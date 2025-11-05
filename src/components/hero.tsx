@@ -85,6 +85,8 @@ function Hero() {
 						<div className="relative bg-linear-to-br from-primary/20 via-primary/10 to-transparent rounded-full w-[320px] h-[320px] lg:w-[500px] lg:h-[500px] flex items-center justify-center">
 							{/* Main image */}
 							<Image
+								width={280}
+								height={280}
 								src="https://images.unsplash.com/photo-1550831107-1553da8c8464?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZG9jdG9yc3xlbnwwfHwwfHx8MA%3D%3D"
 								alt="Healthcare professional"
 								className="rounded-full w-[280px] h-[280px] lg:w-[420px] lg:h-[420px] object-cover border-4 border-background object-top"

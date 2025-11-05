@@ -270,7 +270,7 @@ const app = new Hono()
 	// Get all users with role filter
 	.get("/users", async (c) => {
 		const role = c.req.query("role"); // USER, DOCTOR, ADMIN
-		const limit = bunparseInt(c.req.query("limit") || "50", 10);
+		const limit = parseInt(c.req.query("limit") || "50", 10);
 		const offset = parseInt(c.req.query("offset") || "0", 10);
 
 		try {

@@ -33,7 +33,7 @@ function JobList() {
 	return (
 		<div className="w-full md:w-2/3 space-y-2">
 			{jobListingsData.map((job) => (
-				<div
+				<button
 					onClick={() => handleJobClick(job.id)}
 					key={job.id}
 					className={`bg-card p-6 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer ${
@@ -128,7 +128,7 @@ function JobList() {
 							</div>
 						</div>
 					</div>
-				</div>
+				</button>
 			))}
 		</div>
 	);

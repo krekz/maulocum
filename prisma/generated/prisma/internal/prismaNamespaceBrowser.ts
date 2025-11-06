@@ -49,10 +49,17 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 export const ModelName = {
   User: 'User',
-  DoctorVerification: 'DoctorVerification',
+  DoctorProfile: 'DoctorProfile',
   Session: 'Session',
   Account: 'Account',
-  Verification: 'Verification'
+  Verification: 'Verification',
+  Facility: 'Facility',
+  Job: 'Job',
+  JobApplication: 'JobApplication',
+  Review: 'Review',
+  ContactInfo: 'ContactInfo',
+  UserFacilityProfile: 'UserFacilityProfile',
+  FacilityVerification: 'FacilityVerification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -88,7 +95,7 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const DoctorVerificationScalarFieldEnum = {
+export const DoctorProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   fullName: 'fullName',
@@ -100,15 +107,15 @@ export const DoctorVerificationScalarFieldEnum = {
   fullId: 'fullId',
   apcNumber: 'apcNumber',
   apcDocumentUrl: 'apcDocumentUrl',
-  status: 'status',
+  verificationStatus: 'verificationStatus',
   rejectionReason: 'rejectionReason',
   submittedAt: 'submittedAt',
-  reviewedAt: 'reviewedAt',
+  reviewAt: 'reviewAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type DoctorVerificationScalarFieldEnum = (typeof DoctorVerificationScalarFieldEnum)[keyof typeof DoctorVerificationScalarFieldEnum]
+export type DoctorProfileScalarFieldEnum = (typeof DoctorProfileScalarFieldEnum)[keyof typeof DoctorProfileScalarFieldEnum]
 
 
 export const SessionScalarFieldEnum = {
@@ -154,6 +161,115 @@ export const VerificationScalarFieldEnum = {
 } as const
 
 export type VerificationScalarFieldEnum = (typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum]
+
+
+export const FacilityScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  address: 'address',
+  contactEmail: 'contactEmail',
+  contactPhone: 'contactPhone',
+  profileImage: 'profileImage',
+  description: 'description',
+  ownerId: 'ownerId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FacilityScalarFieldEnum = (typeof FacilityScalarFieldEnum)[keyof typeof FacilityScalarFieldEnum]
+
+
+export const JobScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  location: 'location',
+  payRate: 'payRate',
+  payBasis: 'payBasis',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  jobType: 'jobType',
+  urgency: 'urgency',
+  status: 'status',
+  requiredSpecialists: 'requiredSpecialists',
+  documentUrls: 'documentUrls',
+  facilityId: 'facilityId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userFacilityProfileId: 'userFacilityProfileId'
+} as const
+
+export type JobScalarFieldEnum = (typeof JobScalarFieldEnum)[keyof typeof JobScalarFieldEnum]
+
+
+export const JobApplicationScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  status: 'status',
+  coverLetter: 'coverLetter',
+  appliedAt: 'appliedAt',
+  updatedAt: 'updatedAt',
+  doctorProfileId: 'doctorProfileId'
+} as const
+
+export type JobApplicationScalarFieldEnum = (typeof JobApplicationScalarFieldEnum)[keyof typeof JobApplicationScalarFieldEnum]
+
+
+export const ReviewScalarFieldEnum = {
+  id: 'id',
+  rating: 'rating',
+  comment: 'comment',
+  createdAt: 'createdAt',
+  doctorProfileId: 'doctorProfileId',
+  facilityId: 'facilityId'
+} as const
+
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
+
+
+export const ContactInfoScalarFieldEnum = {
+  id: 'id',
+  facilityId: 'facilityId',
+  name: 'name',
+  position: 'position',
+  contact: 'contact',
+  createdAt: 'createdAt'
+} as const
+
+export type ContactInfoScalarFieldEnum = (typeof ContactInfoScalarFieldEnum)[keyof typeof ContactInfoScalarFieldEnum]
+
+
+export const UserFacilityProfileScalarFieldEnum = {
+  id: 'id',
+  facilityId: 'facilityId',
+  role: 'role',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+} as const
+
+export type UserFacilityProfileScalarFieldEnum = (typeof UserFacilityProfileScalarFieldEnum)[keyof typeof UserFacilityProfileScalarFieldEnum]
+
+
+export const FacilityVerificationScalarFieldEnum = {
+  id: 'id',
+  facilityId: 'facilityId',
+  businessRegistrationNo: 'businessRegistrationNo',
+  businessDocumentUrl: 'businessDocumentUrl',
+  licenseNumber: 'licenseNumber',
+  licenseDocumentUrl: 'licenseDocumentUrl',
+  verificationStatus: 'verificationStatus',
+  rejectionReason: 'rejectionReason',
+  submittedAt: 'submittedAt',
+  reviewedAt: 'reviewedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FacilityVerificationScalarFieldEnum = (typeof FacilityVerificationScalarFieldEnum)[keyof typeof FacilityVerificationScalarFieldEnum]
 
 
 export const SortOrder = {

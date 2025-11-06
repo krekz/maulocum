@@ -1,9 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { PrismaClient } from "../../../../prisma/generated/prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // Schema for verification approval/rejection
 const verificationActionSchema = z.object({
@@ -16,8 +14,8 @@ const app = new Hono()
 	// Get all pending verification requests
 	.get("/verifications/pending", async (c) => {
 		try {
-			const verifications = await prisma.doctorVerification.findMany({
-				where: { status: "PENDING" },
+			const verifications = await prisma.doctorProfile.findMany({
+				where: { verificationStatus: "PENDING" },
 				include: {
 					user: {
 						select: {
@@ -39,54 +37,63 @@ const app = new Hono()
 		}
 	})
 	// Get all verifications with filters
-	.get("/verifications", async (c) => {
-		const status = c.req.query("status"); // PENDING, APPROVED, REJECTED
-		const limit = parseInt(c.req.query("limit") || "50", 10);
-		const offset = parseInt(c.req.query("offset") || "0", 10);
+	.get(
+		"/verifications",
+		zValidator(
+			"query",
+			z.object({
+				status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+				limit: z.coerce.number().int().min(1).max(100).default(10),
+				offset: z.coerce.number().int().min(0).default(0),
+			}),
+		),
+		async (c) => {
+			const { status, limit, offset } = c.req.valid("query");
 
-		try {
-			const where = status ? { status: status as any } : {};
+			try {
+				const where = status ? { verificationStatus: status } : {};
 
-			const [verifications, total] = await Promise.all([
-				prisma.doctorVerification.findMany({
-					where,
-					include: {
-						user: {
-							select: {
-								id: true,
-								name: true,
-								email: true,
-								image: true,
-								role: true,
-								createdAt: true,
+				const [verifications, total] = await Promise.all([
+					prisma.doctorProfile.findMany({
+						where,
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									image: true,
+									role: true,
+									createdAt: true,
+								},
 							},
 						},
-					},
-					orderBy: { createdAt: "desc" },
-					take: limit,
-					skip: offset,
-				}),
-				prisma.doctorVerification.count({ where }),
-			]);
+						orderBy: { createdAt: "desc" },
+						take: limit,
+						skip: offset,
+					}),
+					prisma.doctorProfile.count({ where }),
+				]);
 
-			return c.json({
-				verifications,
-				total,
-				limit,
-				offset,
-				hasMore: offset + limit < total,
-			});
-		} catch (error) {
-			console.error("Error fetching verifications:", error);
-			return c.json({ error: "Failed to fetch verifications" }, 500);
-		}
-	})
+				return c.json({
+					verifications,
+					total,
+					limit,
+					offset,
+					hasMore: offset + limit < total,
+				});
+			} catch (error) {
+				console.error("Error fetching verifications:", error);
+				return c.json({ error: "Failed to fetch verifications" }, 500);
+			}
+		},
+	)
 	// Get single verification details
 	.get("/verifications/:verificationId", async (c) => {
 		const verificationId = c.req.param("verificationId");
 
 		try {
-			const verification = await prisma.doctorVerification.findUnique({
+			const verification = await prisma.doctorProfile.findUnique({
 				where: { id: verificationId },
 				include: {
 					user: {
@@ -123,7 +130,7 @@ const app = new Hono()
 
 			try {
 				// Get verification
-				const verification = await prisma.doctorVerification.findUnique({
+				const verification = await prisma.doctorProfile.findUnique({
 					where: { id: verificationId },
 					include: { user: true },
 				});
@@ -132,7 +139,7 @@ const app = new Hono()
 					return c.json({ error: "Verification not found" }, 404);
 				}
 
-				if (verification.status !== "PENDING") {
+				if (verification.verificationStatus !== "PENDING") {
 					return c.json(
 						{ error: "Verification has already been processed" },
 						400,
@@ -141,11 +148,11 @@ const app = new Hono()
 
 				if (action === "APPROVE") {
 					// Update verification status to APPROVED
-					await prisma.doctorVerification.update({
+					await prisma.doctorProfile.update({
 						where: { id: verificationId },
 						data: {
-							status: "APPROVED",
-							reviewedAt: new Date(),
+							verificationStatus: "APPROVED",
+							reviewAt: new Date(),
 						},
 					});
 
@@ -169,12 +176,12 @@ const app = new Hono()
 					}
 
 					// Update verification status to REJECTED
-					await prisma.doctorVerification.update({
+					await prisma.doctorProfile.update({
 						where: { id: verificationId },
 						data: {
-							status: "REJECTED",
+							verificationStatus: "REJECTED",
 							rejectionReason,
-							reviewedAt: new Date(),
+							reviewAt: new Date(),
 						},
 					});
 
@@ -197,10 +204,16 @@ const app = new Hono()
 	.get("/verifications/stats", async (c) => {
 		try {
 			const [pending, approved, rejected, total] = await Promise.all([
-				prisma.doctorVerification.count({ where: { status: "PENDING" } }),
-				prisma.doctorVerification.count({ where: { status: "APPROVED" } }),
-				prisma.doctorVerification.count({ where: { status: "REJECTED" } }),
-				prisma.doctorVerification.count(),
+				prisma.doctorProfile.count({
+					where: { verificationStatus: "PENDING" },
+				}),
+				prisma.doctorProfile.count({
+					where: { verificationStatus: "APPROVED" },
+				}),
+				prisma.doctorProfile.count({
+					where: { verificationStatus: "REJECTED" },
+				}),
+				prisma.doctorProfile.count(),
 			]);
 
 			return c.json({
@@ -225,8 +238,8 @@ const app = new Hono()
 		try {
 			const where: any = {
 				role: "DOCTOR",
-				doctorVerification: {
-					status: "APPROVED",
+				doctorProfile: {
+					verificationStatus: "APPROVED",
 				},
 			};
 
@@ -235,7 +248,7 @@ const app = new Hono()
 					{ name: { contains: search, mode: "insensitive" } },
 					{ email: { contains: search, mode: "insensitive" } },
 					{
-						doctorVerification: {
+						doctorProfile: {
 							apcNumber: { contains: search, mode: "insensitive" },
 						},
 					},
@@ -246,7 +259,7 @@ const app = new Hono()
 				prisma.user.findMany({
 					where,
 					include: {
-						doctorVerification: true,
+						doctorProfile: true,
 					},
 					orderBy: { createdAt: "desc" },
 					take: limit,
@@ -280,7 +293,7 @@ const app = new Hono()
 				prisma.user.findMany({
 					where,
 					include: {
-						doctorVerification: true,
+						doctorProfile: true,
 					},
 					orderBy: { createdAt: "desc" },
 					take: limit,
@@ -313,7 +326,7 @@ const app = new Hono()
 				const user = await prisma.user.update({
 					where: { id: userId },
 					data: { role },
-					include: { doctorVerification: true },
+					include: { doctorProfile: true },
 				});
 
 				return c.json({ user, message: `User role updated to ${role}` });

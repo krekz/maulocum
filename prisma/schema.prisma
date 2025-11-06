@@ -27,47 +27,77 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum JobUrgency {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+  FILLED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  LOCUM
+  CONTRACT
+}
+
+enum PayBasis {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 model User {
-  id                   String              @id
-  name                 String
-  email                String
-  emailVerified        Boolean             @default(false)
-  image                String?
-  role                 UserRole            @default(USER)
-  phoneNumber          String?             @unique
-  phoneNumberVerified  Boolean             @default(false)
-  location             String?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @default(now()) @updatedAt
-  sessions             Session[]
-  accounts             Account[]
-  doctorVerification   DoctorVerification?
+  id                  String               @id
+  name                String
+  email               String
+  emailVerified       Boolean              @default(false)
+  image               String?
+  role                UserRole             @default(USER)
+  phoneNumber         String?              @unique
+  phoneNumberVerified Boolean              @default(false)
+  location            String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
+  sessions            Session[]
+  accounts            Account[]
+  doctorProfile       DoctorProfile?
+  facilityProfile     UserFacilityProfile?
+  ownedFacilities     Facility[]           @relation("FacilityOwner")
 
   @@unique([email])
   @@map("user")
 }
 
-model DoctorVerification {
-  id                String             @id @default(cuid())
-  userId            String             @unique
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName          String
-  phoneNumber       String
-  location          String
-  specialty         String?
-  yearsOfExperience Int
-  provisionalId     String?
-  fullId            String?
-  apcNumber         String
-  apcDocumentUrl    String
-  status            VerificationStatus @default(PENDING)
-  rejectionReason   String?
-  submittedAt       DateTime           @default(now())
-  reviewedAt        DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+model DoctorProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String
+  phoneNumber        String
+  location           String
+  specialty          String?
+  yearsOfExperience  Int
+  provisionalId      String?
+  fullId             String?
+  apcNumber          String
+  apcDocumentUrl     String
+  reviews            Review[]
+  jobApplications    JobApplication[]
+  verificationStatus VerificationStatus @default(PENDING)
+  rejectionReason    String?
+  submittedAt        DateTime           @default(now())
+  reviewAt           DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  @@map("doctor_verification")
+  @@map("doctor_profile")
 }
 
 model Session {
@@ -113,4 +143,132 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model Facility {
+  id                   String                @id @default(cuid())
+  name                 String
+  address              String
+  contactEmail         String
+  contactPhone         String
+  profileImage         String?
+  description          String?
+  ownerId              String
+  owner                User                  @relation("FacilityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  jobs                 Job[]
+  reviews              Review[]
+  contactInfo          ContactInfo[]
+  userFacilityProfiles UserFacilityProfile[]
+  facilityVerification FacilityVerification?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([ownerId])
+  @@map("facility")
+}
+
+model Job {
+  id                    String               @id @default(cuid())
+  title                 String
+  description           String?
+  location              String
+  payRate               String
+  payBasis              PayBasis
+  startTime             String
+  endTime               String
+  startDate             DateTime
+  endDate               DateTime
+  jobType               JobType
+  urgency               JobUrgency           @default(LOW)
+  status                JobStatus            @default(OPEN)
+  requiredSpecialists   String[]
+  documentUrls          String[]
+  facilityId            String
+  facility              Facility             @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  applicants            JobApplication[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  UserFacilityProfile   UserFacilityProfile? @relation(fields: [userFacilityProfileId], references: [id])
+  userFacilityProfileId String?
+
+  @@index([facilityId])
+  @@index([status])
+  @@index([urgency])
+  @@map("job")
+}
+
+model JobApplication {
+  id              String         @id @default(cuid())
+  jobId           String
+  job             Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status          String         @default("pending")
+  coverLetter     String?
+  appliedAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id])
+  doctorProfileId String?
+
+  @@unique([jobId])
+  @@index([jobId])
+  @@map("job_application")
+}
+
+model Review {
+  id              String         @id @default(cuid())
+  rating          Int
+  comment         String
+  createdAt       DateTime       @default(now())
+  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id])
+  doctorProfileId String?
+  Facility        Facility?      @relation(fields: [facilityId], references: [id])
+  facilityId      String?
+
+  @@map("review")
+}
+
+model ContactInfo {
+  id         String   @id @default(cuid())
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  name       String
+  position   String
+  contact    String
+  createdAt  DateTime @default(now())
+
+  @@index([facilityId])
+  @@map("contact_info")
+}
+
+model UserFacilityProfile {
+  id          String   @id @default(cuid())
+  facilityId  String
+  createdJobs Job[]
+  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  role        String // e.g., "staff", "manager", "admin", "hr"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId])
+  @@map("facility_profile")
+}
+
+model FacilityVerification {
+  id                     String             @id @default(cuid())
+  facilityId             String             @unique
+  facility               Facility           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  businessRegistrationNo String
+  businessDocumentUrl    String
+  licenseNumber          String?
+  licenseDocumentUrl     String?
+  verificationStatus     VerificationStatus @default(PENDING)
+  rejectionReason        String?
+  submittedAt            DateTime           @default(now())
+  reviewedAt             DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  @@map("facility_verification")
 }

@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 import {
 	deleteFromR2,
 	extractKeyFromUrl,
@@ -11,9 +12,6 @@ import {
 	doctorVerificationApiSchema,
 	doctorVerificationUpdateSchema,
 } from "@/lib/schemas/doctor-verification.schema";
-import { PrismaClient } from "../../../../prisma/generated/prisma/client";
-
-const prisma = new PrismaClient();
 
 const app = new Hono()
 	// Get user profile with verification status
@@ -27,7 +25,7 @@ const app = new Hono()
 				const user = await prisma.user.findUnique({
 					where: { id: userId },
 					include: {
-						doctorVerification: true,
+						doctorProfile: true,
 					},
 				});
 
@@ -59,7 +57,7 @@ const app = new Hono()
 				select: {
 					id: true,
 					phoneNumberVerified: true,
-					doctorVerification: true,
+					doctorProfile: true,
 				},
 			});
 
@@ -76,7 +74,7 @@ const app = new Hono()
 			}
 
 			// Prevent spam: Check if user already has a verification submitted
-			if (user.doctorVerification) {
+			if (user.doctorProfile) {
 				return c.json(
 					{
 						error:
@@ -129,7 +127,7 @@ const app = new Hono()
 				// Check if user exists
 				const user = await prisma.user.findUnique({
 					where: { id: data.userId },
-					include: { doctorVerification: true },
+					include: { doctorProfile: true },
 				});
 
 				if (!user) {
@@ -148,7 +146,7 @@ const app = new Hono()
 				}
 
 				// Check if verification already exists
-				if (user.doctorVerification) {
+				if (user.doctorProfile) {
 					return c.json({ error: "Verification already submitted" }, 400);
 				}
 
@@ -167,7 +165,7 @@ const app = new Hono()
 					where: { id: data.userId },
 					data: {
 						location: data.location,
-						doctorVerification: {
+						doctorProfile: {
 							create: {
 								fullName: data.fullName,
 								phoneNumber: userPhone,
@@ -178,16 +176,16 @@ const app = new Hono()
 								fullId: data.fullId,
 								apcNumber: data.apcNumber,
 								apcDocumentUrl: data.apcDocumentUrl,
-								status: "PENDING",
+								verificationStatus: "PENDING",
 							},
 						},
 					},
 					include: {
-						doctorVerification: true,
+						doctorProfile: true,
 					},
 				});
 
-				const verification = updatedUser.doctorVerification;
+				const verification = updatedUser.doctorProfile;
 
 				return c.json(
 					{
@@ -219,7 +217,7 @@ const app = new Hono()
 				}
 
 				// Get existing verification
-				const verification = await prisma.doctorVerification.findUnique({
+				const verification = await prisma.doctorProfile.findUnique({
 					where: { id: verificationId },
 				});
 
@@ -228,8 +226,8 @@ const app = new Hono()
 				}
 
 				if (
-					verification.status !== "PENDING" &&
-					verification.status !== "REJECTED"
+					verification.verificationStatus !== "PENDING" &&
+					verification.verificationStatus !== "REJECTED"
 				) {
 					return c.json(
 						{
@@ -273,7 +271,7 @@ const app = new Hono()
 				}
 
 				// Update verification with new URL
-				await prisma.doctorVerification.update({
+				await prisma.doctorProfile.update({
 					where: { id: verificationId },
 					data: {
 						apcDocumentUrl: result.url,
@@ -297,7 +295,7 @@ const app = new Hono()
 
 			try {
 				// Check if verification exists and is PENDING or REJECTED
-				const verification = await prisma.doctorVerification.findUnique({
+				const verification = await prisma.doctorProfile.findUnique({
 					where: { id: verificationId },
 				});
 
@@ -306,8 +304,8 @@ const app = new Hono()
 				}
 
 				if (
-					verification.status !== "PENDING" &&
-					verification.status !== "REJECTED"
+					verification.verificationStatus !== "PENDING" &&
+					verification.verificationStatus !== "REJECTED"
 				) {
 					return c.json(
 						{
@@ -319,7 +317,7 @@ const app = new Hono()
 				}
 
 				// Update verification
-				await prisma.doctorVerification.update({
+				await prisma.doctorProfile.update({
 					where: { id: verificationId },
 					data: {
 						fullName: data.fullName,

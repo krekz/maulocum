@@ -1,71 +1,60 @@
 import { z } from "zod";
 
-// Contact Info interface
-export interface ContactInfo {
-	name: string;
-	position: string;
-	contact: string;
-}
-
-// Review interface
-export interface Review {
-	name: string;
-	star: number;
-	comment: string;
-	date: Date;
-}
-
-// Facility interface
-export interface Facility {
-	id: string;
-	name: string;
-	address: string;
-	contactEmail: string;
-	contactPhone: string;
-	createdAt: Date;
-	updatedAt: Date;
-	profileImage?: string;
-	contactInfo: ContactInfo[];
-	reviews: Review[];
-	openJobs: string[];
-}
-
-// Zod schemas for validation
-const contactInfoSchema = z.object({
+// Base schemas (DRY - reusable components)
+export const contactInfoSchema = z.object({
+	id: z.cuid(),
 	name: z.string().min(1, "Contact name is required"),
 	position: z.string().min(1, "Position is required"),
 	contact: z.string().min(1, "Contact is required"),
+	facilityId: z.cuid(),
+	createdAt: z.date(),
 });
 
-const reviewSchema = z.object({
+export const reviewSchema = z.object({
+	id: z.cuid(),
 	name: z.string().min(1, "Reviewer name is required"),
-	star: z.number().min(1).max(5),
+	rating: z.number().int().min(1).max(5),
 	comment: z.string().min(1, "Comment is required"),
-	date: z.date(),
+	facilityId: z.cuid(),
+	createdAt: z.date(),
 });
 
+// Facility schema
 export const facilitySchema = z.object({
-	id: z.string().uuid(),
 	name: z.string().min(1, "Facility name is required"),
 	address: z.string().min(1, "Address is required"),
-	contactEmail: z.string().email("Invalid email address"),
+	contactEmail: z.email("Invalid email address"),
 	contactPhone: z.string().min(1, "Contact phone is required"),
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	profileImage: z.string().url().optional(),
-	contactInfo: z.array(contactInfoSchema).default([]),
-	reviews: z.array(reviewSchema).default([]),
-	openJobs: z.array(z.string()).default([]),
+	profileImage: z.url().optional(),
+	description: z.string().optional(),
 });
 
-export const createFacilitySchema = facilitySchema.omit({
+// Facility query/filter schema
+export const facilityQuerySchema = z.object({
+	ownerId: z.string().optional(),
+	search: z.string().optional(),
+	page: z.coerce.number().int().positive().default(1),
+	limit: z.coerce.number().int().positive().max(100).default(10),
+});
+
+// Create contact info schema
+export const createContactInfoSchema = contactInfoSchema.omit({
 	id: true,
 	createdAt: true,
-	updatedAt: true,
 });
 
-export const updateFacilitySchema = createFacilitySchema.partial();
+// Create review schema
+export const createReviewSchema = reviewSchema.omit({
+	id: true,
+	createdAt: true,
+});
 
 // Type exports
-export type CreateFacilityInput = z.infer<typeof createFacilitySchema>;
-export type UpdateFacilityInput = z.infer<typeof updateFacilitySchema>;
+export type Facility = z.infer<typeof facilitySchema>;
+export type CreateFacilityInput = z.infer<typeof facilitySchema>;
+export type UpdateFacilityInput = z.infer<typeof facilitySchema>;
+export type FacilityQuery = z.infer<typeof facilityQuerySchema>;
+export type ContactInfo = z.infer<typeof contactInfoSchema>;
+export type CreateContactInfoInput = z.infer<typeof createContactInfoSchema>;
+export type Review = z.infer<typeof reviewSchema>;
+export type CreateReviewInput = z.infer<typeof createReviewSchema>;

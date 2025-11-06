@@ -30,7 +30,7 @@ interface Doctor {
 	name: string | null;
 	email: string;
 	location: string | null;
-	doctorVerification: DoctorVerification | null;
+	doctorProfile: DoctorVerification | null;
 }
 
 interface DoctorsTableProps {
@@ -60,19 +60,15 @@ export function DoctorsTable({ doctors }: DoctorsTableProps) {
 							<TableCell className="text-sm text-muted-foreground">
 								{doctor.email}
 							</TableCell>
+							<TableCell>{doctor.doctorProfile?.apcNumber || "N/A"}</TableCell>
 							<TableCell>
-								{doctor.doctorVerification?.apcNumber || "N/A"}
+								{doctor.doctorProfile?.specialty || "Not specified"}
 							</TableCell>
 							<TableCell>
-								{doctor.doctorVerification?.specialty || "Not specified"}
+								{doctor.doctorProfile?.yearsOfExperience || 0} years
 							</TableCell>
 							<TableCell>
-								{doctor.doctorVerification?.yearsOfExperience || 0} years
-							</TableCell>
-							<TableCell>
-								{doctor.doctorVerification?.location ||
-									doctor.location ||
-									"N/A"}
+								{doctor.doctorProfile?.location || doctor.location || "N/A"}
 							</TableCell>
 							<TableCell>
 								<Badge variant="default">Verified</Badge>

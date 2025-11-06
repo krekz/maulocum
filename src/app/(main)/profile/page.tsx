@@ -35,9 +35,11 @@ export default async function ProfilePage() {
 
 	const { user } = await res.json();
 
-	const needsVerification = user.role === "USER" && !user.doctorVerification;
-	const verificationPending = user.doctorVerification?.status === "PENDING";
-	const verificationRejected = user.doctorVerification?.status === "REJECTED";
+	const needsVerification = user.role === "USER" && !user.doctorProfile;
+	const verificationPending =
+		user.doctorProfile?.verificationStatus === "PENDING";
+	const verificationRejected =
+		user.doctorProfile?.verificationStatus === "REJECTED";
 	const isVerified = user.role === "DOCTOR";
 
 	return (
@@ -110,7 +112,7 @@ export default async function ProfilePage() {
 										Verification Rejected
 									</h3>
 									<p className="text-sm text-red-700 dark:text-red-300 mb-2">
-										{user.doctorVerification?.rejectionReason ||
+										{user.doctorProfile?.rejectionReason ||
 											"Your verification was rejected. Please contact support."}
 									</p>
 								</div>
@@ -128,7 +130,7 @@ export default async function ProfilePage() {
 					)}
 
 					{/* Profile header card - Only show if verified or has verification */}
-					{(isVerified || user.doctorVerification) && (
+					{(isVerified || user.doctorProfile) && (
 						<>
 							<Card className="overflow-hidden">
 								<div className="p-4 sm:p-6 pt-0 relative">
@@ -145,10 +147,10 @@ export default async function ProfilePage() {
 									<div className="ml-24 sm:ml-28 pt-1 sm:pt-2 flex flex-col justify-between gap-3 sm:gap-4">
 										<div>
 											<h2 className="text-xl sm:text-2xl font-semibold">
-												{user.doctorVerification?.fullName || user.name}
+												{user.doctorProfile?.fullName || user.name}
 											</h2>
 											<p className="text-sm sm:text-base text-muted-foreground">
-												{user.doctorVerification?.specialty || "Doctor"}
+												{user.doctorProfile?.specialty || "Doctor"}
 											</p>
 											<p className="text-sm italic sm:text-base text-muted-foreground">
 												{user.email}
@@ -171,9 +173,9 @@ export default async function ProfilePage() {
 							</Card>
 
 							{/* Professional Information with Edit Toggle */}
-							{user.doctorVerification && (
+							{user.doctorProfile && (
 								<VerificationDisplayWrapper
-									verification={user.doctorVerification}
+									verification={user.doctorProfile}
 									userEmail={user.email}
 								/>
 							)}

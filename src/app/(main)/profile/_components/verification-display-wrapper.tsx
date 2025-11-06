@@ -18,7 +18,7 @@ interface VerificationDisplayWrapperProps {
 		fullId?: string | null;
 		apcNumber: string;
 		apcDocumentUrl: string;
-		status: string;
+		verificationStatus: string;
 	};
 	userEmail: string;
 }
@@ -35,7 +35,8 @@ export function VerificationDisplayWrapper({
 
 	// Only allow editing if status is REJECTED or not yet submitted
 	const canEdit =
-		verification.status === "REJECTED" || verification.status === "PENDING";
+		verification.verificationStatus === "REJECTED" ||
+		verification.verificationStatus === "PENDING";
 
 	return (
 		<Card className="p-4 sm:p-6">

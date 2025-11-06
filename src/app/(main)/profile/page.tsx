@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { DoctorVerificationForm } from "./_components/doctor-create-verification-form";
+import { DoctorVerificationWizard } from "./_components/doctor-verification-wizard";
 import { VerificationDisplayWrapper } from "./_components/verification-display-wrapper";
 
 export default async function ProfilePage() {
@@ -119,7 +119,13 @@ export default async function ProfilePage() {
 					)}
 
 					{/* Show verification form for normal users */}
-					{needsVerification && <DoctorVerificationForm userId={user.id} />}
+					{needsVerification && (
+						<DoctorVerificationWizard
+							userId={user.id}
+							phoneNumber={user.phoneNumber}
+							phoneNumberVerified={user.phoneNumberVerified}
+						/>
+					)}
 
 					{/* Profile header card - Only show if verified or has verification */}
 					{(isVerified || user.doctorVerification) && (
@@ -143,6 +149,9 @@ export default async function ProfilePage() {
 											</h2>
 											<p className="text-sm sm:text-base text-muted-foreground">
 												{user.doctorVerification?.specialty || "Doctor"}
+											</p>
+											<p className="text-sm italic sm:text-base text-muted-foreground">
+												{user.email}
 											</p>
 										</div>
 

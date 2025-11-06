@@ -14,7 +14,6 @@ interface UploadFileResponse {
 interface VerifyDoctorParams {
 	userId: string;
 	fullName: string;
-	phoneNumber: string;
 	location: string;
 	specialty?: string;
 	yearsOfExperience: number;
@@ -34,7 +33,6 @@ export function useUploadAPC() {
 			formData.append("file", file);
 			formData.append("userId", userId);
 
-			// Use native fetch for FormData upload
 			const res = await fetch("/api/v2/profile/upload-apc", {
 				method: "POST",
 				body: formData,

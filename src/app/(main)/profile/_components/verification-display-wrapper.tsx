@@ -30,13 +30,12 @@ export function VerificationDisplayWrapper({
 	const { isEditing, setIsEditing } = useEditVerificationStore();
 
 	if (isEditing) {
-		return (
-			<EditVerificationForm verification={verification} userEmail={userEmail} />
-		);
+		return <EditVerificationForm verification={verification} />;
 	}
 
 	// Only allow editing if status is REJECTED or not yet submitted
-	const canEdit = verification.status === "REJECTED";
+	const canEdit =
+		verification.status === "REJECTED" || verification.status === "PENDING";
 
 	return (
 		<Card className="p-4 sm:p-6">

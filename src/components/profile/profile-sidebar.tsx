@@ -7,6 +7,7 @@ import {
 	Heart,
 	History,
 	Menu,
+	Settings,
 	User,
 } from "lucide-react";
 import Link from "next/link";
@@ -130,18 +131,13 @@ export function ProfileSidebar() {
 		},
 	];
 
-	// const settingLinks = [
-	// 	{
-	// 		href: "/profile/settings",
-	// 		icon: <UserCog className="h-4 w-4" />,
-	// 		label: "Account",
-	// 	},
-	// 	{
-	// 		href: "/profile/facility-settings",
-	// 		icon: <MonitorCog className="h-4 w-4" />,
-	// 		label: "Facility",
-	// 	},
-	// ];
+	const settingLinks = [
+		{
+			href: "/profile/settings",
+			icon: <Settings className="h-4 w-4" />,
+			label: "Account Settings",
+		},
+	];
 
 	return (
 		<>
@@ -153,11 +149,11 @@ export function ProfileSidebar() {
 					pathname={pathname}
 				/>
 				<SidebarSection title="Jobs" links={jobLinks} pathname={pathname} />
-				{/* <SidebarSection
+				<SidebarSection
 					title="Settings"
 					links={settingLinks}
 					pathname={pathname}
-				/> */}
+				/>
 			</div>
 
 			{/* Mobile Sidebar Sheet */}
@@ -187,13 +183,13 @@ export function ProfileSidebar() {
 							collapsible
 							onLinkClick={() => setIsOpen(false)}
 						/>
-						{/* <SidebarSection
+						<SidebarSection
 							title="Settings"
 							links={settingLinks}
 							pathname={pathname}
 							collapsible
 							onLinkClick={() => setIsOpen(false)}
-						/> */}
+						/>
 					</div>
 				</SheetContent>
 			</Sheet>

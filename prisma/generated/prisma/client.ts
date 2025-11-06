@@ -49,10 +49,10 @@ path.join(process.cwd(), "prisma/generated/prisma/libquery_engine-darwin-arm64.d
  */
 export type User = Prisma.UserModel
 /**
- * Model DoctorVerification
+ * Model DoctorProfile
  * 
  */
-export type DoctorVerification = Prisma.DoctorVerificationModel
+export type DoctorProfile = Prisma.DoctorProfileModel
 /**
  * Model Session
  * 
@@ -68,3 +68,38 @@ export type Account = Prisma.AccountModel
  * 
  */
 export type Verification = Prisma.VerificationModel
+/**
+ * Model Facility
+ * 
+ */
+export type Facility = Prisma.FacilityModel
+/**
+ * Model Job
+ * 
+ */
+export type Job = Prisma.JobModel
+/**
+ * Model JobApplication
+ * 
+ */
+export type JobApplication = Prisma.JobApplicationModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel
+/**
+ * Model ContactInfo
+ * 
+ */
+export type ContactInfo = Prisma.ContactInfoModel
+/**
+ * Model UserFacilityProfile
+ * 
+ */
+export type UserFacilityProfile = Prisma.UserFacilityProfileModel
+/**
+ * Model FacilityVerification
+ * 
+ */
+export type FacilityVerification = Prisma.FacilityVerificationModel

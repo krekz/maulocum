@@ -231,7 +231,9 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
-  doctorVerification?: Prisma.XOR<Prisma.DoctorVerificationNullableScalarRelationFilter, Prisma.DoctorVerificationWhereInput> | null
+  doctorProfile?: Prisma.XOR<Prisma.DoctorProfileNullableScalarRelationFilter, Prisma.DoctorProfileWhereInput> | null
+  facilityProfile?: Prisma.XOR<Prisma.UserFacilityProfileNullableScalarRelationFilter, Prisma.UserFacilityProfileWhereInput> | null
+  ownedFacilities?: Prisma.FacilityListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -248,7 +250,9 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   accounts?: Prisma.AccountOrderByRelationAggregateInput
-  doctorVerification?: Prisma.DoctorVerificationOrderByWithRelationInput
+  doctorProfile?: Prisma.DoctorProfileOrderByWithRelationInput
+  facilityProfile?: Prisma.UserFacilityProfileOrderByWithRelationInput
+  ownedFacilities?: Prisma.FacilityOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -268,7 +272,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
-  doctorVerification?: Prisma.XOR<Prisma.DoctorVerificationNullableScalarRelationFilter, Prisma.DoctorVerificationWhereInput> | null
+  doctorProfile?: Prisma.XOR<Prisma.DoctorProfileNullableScalarRelationFilter, Prisma.DoctorProfileWhereInput> | null
+  facilityProfile?: Prisma.XOR<Prisma.UserFacilityProfileNullableScalarRelationFilter, Prisma.UserFacilityProfileWhereInput> | null
+  ownedFacilities?: Prisma.FacilityListRelationFilter
 }, "id" | "phoneNumber" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -319,7 +325,9 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -336,7 +344,9 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUpdateInput = {
@@ -353,7 +363,9 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -370,7 +382,9 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -482,18 +496,18 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type UserCreateNestedOneWithoutDoctorVerificationInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutDoctorVerificationInput, Prisma.UserUncheckedCreateWithoutDoctorVerificationInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDoctorVerificationInput
+export type UserCreateNestedOneWithoutDoctorProfileInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDoctorProfileInput, Prisma.UserUncheckedCreateWithoutDoctorProfileInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDoctorProfileInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutDoctorVerificationNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutDoctorVerificationInput, Prisma.UserUncheckedCreateWithoutDoctorVerificationInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDoctorVerificationInput
-  upsert?: Prisma.UserUpsertWithoutDoctorVerificationInput
+export type UserUpdateOneRequiredWithoutDoctorProfileNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDoctorProfileInput, Prisma.UserUncheckedCreateWithoutDoctorProfileInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDoctorProfileInput
+  upsert?: Prisma.UserUpsertWithoutDoctorProfileInput
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDoctorVerificationInput, Prisma.UserUpdateWithoutDoctorVerificationInput>, Prisma.UserUncheckedUpdateWithoutDoctorVerificationInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDoctorProfileInput, Prisma.UserUpdateWithoutDoctorProfileInput>, Prisma.UserUncheckedUpdateWithoutDoctorProfileInput>
 }
 
 export type UserCreateNestedOneWithoutSessionsInput = {
@@ -524,7 +538,35 @@ export type UserUpdateOneRequiredWithoutAccountsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAccountsInput, Prisma.UserUpdateWithoutAccountsInput>, Prisma.UserUncheckedUpdateWithoutAccountsInput>
 }
 
-export type UserCreateWithoutDoctorVerificationInput = {
+export type UserCreateNestedOneWithoutOwnedFacilitiesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedCreateWithoutOwnedFacilitiesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedFacilitiesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutOwnedFacilitiesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedCreateWithoutOwnedFacilitiesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedFacilitiesInput
+  upsert?: Prisma.UserUpsertWithoutOwnedFacilitiesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOwnedFacilitiesInput, Prisma.UserUpdateWithoutOwnedFacilitiesInput>, Prisma.UserUncheckedUpdateWithoutOwnedFacilitiesInput>
+}
+
+export type UserCreateNestedOneWithoutFacilityProfileInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFacilityProfileInput, Prisma.UserUncheckedCreateWithoutFacilityProfileInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFacilityProfileInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFacilityProfileNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFacilityProfileInput, Prisma.UserUncheckedCreateWithoutFacilityProfileInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFacilityProfileInput
+  upsert?: Prisma.UserUpsertWithoutFacilityProfileInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFacilityProfileInput, Prisma.UserUpdateWithoutFacilityProfileInput>, Prisma.UserUncheckedUpdateWithoutFacilityProfileInput>
+}
+
+export type UserCreateWithoutDoctorProfileInput = {
   id: string
   name: string
   email: string
@@ -538,9 +580,11 @@ export type UserCreateWithoutDoctorVerificationInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityCreateNestedManyWithoutOwnerInput
 }
 
-export type UserUncheckedCreateWithoutDoctorVerificationInput = {
+export type UserUncheckedCreateWithoutDoctorProfileInput = {
   id: string
   name: string
   email: string
@@ -554,25 +598,27 @@ export type UserUncheckedCreateWithoutDoctorVerificationInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityUncheckedCreateNestedManyWithoutOwnerInput
 }
 
-export type UserCreateOrConnectWithoutDoctorVerificationInput = {
+export type UserCreateOrConnectWithoutDoctorProfileInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutDoctorVerificationInput, Prisma.UserUncheckedCreateWithoutDoctorVerificationInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDoctorProfileInput, Prisma.UserUncheckedCreateWithoutDoctorProfileInput>
 }
 
-export type UserUpsertWithoutDoctorVerificationInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutDoctorVerificationInput, Prisma.UserUncheckedUpdateWithoutDoctorVerificationInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutDoctorVerificationInput, Prisma.UserUncheckedCreateWithoutDoctorVerificationInput>
+export type UserUpsertWithoutDoctorProfileInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDoctorProfileInput, Prisma.UserUncheckedUpdateWithoutDoctorProfileInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDoctorProfileInput, Prisma.UserUncheckedCreateWithoutDoctorProfileInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutDoctorVerificationInput = {
+export type UserUpdateToOneWithWhereWithoutDoctorProfileInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutDoctorVerificationInput, Prisma.UserUncheckedUpdateWithoutDoctorVerificationInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDoctorProfileInput, Prisma.UserUncheckedUpdateWithoutDoctorProfileInput>
 }
 
-export type UserUpdateWithoutDoctorVerificationInput = {
+export type UserUpdateWithoutDoctorProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -586,9 +632,11 @@ export type UserUpdateWithoutDoctorVerificationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUpdateManyWithoutOwnerNestedInput
 }
 
-export type UserUncheckedUpdateWithoutDoctorVerificationInput = {
+export type UserUncheckedUpdateWithoutDoctorProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
@@ -602,6 +650,8 @@ export type UserUncheckedUpdateWithoutDoctorVerificationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -617,7 +667,9 @@ export type UserCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -633,7 +685,9 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -665,7 +719,9 @@ export type UserUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -681,7 +737,9 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutAccountsInput = {
@@ -697,7 +755,9 @@ export type UserCreateWithoutAccountsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -713,7 +773,9 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedCreateNestedOneWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -745,7 +807,9 @@ export type UserUpdateWithoutAccountsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -761,7 +825,185 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
-  doctorVerification?: Prisma.DoctorVerificationUncheckedUpdateOneWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutOwnedFacilitiesInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  role?: $Enums.UserRole
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean
+  location?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutOwnedFacilitiesInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  role?: $Enums.UserRole
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean
+  location?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedCreateNestedOneWithoutUserInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutOwnedFacilitiesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedCreateWithoutOwnedFacilitiesInput>
+}
+
+export type UserUpsertWithoutOwnedFacilitiesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedUpdateWithoutOwnedFacilitiesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedCreateWithoutOwnedFacilitiesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutOwnedFacilitiesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutOwnedFacilitiesInput, Prisma.UserUncheckedUpdateWithoutOwnedFacilitiesInput>
+}
+
+export type UserUpdateWithoutOwnedFacilitiesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutOwnedFacilitiesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedUpdateOneWithoutUserNestedInput
+  facilityProfile?: Prisma.UserFacilityProfileUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutFacilityProfileInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  role?: $Enums.UserRole
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean
+  location?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutFacilityProfileInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  image?: string | null
+  role?: $Enums.UserRole
+  phoneNumber?: string | null
+  phoneNumberVerified?: boolean
+  location?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedCreateNestedOneWithoutUserInput
+  ownedFacilities?: Prisma.FacilityUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutFacilityProfileInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFacilityProfileInput, Prisma.UserUncheckedCreateWithoutFacilityProfileInput>
+}
+
+export type UserUpsertWithoutFacilityProfileInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFacilityProfileInput, Prisma.UserUncheckedUpdateWithoutFacilityProfileInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFacilityProfileInput, Prisma.UserUncheckedCreateWithoutFacilityProfileInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFacilityProfileInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFacilityProfileInput, Prisma.UserUncheckedUpdateWithoutFacilityProfileInput>
+}
+
+export type UserUpdateWithoutFacilityProfileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFacilityProfileInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneNumberVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  doctorProfile?: Prisma.DoctorProfileUncheckedUpdateOneWithoutUserNestedInput
+  ownedFacilities?: Prisma.FacilityUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 
@@ -772,11 +1014,13 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
 export type UserCountOutputType = {
   sessions: number
   accounts: number
+  ownedFacilities: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   accounts?: boolean | UserCountOutputTypeCountAccountsArgs
+  ownedFacilities?: boolean | UserCountOutputTypeCountOwnedFacilitiesArgs
 }
 
 /**
@@ -803,6 +1047,13 @@ export type UserCountOutputTypeCountAccountsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.AccountWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOwnedFacilitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FacilityWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -818,7 +1069,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
-  doctorVerification?: boolean | Prisma.User$doctorVerificationArgs<ExtArgs>
+  doctorProfile?: boolean | Prisma.User$doctorProfileArgs<ExtArgs>
+  facilityProfile?: boolean | Prisma.User$facilityProfileArgs<ExtArgs>
+  ownedFacilities?: boolean | Prisma.User$ownedFacilitiesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -868,7 +1121,9 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
-  doctorVerification?: boolean | Prisma.User$doctorVerificationArgs<ExtArgs>
+  doctorProfile?: boolean | Prisma.User$doctorProfileArgs<ExtArgs>
+  facilityProfile?: boolean | Prisma.User$facilityProfileArgs<ExtArgs>
+  ownedFacilities?: boolean | Prisma.User$ownedFacilitiesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -879,7 +1134,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     accounts: Prisma.$AccountPayload<ExtArgs>[]
-    doctorVerification: Prisma.$DoctorVerificationPayload<ExtArgs> | null
+    doctorProfile: Prisma.$DoctorProfilePayload<ExtArgs> | null
+    facilityProfile: Prisma.$UserFacilityProfilePayload<ExtArgs> | null
+    ownedFacilities: Prisma.$FacilityPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1289,7 +1546,9 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   accounts<T extends Prisma.User$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  doctorVerification<T extends Prisma.User$doctorVerificationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$doctorVerificationArgs<ExtArgs>>): Prisma.Prisma__DoctorVerificationClient<runtime.Types.Result.GetResult<Prisma.$DoctorVerificationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  doctorProfile<T extends Prisma.User$doctorProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$doctorProfileArgs<ExtArgs>>): Prisma.Prisma__DoctorProfileClient<runtime.Types.Result.GetResult<Prisma.$DoctorProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  facilityProfile<T extends Prisma.User$facilityProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$facilityProfileArgs<ExtArgs>>): Prisma.Prisma__UserFacilityProfileClient<runtime.Types.Result.GetResult<Prisma.$UserFacilityProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  ownedFacilities<T extends Prisma.User$ownedFacilitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownedFacilitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FacilityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1766,22 +2025,65 @@ export type User$accountsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 
 /**
- * User.doctorVerification
+ * User.doctorProfile
  */
-export type User$doctorVerificationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$doctorProfileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the DoctorVerification
+   * Select specific fields to fetch from the DoctorProfile
    */
-  select?: Prisma.DoctorVerificationSelect<ExtArgs> | null
+  select?: Prisma.DoctorProfileSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the DoctorVerification
+   * Omit specific fields from the DoctorProfile
    */
-  omit?: Prisma.DoctorVerificationOmit<ExtArgs> | null
+  omit?: Prisma.DoctorProfileOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.DoctorVerificationInclude<ExtArgs> | null
-  where?: Prisma.DoctorVerificationWhereInput
+  include?: Prisma.DoctorProfileInclude<ExtArgs> | null
+  where?: Prisma.DoctorProfileWhereInput
+}
+
+/**
+ * User.facilityProfile
+ */
+export type User$facilityProfileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserFacilityProfile
+   */
+  select?: Prisma.UserFacilityProfileSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserFacilityProfile
+   */
+  omit?: Prisma.UserFacilityProfileOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserFacilityProfileInclude<ExtArgs> | null
+  where?: Prisma.UserFacilityProfileWhereInput
+}
+
+/**
+ * User.ownedFacilities
+ */
+export type User$ownedFacilitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Facility
+   */
+  select?: Prisma.FacilitySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Facility
+   */
+  omit?: Prisma.FacilityOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FacilityInclude<ExtArgs> | null
+  where?: Prisma.FacilityWhereInput
+  orderBy?: Prisma.FacilityOrderByWithRelationInput | Prisma.FacilityOrderByWithRelationInput[]
+  cursor?: Prisma.FacilityWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FacilityScalarFieldEnum | Prisma.FacilityScalarFieldEnum[]
 }
 
 /**

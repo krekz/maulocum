@@ -8,8 +8,15 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
-export type * from './models/DoctorVerification'
+export type * from './models/DoctorProfile'
 export type * from './models/Session'
 export type * from './models/Account'
 export type * from './models/Verification'
+export type * from './models/Facility'
+export type * from './models/Job'
+export type * from './models/JobApplication'
+export type * from './models/Review'
+export type * from './models/ContactInfo'
+export type * from './models/UserFacilityProfile'
+export type * from './models/FacilityVerification'
 export type * from './commonInputTypes'

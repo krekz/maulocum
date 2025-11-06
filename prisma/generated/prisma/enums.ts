@@ -25,3 +25,41 @@ export const VerificationStatus = {
 } as const
 
 export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus]
+
+
+export const JobUrgency = {
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW'
+} as const
+
+export type JobUrgency = (typeof JobUrgency)[keyof typeof JobUrgency]
+
+
+export const JobStatus = {
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
+  FILLED: 'FILLED'
+} as const
+
+export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus]
+
+
+export const JobType = {
+  FULL_TIME: 'FULL_TIME',
+  PART_TIME: 'PART_TIME',
+  LOCUM: 'LOCUM',
+  CONTRACT: 'CONTRACT'
+} as const
+
+export type JobType = (typeof JobType)[keyof typeof JobType]
+
+
+export const PayBasis = {
+  HOURLY: 'HOURLY',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY'
+} as const
+
+export type PayBasis = (typeof PayBasis)[keyof typeof PayBasis]

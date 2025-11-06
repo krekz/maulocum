@@ -1,16 +1,15 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import z from "zod";
-import { jobService } from "../services/job.service";
+import { z } from "zod";
+import { jobApplicationService, jobService } from "../services/jobs.service";
 import {
+	createJobApplicationSchema,
 	createJobSchema,
-	type Job,
 	jobQuerySchema,
-	type PaginatedResponse,
-	type SuccessResponse,
+	// updateJobApplicationSchema,
 	updateJobSchema,
-} from "../types/job.types";
+} from "../types/jobs.types";
 
 // Initialize jobs route
 const app = new Hono()
@@ -20,27 +19,13 @@ const app = new Hono()
 	 * Get all jobs with pagination and filtering
 	 */
 	.get("/", zValidator("query", jobQuerySchema), async (c) => {
-		const query = c.req.valid("query");
-
 		try {
+			const query = c.req.valid("query");
 			const result = await jobService.getJobs(query);
-
-			const response: PaginatedResponse<Job> = {
-				success: true,
-				...result,
-			};
-
-			return c.json(response);
+			return c.json(result);
 		} catch (error) {
-			if (error instanceof Error) {
-				if (
-					error.message.includes("exceeds total pages") ||
-					error.message === "No jobs found"
-				) {
-					throw new HTTPException(404, { message: error.message });
-				}
-			}
-			throw error;
+			console.error(error);
+			throw new HTTPException(500, { message: "Failed to fetch jobs" });
 		}
 	})
 
@@ -48,78 +33,53 @@ const app = new Hono()
 	 * GET /api/v2/jobs/:id
 	 * Get a single job by ID
 	 */
-	.get(
-		"/:id",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
-		async (c) => {
+	.get("/:id", zValidator("param", z.object({ id: z.string() })), async (c) => {
+		try {
 			const { id } = c.req.valid("param");
-
 			const job = await jobService.getJobById(id);
-
 			if (!job) {
 				throw new HTTPException(404, { message: "Job not found" });
 			}
-
-			const response: SuccessResponse<Job> = {
-				success: true,
-				data: job,
-			};
-
-			return c.json(response);
-		},
-	)
+			return c.json(job);
+		} catch (error) {
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to fetch job" });
+		}
+	})
 
 	/**
 	 * POST /api/v2/jobs
 	 * Create a new job
 	 */
 	.post("/", zValidator("json", createJobSchema), async (c) => {
-		const data = c.req.valid("json");
-
-		const job = await jobService.createJob(data);
-
-		const response: SuccessResponse<Job> = {
-			success: true,
-			data: job,
-		};
-
-		return c.json(response, 201);
+		try {
+			const data = c.req.valid("json");
+			const job = await jobService.createJob(data);
+			return c.json(job, 201);
+		} catch (error) {
+			console.error(error);
+			throw new HTTPException(500, { message: "Failed to create job" });
+		}
 	})
 
 	/**
-	 * PUT /api/v2/jobs/:id
+	 * PATCH /api/v2/jobs/:id
 	 * Update an existing job
 	 */
-	.put(
+	.patch(
 		"/:id",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
+		zValidator("param", z.object({ id: z.string() })),
 		zValidator("json", updateJobSchema),
 		async (c) => {
-			const { id } = c.req.valid("param");
-			const data = c.req.valid("json");
-
-			const job = await jobService.updateJob(id, data);
-
-			if (!job) {
-				throw new HTTPException(404, { message: "Job not found" });
+			try {
+				const { id } = c.req.valid("param");
+				const data = c.req.valid("json");
+				const job = await jobService.updateJob(id, data);
+				return c.json(job);
+			} catch (error) {
+				console.error(error);
+				throw new HTTPException(500, { message: "Failed to update job" });
 			}
-
-			const response: SuccessResponse<Job> = {
-				success: true,
-				data: job,
-			};
-
-			return c.json(response);
 		},
 	)
 
@@ -129,146 +89,88 @@ const app = new Hono()
 	 */
 	.delete(
 		"/:id",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
+		zValidator("param", z.object({ id: z.string() })),
 		async (c) => {
-			const { id } = c.req.valid("param");
-
-			const deleted = await jobService.deleteJob(id);
-
-			if (!deleted) {
-				throw new HTTPException(404, { message: "Job not found" });
+			try {
+				const { id } = c.req.valid("param");
+				await jobService.deleteJob(id);
+				return c.json({ message: "Job deleted successfully" });
+			} catch (error) {
+				console.error(error);
+				throw new HTTPException(500, { message: "Failed to delete job" });
 			}
-
-			return c.json({
-				success: true,
-				message: "Job deleted successfully",
-			});
 		},
 	)
 
 	/**
-	 * POST /api/v2/jobs/:id/publish
-	 * Publish a job (change status from draft to published)
+	 * GET /api/v2/jobs/facility/:facilityId
+	 * Get jobs by facility
 	 */
-	.post(
-		"/:id/publish",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
+	.get(
+		"/facility/:facilityId",
+		zValidator("param", z.object({ facilityId: z.string() })),
 		async (c) => {
-			const { id } = c.req.valid("param");
-
-			const job = await jobService.publishJob(id);
-
-			if (!job) {
-				throw new HTTPException(404, { message: "Job not found" });
+			try {
+				const { facilityId } = c.req.valid("param");
+				const jobs = await jobService.getJobsByFacility(facilityId);
+				return c.json(jobs);
+			} catch (error) {
+				console.error(error);
+				throw new HTTPException(500, { message: "Failed to fetch jobs" });
 			}
-
-			const response: SuccessResponse<Job> = {
-				success: true,
-				data: job,
-			};
-
-			return c.json(response);
 		},
 	)
 
 	/**
-	 * POST /api/v2/jobs/:id/close
-	 * Close a job (change status to closed)
-	 */
-	.post(
-		"/:id/close",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
-		async (c) => {
-			const { id } = c.req.valid("param");
-
-			const job = await jobService.closeJob(id);
-
-			if (!job) {
-				throw new HTTPException(404, { message: "Job not found" });
-			}
-
-			const response: SuccessResponse<Job> = {
-				success: true,
-				data: job,
-			};
-
-			return c.json(response);
-		},
-	)
-
-	/**
-	 * POST /api/v2/jobs/:id/apply
+	 * POST /api/v2/jobs/:jobId/apply
 	 * Apply to a job
 	 */
 	.post(
-		"/:id/apply",
-		zValidator(
-			"param",
-			z.object({
-				id: z.string(),
-			}),
-		),
-		zValidator(
-			"json",
-			z.object({
-				applicantName: z.string().min(2, "Name must be at least 2 characters"),
-				applicantEmail: z.string().email("Invalid email address"),
-				applicantPhone: z.string().optional(),
-				coverLetter: z.string().optional(),
-				resumeUrl: z.string().url("Invalid resume URL").optional(),
-			}),
-		),
+		"/:jobId/apply",
+		zValidator("param", z.object({ jobId: z.string() })),
+		zValidator("json", createJobApplicationSchema),
 		async (c) => {
-			const { id } = c.req.valid("param");
-			const applicationData = c.req.valid("json");
-
-			// Check if job exists
-			const job = await jobService.getJobById(id);
-
-			if (!job) {
-				throw new HTTPException(404, { message: "Job not found" });
-			}
-
-			// Check if job is published
-			if (job.status !== "published") {
-				throw new HTTPException(400, {
-					message: "This job is not accepting applications",
+			try {
+				const { jobId } = c.req.valid("param");
+				const data = c.req.valid("json");
+				const application = await jobApplicationService.createApplication({
+					...data,
+					jobId,
+				});
+				return c.json(application, 201);
+			} catch (error) {
+				if (
+					error instanceof Error &&
+					error.message.includes("already applied")
+				) {
+					throw new HTTPException(400, { message: error.message });
+				}
+				throw new HTTPException(500, {
+					message: "Failed to submit application",
 				});
 			}
+		},
+	)
 
-			// TODO: Save application to database
-			// For now, just return success response
-			const application = {
-				id: crypto.randomUUID(),
-				jobId: id,
-				...applicationData,
-				appliedAt: new Date().toISOString(),
-				status: "pending",
-			};
-
-			return c.json(
-				{
-					success: true,
-					data: application,
-					message: "Application submitted successfully",
-				},
-				201,
-			);
+	/**
+	 * GET /api/v2/jobs/:jobId/applications
+	 * Get applications for a job
+	 */
+	.get(
+		"/:jobId/applications",
+		zValidator("param", z.object({ jobId: z.string() })),
+		async (c) => {
+			try {
+				const { jobId } = c.req.valid("param");
+				const applications =
+					await jobApplicationService.getApplicationsByJob(jobId);
+				return c.json(applications);
+			} catch (error) {
+				console.error(error);
+				throw new HTTPException(500, {
+					message: "Failed to fetch applications",
+				});
+			}
 		},
 	);
 

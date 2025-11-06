@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -26,33 +25,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	type DoctorVerificationFormData,
+	doctorVerificationFormSchema,
+} from "@/lib/schemas/doctor-verification.schema";
 import { useEditVerificationStore } from "@/lib/store/useEditVerificationStore";
 
-const formSchema = z
-	.object({
-		fullName: z.string().min(1, "Full name is required"),
-		phoneNumber: z.string().min(10, "Valid phone number is required"),
-		location: z.string().min(1, "Location is required"),
-		specialty: z.string().optional(),
-		yearsOfExperience: z
-			.number()
-			.min(0, "Years of experience must be positive"),
-		provisionalId: z.string().optional(),
-		fullId: z.string().optional(),
-		apcNumber: z.string().min(1, "APC number is required"),
-	})
-	.refine((data) => data.provisionalId || data.fullId, {
-		message: "Either Provisional ID or Full ID must be provided",
-		path: ["provisionalId"],
-	});
-
-type FormData = z.infer<typeof formSchema>;
+type FormData = DoctorVerificationFormData;
 
 interface EditVerificationFormProps {
 	verification: {
 		id: string;
 		fullName: string;
-		phoneNumber: string;
 		location: string;
 		specialty?: string | null;
 		yearsOfExperience: number;
@@ -61,12 +45,10 @@ interface EditVerificationFormProps {
 		apcNumber: string;
 		apcDocumentUrl: string;
 	};
-	userEmail: string;
 }
 
 export function EditVerificationForm({
 	verification,
-	userEmail,
 }: EditVerificationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -74,10 +56,9 @@ export function EditVerificationForm({
 	const router = useRouter();
 
 	const form = useForm<FormData>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(doctorVerificationFormSchema),
 		defaultValues: {
 			fullName: verification.fullName,
-			phoneNumber: verification.phoneNumber,
 			location: verification.location,
 			specialty: verification.specialty || "",
 			yearsOfExperience: verification.yearsOfExperience,
@@ -156,61 +137,36 @@ export function EditVerificationForm({
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-					{/* Full Name */}
-					<FormField
-						control={form.control}
-						name="fullName"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Full Name *</FormLabel>
-								<FormControl>
-									<Input placeholder="Dr. John Doe" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					{/* Email (Read-only) */}
-					<div>
-						<FormLabel>Email</FormLabel>
-						<Input value={userEmail} disabled className="bg-muted" />
-						<p className="text-xs text-muted-foreground mt-1">
-							Email cannot be changed
-						</p>
-					</div>
-
-					{/* Phone Number */}
-					<FormField
-						control={form.control}
-						name="phoneNumber"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Phone Number *</FormLabel>
-								<FormControl>
-									<Input placeholder="+60 12-345 6789" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					{/* Location */}
-					<FormField
-						control={form.control}
-						name="location"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Location *</FormLabel>
-								<FormControl>
-									<Input placeholder="Kuala Lumpur, Malaysia" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{/* Full Name */}
+						<FormField
+							control={form.control}
+							name="fullName"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Full Name *</FormLabel>
+									<FormControl>
+										<Input placeholder="Dr. John Doe" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						{/* Location */}
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Location *</FormLabel>
+									<FormControl>
+										<Input placeholder="Kuala Lumpur, Malaysia" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 						{/* Specialty */}
 						<FormField
 							control={form.control}
@@ -265,9 +221,7 @@ export function EditVerificationForm({
 								</FormItem>
 							)}
 						/>
-					</div>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{/* Provisional ID */}
 						<FormField
 							control={form.control}
@@ -303,24 +257,24 @@ export function EditVerificationForm({
 								</FormItem>
 							)}
 						/>
-					</div>
 
-					{/* APC Number */}
-					<FormField
-						control={form.control}
-						name="apcNumber"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>
-									Annual Practicing Certificate (APC) Number *
-								</FormLabel>
-								<FormControl>
-									<Input placeholder="APC-12345-2024" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+						{/* APC Number */}
+						<FormField
+							control={form.control}
+							name="apcNumber"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										Annual Practicing Certificate (APC) Number *
+									</FormLabel>
+									<FormControl>
+										<Input placeholder="APC-12345-2024" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
 
 					{/* APC Document Upload/Replace */}
 					<div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 import ReactQueryProvider from "@/lib/query-provider";
 
 const poppins = Plus_Jakarta_Sans({
@@ -22,6 +23,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={`${poppins.variable} font-sans antialiased`}>
+				<Toaster />
 				<ReactQueryProvider>{children}</ReactQueryProvider>
 			</body>
 		</html>

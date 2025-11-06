@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
@@ -27,34 +25,21 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useUploadAPC, useVerifyDoctor } from "@/lib/hooks/useVerification";
+import {
+	type DoctorVerificationCreateData,
+	doctorVerificationCreateSchema,
+} from "@/lib/schemas/doctor-verification.schema";
 
-const formSchema = z
-	.object({
-		fullName: z.string().min(1, "Full name is required"),
-		phoneNumber: z.string().min(10, "Valid phone number is required"),
-		location: z.string().min(1, "Location is required"),
-		specialty: z.string().optional(),
-		yearsOfExperience: z
-			.number()
-			.min(0, "Years of experience must be positive"),
-		provisionalId: z.string().optional(),
-		fullId: z.string().optional(),
-		apcNumber: z.string().min(1, "APC number is required"),
-		apcDocument: z.instanceof(File).optional(),
-	})
-	.refine((data) => data.provisionalId || data.fullId, {
-		message: "Either Provisional ID or Full ID must be provided",
-		path: ["provisionalId"],
-	});
-
-type FormData = z.infer<typeof formSchema>;
+type FormData = DoctorVerificationCreateData;
 
 interface DoctorVerificationFormProps {
 	userId: string;
+	phoneNumber: string;
 }
 
-export function DoctorVerificationForm({
+export function DoctorDetailsForm({
 	userId,
+	phoneNumber,
 }: DoctorVerificationFormProps) {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const router = useRouter();
@@ -63,10 +48,9 @@ export function DoctorVerificationForm({
 	const verifyMutation = useVerifyDoctor();
 
 	const form = useForm<FormData>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(doctorVerificationCreateSchema),
 		defaultValues: {
 			fullName: "",
-			phoneNumber: "",
 			location: "",
 			specialty: "",
 			yearsOfExperience: 0,
@@ -103,7 +87,6 @@ export function DoctorVerificationForm({
 			await verifyMutation.mutateAsync({
 				userId,
 				fullName: data.fullName,
-				phoneNumber: data.phoneNumber,
 				location: data.location,
 				specialty: data.specialty || undefined,
 				yearsOfExperience: data.yearsOfExperience,
@@ -127,63 +110,49 @@ export function DoctorVerificationForm({
 	}
 
 	return (
-		<Card className="p-6">
-			<div className="mb-6">
-				<h2 className="text-2xl font-bold">Complete Your Doctor Profile</h2>
-				<p className="text-muted-foreground mt-2">
-					Please provide the following information to verify your credentials
-					and access full features.
+		<div className="space-y-6">
+			<div>
+				<h3 className="text-xl font-semibold">Professional Information</h3>
+				<p className="text-sm text-muted-foreground mt-1">
+					Provide your professional details and upload your APC document
 				</p>
 			</div>
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-					{/* Full Name */}
-					<FormField
-						control={form.control}
-						name="fullName"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Full Name *</FormLabel>
-								<FormControl>
-									<Input placeholder="Dr. John Doe" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					{/* Phone Number */}
-					<FormField
-						control={form.control}
-						name="phoneNumber"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Phone Number *</FormLabel>
-								<FormControl>
-									<Input placeholder="+60 12-345 6789" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					{/* Location */}
-					<FormField
-						control={form.control}
-						name="location"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Location *</FormLabel>
-								<FormControl>
-									<Input placeholder="Kuala Lumpur, Malaysia" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					{/* Phone Number - Hidden but included in form */}
+					<input type="hidden" value={phoneNumber} />
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{/* Full Name */}
+						<FormField
+							control={form.control}
+							name="fullName"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Full Name *</FormLabel>
+									<FormControl>
+										<Input placeholder="Dr. John Doe" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						{/* Location */}
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Location *</FormLabel>
+									<FormControl>
+										<Input placeholder="Kuala Lumpur, Malaysia" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 						{/* Specialty */}
 						<FormField
 							control={form.control}
@@ -238,9 +207,7 @@ export function DoctorVerificationForm({
 								</FormItem>
 							)}
 						/>
-					</div>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{/* Provisional ID */}
 						<FormField
 							control={form.control}
@@ -276,24 +243,24 @@ export function DoctorVerificationForm({
 								</FormItem>
 							)}
 						/>
-					</div>
 
-					{/* APC Number */}
-					<FormField
-						control={form.control}
-						name="apcNumber"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>
-									Annual Practicing Certificate (APC) Number *
-								</FormLabel>
-								<FormControl>
-									<Input placeholder="APC-12345-2024" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+						{/* APC Number */}
+						<FormField
+							control={form.control}
+							name="apcNumber"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										Annual Practicing Certificate (APC) Number *
+									</FormLabel>
+									<FormControl>
+										<Input placeholder="APC-12345-2024" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
 
 					{/* APC Document Upload */}
 					<FormField
@@ -371,6 +338,6 @@ export function DoctorVerificationForm({
 					</div>
 				</form>
 			</Form>
-		</Card>
+		</div>
 	);
 }

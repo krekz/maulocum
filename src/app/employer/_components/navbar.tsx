@@ -130,7 +130,13 @@ const NavbarEmployer = async ({
 				<nav className="hidden justify-between lg:flex">
 					<div className="flex items-center gap-6">
 						<Link href={logo.url} className="flex items-center gap-2">
-							<Image src={logo.src} className="w-8" alt={logo.alt} />
+							<Image
+								width={24}
+								height={24}
+								src={logo.src}
+								className="w-8"
+								alt={logo.alt}
+							/>
 							<span className="text-lg font-semibold text-primary">
 								{logo.title}
 							</span>
@@ -248,7 +254,13 @@ const NavbarEmployer = async ({
 				<div className="block lg:hidden">
 					<div className="flex items-center justify-between">
 						<Link href={logo.url} className="flex items-center gap-2">
-							<Image src={logo.src} className="w-8" alt={logo.alt} />
+							<Image
+								width={24}
+								height={24}
+								src={logo.src}
+								className="w-8"
+								alt={logo.alt}
+							/>
 							<span className="text-lg font-semibold text-primary">
 								{logo.title}
 							</span>
@@ -263,7 +275,13 @@ const NavbarEmployer = async ({
 								<SheetHeader>
 									<SheetTitle>
 										<Link href={logo.url} className="flex items-center gap-2">
-											<Image src={logo.src} className="w-8" alt={logo.alt} />
+											<Image
+												width={24}
+												height={24}
+												src={logo.src}
+												className="w-8"
+												alt={logo.alt}
+											/>
 											<span className="text-lg font-semibold text-primary">
 												{logo.title}
 											</span>

@@ -122,7 +122,13 @@ const Navbar1 = ({
 	const { data: session } = authClient.useSession();
 
 	const handleLogout = async () => {
-		await authClient.signOut();
+		await authClient.signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					window.location.href = "/login";
+				},
+			},
+		});
 	};
 	return (
 		<section className="py-4 sticky top-0 z-50 bg-card">
@@ -187,7 +193,13 @@ const Navbar1 = ({
 				<div className="block lg:hidden">
 					<div className="flex items-center justify-between px-3">
 						<Link href={logo.url} className="flex items-center gap-2">
-							<Image width={24} height={24} src={logo.src} className="w-8" alt={logo.alt} />
+							<Image
+								width={24}
+								height={24}
+								src={logo.src}
+								className="w-8"
+								alt={logo.alt}
+							/>
 							<span className="text-lg font-semibold">{logo.title}</span>
 						</Link>
 						<Sheet>

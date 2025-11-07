@@ -3,16 +3,27 @@ import JobDetails from "@/components/jobs/job-details";
 import JobFilter from "@/components/jobs/job-filter";
 import JobList from "@/components/jobs/job-list";
 import { backendApi } from "@/lib/rpc-client";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 async function JobsPage() {
-	const jobs = await backendApi.api.v2.jobs.$get({
-		query: {
-			page: "1",
-			limit: "10",
+	const headersList = await headers();
+	const cookie = headersList.get("cookie");
+
+	const jobs = await backendApi.api.v2.jobs.$get(
+		{
+			query: {
+				page: "1",
+				limit: "10",
+			},
 		},
-	});
+		{
+			headers: {
+				cookie: cookie || "",
+			},
+		},
+	);
 
 	if (!jobs.ok) {
 		throw new Error("Failed to fetch jobs");

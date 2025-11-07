@@ -21,7 +21,7 @@ const app = new Hono()
 	.get("/", zValidator("query", jobQuerySchema), async (c) => {
 		try {
 			const query = c.req.valid("query");
-			const result = await jobService.getJobs(query);
+			const result = await jobService.getJobs(query, c);
 			return c.json(result);
 		} catch (error) {
 			console.error(error);

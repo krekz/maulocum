@@ -205,7 +205,7 @@ model JobApplication {
   coverLetter     String?
   appliedAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id])
+  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   doctorProfileId String?
 
   @@unique([jobId])
@@ -218,9 +218,9 @@ model Review {
   rating          Int
   comment         String
   createdAt       DateTime       @default(now())
-  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id])
+  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   doctorProfileId String?
-  Facility        Facility?      @relation(fields: [facilityId], references: [id])
+  Facility        Facility?      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   facilityId      String?
 
   @@map("review")

@@ -1,47 +1,137 @@
+import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generateFileKey, uploadToR2 } from "@/lib/r2";
+import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import type {
 	CreateContactInfoInput,
-	CreateFacilityInput,
 	CreateReviewInput,
 	FacilityQuery,
-	UpdateFacilityInput,
+	FacilityRegistrationApiInput,
 } from "../types/facilities.types";
 
 // Facility Service (Single Responsibility Principle)
 export class FacilityService {
-	// Create a new facility
-	async createFacility(data: CreateFacilityInput, headers: Headers) {
-		const session = await auth.api.getSession({
-			headers,
-		});
+	// Create or Register a new facility
+	async createFacility(data: FacilityRegistrationApiInput, c: Context) {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
 
-		if (!session) {
-			throw new HTTPException(401, { message: "Unauthorized" });
+			if (!session) {
+				throw new HTTPException(401, { message: "Unauthorized" });
+			}
+
+			// Check if user already has a facility
+			const existingFacility = await prisma.facility.findFirst({
+				where: { ownerId: session.user.id },
+			});
+
+			if (existingFacility) {
+				throw new HTTPException(400, {
+					message: "User already has a registered facility",
+				});
+			}
+
+			// Validate file sizes
+			const maxSize = 5 * 1024 * 1024; // 5MB
+			if (
+				data.ssmDocument.size > maxSize ||
+				data.clinicLicense.size > maxSize
+			) {
+				throw new HTTPException(400, {
+					message: "File size must be less than 5MB",
+				});
+			}
+
+			// Validate file types
+			const allowedTypes = [
+				"application/pdf",
+				"image/jpeg",
+				"image/png",
+				"image/jpg",
+			];
+			if (
+				!allowedTypes.includes(data.ssmDocument.type) ||
+				!allowedTypes.includes(data.clinicLicense.type)
+			) {
+				throw new HTTPException(400, {
+					message: "Files must be PDF or image (JPEG, PNG)",
+				});
+			}
+
+			// Generate unique file keys
+			const ssmKey = generateFileKey(session.user.id, data.ssmDocument.name);
+			const licenseKey = generateFileKey(
+				session.user.id,
+				data.clinicLicense.name,
+			);
+
+			// Convert Files to Buffers
+			const [ssmArrayBuffer, licenseArrayBuffer] = await Promise.all([
+				data.ssmDocument.arrayBuffer(),
+				data.clinicLicense.arrayBuffer(),
+			]);
+
+			const ssmBuffer = Buffer.from(ssmArrayBuffer);
+			const licenseBuffer = Buffer.from(licenseArrayBuffer);
+
+			// Upload both files to R2 in parallel
+			const [ssmResult, licenseResult] = await Promise.all([
+				uploadToR2(ssmBuffer, ssmKey, data.ssmDocument.type),
+				uploadToR2(licenseBuffer, licenseKey, data.clinicLicense.type),
+			]);
+
+			// Create facility
+			const facility = await prisma.facility.create({
+				data: {
+					name: data.companyName,
+					address: data.address,
+					contactEmail: data.companyEmail,
+					contactPhone: data.companyPhone,
+					ownerId: session.user.id,
+				},
+			});
+
+			// Create facility verification record with uploaded file URLs
+			await prisma.facilityVerification.create({
+				data: {
+					facilityId: facility.id,
+					businessRegistrationNo: "PENDING", // Will be extracted from document
+					businessDocumentUrl: ssmResult.url,
+					licenseDocumentUrl: licenseResult.url,
+					verificationStatus: "PENDING",
+				},
+			});
+
+			return {
+				facility,
+				message:
+					"Facility registration submitted successfully. Verification pending.",
+			};
+		} catch (error) {
+			console.error("Error in facility.service.createFacility:", error);
+			throw new HTTPException(500, {
+				message: "Failed to create facility",
+			});
 		}
+	}
 
-		return prisma.facility.create({
+	async updateFacilityVerificationStatus(
+		facilityId: string,
+		verificationStatus: Prisma.EnumVerificationStatusFilter,
+		rejectionReason?: string,
+	) {
+		return prisma.facilityVerification.update({
+			where: { facilityId },
 			data: {
-				...data,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				ownerId: session.user.id,
-			},
-			include: {
-				owner: {
-					select: {
-						id: true,
-						name: true,
-						email: true,
-					},
-				},
-				_count: {
-					select: {
-						jobs: true,
-						reviews: true,
-					},
-				},
+				verificationStatus:
+					verificationStatus.equals === "APPROVED" ? "APPROVED" : "REJECTED",
+				rejectionReason,
+				reviewedAt:
+					verificationStatus.equals === "APPROVED" ? new Date() : null,
 			},
 		});
 	}
@@ -131,10 +221,17 @@ export class FacilityService {
 	}
 
 	// Update facility
-	async updateFacility(id: string, data: UpdateFacilityInput) {
+	async updateFacility(id: string, data: FacilityRegistrationApiInput) {
 		return prisma.facility.update({
 			where: { id },
-			data,
+			data: {
+				...data,
+				name: data.companyName,
+				address: data.address,
+				contactEmail: data.companyEmail,
+				contactPhone: data.companyPhone,
+				updatedAt: new Date(),
+			},
 		});
 	}
 
@@ -171,6 +268,14 @@ export class FacilityService {
 	async getFacilityContactInfo(facilityId: string) {
 		return prisma.contactInfo.findMany({
 			where: { facilityId },
+		});
+	}
+	async getFacilityByOwnerId(ownerId: string) {
+		return prisma.facility.findFirst({
+			where: { ownerId },
+			include: {
+				facilityVerification: true,
+			},
 		});
 	}
 }

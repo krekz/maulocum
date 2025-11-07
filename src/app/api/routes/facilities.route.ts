@@ -2,12 +2,13 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { facilityService } from "../services/facilities.service";
 import {
 	createContactInfoSchema,
 	createReviewSchema,
 	facilityQuerySchema,
-	facilitySchema,
+	facilityRegistrationApiSchema,
 } from "../types/facilities.types";
 
 const app = new Hono()
@@ -22,7 +23,9 @@ const app = new Hono()
 			return c.json(result);
 		} catch (error) {
 			console.error(error);
-			throw new HTTPException(500, { message: "Failed to fetch facilities" });
+			if (error instanceof HTTPException)
+				return c.json(error.message, error.status);
+			return c.json("Failed to fetch facilities", 500);
 		}
 	})
 
@@ -35,28 +38,60 @@ const app = new Hono()
 			const { id } = c.req.valid("param");
 			const facility = await facilityService.getFacilityById(id);
 			if (!facility) {
-				throw new HTTPException(404, { message: "Facility not found" });
+				return c.json({ facility: null }, 404);
 			}
 			return c.json(facility);
 		} catch (error) {
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to fetch facility" });
+			console.error(error);
+			if (error instanceof HTTPException)
+				return c.json(error.message, error.status);
+			return c.json("Failed to fetch facility", 500);
 		}
 	})
 
 	/**
 	 * POST /api/v2/facilities
-	 * Create a new facility
+	 * Create or Register a new facility with file uploads
 	 */
-	.post("/", zValidator("json", facilitySchema), async (c) => {
+	.post("/", zValidator("form", facilityRegistrationApiSchema), async (c) => {
 		try {
-			const data = c.req.valid("json");
-			const headers = c.req.raw.headers;
-			const facility = await facilityService.createFacility(data, headers);
+			const data = c.req.valid("form");
+			const facility = await facilityService.createFacility(data, c);
 			return c.json(facility, 201);
 		} catch (error) {
-			if (error instanceof HTTPException) return c.json(error, error.status);
-			return c.json({ message: "Failed to create facility" }, 500);
+			console.error(error);
+			if (error instanceof HTTPException)
+				return c.json(error.message, error.status);
+			return c.json("Failed to create facility", 500);
+		}
+	})
+	/**
+	 * GET /api/v2/facility/my-fility
+	 * Get current user's facility
+	 */
+	.get("/my-facility", async (c) => {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+
+			if (!session?.user?.id) {
+				return c.json("Unauthorized", 401);
+			}
+
+			const facility = await facilityService.getFacilityByOwnerId(
+				session.user.id,
+			);
+			if (!facility) {
+				return c.json(null, 200);
+			}
+
+			return c.json(facility, 200);
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException)
+				return c.json(error.message, error.status);
+			return c.json("Failed to fetch facility", 500);
 		}
 	})
 
@@ -67,7 +102,7 @@ const app = new Hono()
 	.patch(
 		"/:id",
 		zValidator("param", z.object({ id: z.string() })),
-		zValidator("json", facilitySchema),
+		zValidator("json", facilityRegistrationApiSchema),
 		async (c) => {
 			try {
 				const { id } = c.req.valid("param");
@@ -76,7 +111,9 @@ const app = new Hono()
 				return c.json(facility);
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to update facility" });
+				if (error instanceof HTTPException)
+					return c.json(error.message, error.status);
+				return c.json("Failed to update facility", 500);
 			}
 		},
 	)
@@ -95,7 +132,9 @@ const app = new Hono()
 				return c.json({ message: "Facility deleted successfully" });
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to delete facility" });
+				if (error instanceof HTTPException)
+					return c.json(error.message, error.status);
+				return c.json("Failed to delete facility", 500);
 			}
 		},
 	)
@@ -119,7 +158,9 @@ const app = new Hono()
 				return c.json(contact, 201);
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to add contact info" });
+				if (error instanceof HTTPException)
+					return c.json(error.message, error.status);
+				return c.json("Failed to add contact info", 500);
 			}
 		},
 	)
@@ -143,7 +184,9 @@ const app = new Hono()
 				return c.json(review, 201);
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to add review" });
+				if (error instanceof HTTPException)
+					return c.json(error.message, error.status);
+				return c.json("Failed to add review", 500);
 			}
 		},
 	);

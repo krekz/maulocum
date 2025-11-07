@@ -4,6 +4,8 @@ import JobFilter from "@/components/jobs/job-filter";
 import JobList from "@/components/jobs/job-list";
 import { backendApi } from "@/lib/rpc-client";
 
+export const dynamic = "force-dynamic";
+
 async function JobsPage() {
 	const jobs = await backendApi.api.v2.jobs.$get({
 		query: {

@@ -22,7 +22,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "/Users/khairulfitri/Documents/GitHub/mau-locum/prisma/generated/prisma",
+      "value": "/Users/luqmanariffin/Documents/GitHub/maulocum-luqman/prisma/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -36,7 +36,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/khairulfitri/Documents/GitHub/mau-locum/prisma/schema.prisma",
+    "sourceFilePath": "/Users/luqmanariffin/Documents/GitHub/maulocum-luqman/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../..",

@@ -40,12 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/generated/prisma
-
-/prisma/prisma
-
-/generated/prisma
-
-/src/generated/prisma
+# Prisma generated artifacts
+/prisma/generated/
+/generated/prisma/
+/src/generated/prisma/
 
 .windsurf/*

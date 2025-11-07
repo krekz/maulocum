@@ -97,17 +97,17 @@ const app = new Hono()
 			}
 
 			// Validate file name (prevent path traversal)
-			const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-			if (sanitizedFileName !== file.name) {
-				return c.json({ error: "Invalid file name" }, 400);
-			}
+			// const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+			// if (sanitizedFileName !== file.name) {
+			// 	return c.json({ error: "Invalid file name" }, 400);
+			// }
 
 			// Convert file to buffer
 			const arrayBuffer = await file.arrayBuffer();
 			const buffer = Buffer.from(arrayBuffer);
 
 			// Generate unique key and upload to R2
-			const fileKey = generateFileKey(userId, sanitizedFileName);
+			const fileKey = generateFileKey(userId, file.name);
 			const result = await uploadToR2(buffer, fileKey, file.type);
 
 			return c.json({ url: result.url, key: result.key }, 200);

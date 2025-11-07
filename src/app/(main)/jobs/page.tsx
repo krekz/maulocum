@@ -1,9 +1,9 @@
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import JobDetails from "@/components/jobs/job-details";
 import JobFilter from "@/components/jobs/job-filter";
 import JobList from "@/components/jobs/job-list";
 import { backendApi } from "@/lib/rpc-client";
-import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { jobListingsData } from "@/lib/constant";
 import { useSession } from "@/lib/hooks/useSession";
+import type { JobResponse } from "@/lib/rpc-client";
 
-function JobList() {
+function JobList({ jobListings }: { jobListings: JobResponse }) {
 	const { session, isPending } = useSession();
 	const handleJobClick = (jobId: string) => {
 		// Update URL with the selected job ID in the query parameters
@@ -32,7 +32,7 @@ function JobList() {
 
 	return (
 		<div className="w-full md:w-2/3 space-y-2">
-			{jobListingsData.map((job) => (
+			{jobListings.jobs.map((job) => (
 				<button
 					onClick={() => handleJobClick(job.id)}
 					key={job.id}
@@ -48,7 +48,7 @@ function JobList() {
 							<div>
 								<h3 className="text-xl font-semibold">
 									{session ? (
-										job.clinicName
+										job.facility.name
 									) : (
 										<span className="blur-sm">Klinik Kesihatan</span>
 									)}
@@ -69,7 +69,7 @@ function JobList() {
 										<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
 										<circle cx="12" cy="10" r="3" />
 									</svg>
-									{job.location}
+									{job.facility.address}
 								</p>
 							</div>
 							<div
@@ -112,7 +112,7 @@ function JobList() {
 						<div className="grid grid-cols-2 gap-3">
 							<div className="bg-accent/50 p-2 rounded">
 								<p className="text-xs text-muted-foreground">Specialist</p>
-								<p className="font-medium">{job.specialist}</p>
+								<p className="font-medium">{job.requiredSpecialists}</p>
 							</div>
 							<div className="bg-accent/50 p-2 rounded">
 								<p className="text-xs text-muted-foreground">Pay Rate</p>
@@ -120,11 +120,11 @@ function JobList() {
 							</div>
 							<div className="bg-accent/50 p-2 rounded">
 								<p className="text-xs text-muted-foreground">Duration</p>
-								<p className="font-medium">{job.duration}</p>
+								<p className="font-medium">{job.startDate}</p>
 							</div>
 							<div className="bg-accent/50 p-2 rounded">
 								<p className="text-xs text-muted-foreground">Date</p>
-								<p className="font-medium">{job.date}</p>
+								<p className="font-medium">{job.endDate}</p>
 							</div>
 						</div>
 					</div>

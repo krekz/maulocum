@@ -11,30 +11,31 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { JobDetail } from "@/lib/constant";
-import { jobDetailsArray } from "@/lib/constant";
 import { useSession } from "@/lib/hooks/useSession";
+import type { JobResponse } from "@/lib/rpc-client";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
 import ApplyJobDialog from "./apply-jobs-dialog";
 
-function JobDetails() {
+function JobDetails({ jobListings }: { jobListings?: JobResponse }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const selectedJobId = searchParams.get("id");
-	const [selectedJob, setSelectedJob] = useState<JobDetail | null>(null);
+	const [selectedJob, setSelectedJob] = useState<JobResponse["jobs"][0] | null>(
+		null,
+	);
 
 	const { session, isPending } = useSession();
 
 	useEffect(() => {
-		if (selectedJobId) {
-			const job = jobDetailsArray.find((j) => j.id === selectedJobId);
-			setSelectedJob(job || null); // If job is undefined, set to null
+		if (selectedJobId && jobListings?.jobs) {
+			const job = jobListings.jobs.find((j) => j.id === selectedJobId);
+			setSelectedJob(job || null);
 		} else {
-			setSelectedJob(null); // Clear selection if no ID
+			setSelectedJob(null);
 		}
-	}, [selectedJobId]);
+	}, [selectedJobId, jobListings?.jobs]);
 
 	if (isPending) {
 		return (
@@ -102,16 +103,12 @@ function JobDetails() {
 				<h4>Locum Details</h4>
 				<div className="flex items-center gap-2">
 					<Tooltip>
-						<TooltipTrigger>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8 cursor-pointer"
-								onClick={() => window.open(`/jobs/${selectedJob.id}`, "_blank")}
-							>
-								<SquareArrowOutUpRight className="h-4 w-4" />
-								<span className="sr-only">Open in new tab</span>
-							</Button>
+						<TooltipTrigger
+							className="h-8 w-8 cursor-pointer"
+							onClick={() => window.open(`/jobs/${selectedJob.id}`, "_blank")}
+						>
+							<SquareArrowOutUpRight className="h-4 w-4" />
+							<span className="sr-only">Open in new tab</span>
 						</TooltipTrigger>
 						<TooltipContent>
 							<p>Open in new tab</p>
@@ -169,33 +166,42 @@ function JobDetails() {
 				{/* Clinic Information at the top */}
 				<div className="mb-4">
 					<h5 className="text-xl font-semibold mb-2">
-						{selectedJob.clinicName}
+						{selectedJob.facility.name}
 					</h5>
 					<div className="flex items-center mb-2">
 						<div className="flex items-center">
 							<span className="text-amber-500">
-								{"★".repeat(Math.floor(selectedJob.rating))}
+								{"★".repeat(
+									Math.floor(
+										selectedJob.facility.reviews
+											.map((review) => review.rating)
+											.reduce((a, b) => a + b, 0) /
+											selectedJob.facility.reviews.length,
+									),
+								)}
 							</span>
-							<span className="text-muted-foreground">
+							{/* <span className="text-muted-foreground">
 								{"★".repeat(5 - Math.floor(selectedJob.rating))}
-							</span>
-							<span className="text-sm ml-1 font-medium">
+							</span> */}
+							{/* <span className="text-sm ml-1 font-medium">
 								{selectedJob.rating}
-							</span>
+							</span> */}
 						</div>
-						<span className="text-xs text-muted-foreground ml-2">
+						{/* <span className="text-xs text-muted-foreground ml-2">
 							({selectedJob.reviewCount} reviews by locums)
-						</span>
+						</span> */}
 					</div>
-					<p className="text-sm text-muted-foreground">{selectedJob.address}</p>
-					<a
+					<p className="text-sm text-muted-foreground">
+						{selectedJob.facility.address}
+					</p>
+					{/* <a
 						href={selectedJob.gmapLink}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="text-xs text-primary hover:underline mt-1 inline-block"
 					>
 						View on Google Maps
-					</a>
+					</a> */}
 				</div>
 
 				{/* Key Information */}
@@ -204,17 +210,15 @@ function JobDetails() {
 						<span className="text-xs uppercase text-muted-foreground">
 							Location
 						</span>
-						<span className="font-medium">
+						{/* <span className="font-medium">
 							{selectedJob.address.split(",")[2]?.trim() || "Location"}
-						</span>
+						</span> */}
 					</div>
 					<div className="flex flex-col">
 						<span className="text-xs uppercase text-muted-foreground">
 							Payment
 						</span>
-						<span className="font-medium">
-							{selectedJob.payment.split(" ")[0]}
-						</span>
+						<span className="font-medium">{selectedJob.payBasis}</span>
 					</div>
 					<div className="flex flex-col">
 						<span className="text-xs uppercase text-muted-foreground">
@@ -231,7 +235,7 @@ function JobDetails() {
 							Dates Needed
 						</h6>
 						<p className="text-blue-900 font-medium">
-							{selectedJob.dateNeeded}
+							{selectedJob.startDate} - {selectedJob.endDate}
 						</p>
 					</div>
 					<div className="bg-purple-50 rounded-lg p-3 flex-1">
@@ -239,27 +243,27 @@ function JobDetails() {
 							Working Hours
 						</h6>
 						<p className="text-purple-900 font-medium">
-							{selectedJob.workingHours}
+							{selectedJob.startTime} - {selectedJob.endTime}
 						</p>
 					</div>
 					<div
 						className={`rounded-lg p-3 flex-1 ${
-							selectedJob.urgency === "Critical"
+							selectedJob.urgency === "HIGH"
 								? "bg-red-50 text-red-900"
-								: selectedJob.urgency === "High"
+								: selectedJob.urgency === "MEDIUM"
 									? "bg-orange-50 text-orange-900"
-									: selectedJob.urgency === "Medium"
-										? "bg-yellow-50 text-yellow-900"
+									: selectedJob.urgency === "LOW"
+										? "bg-green-50 text-green-900"
 										: "bg-green-50 text-green-900"
 						}`}
 					>
 						<h6
 							className={`text-xs uppercase font-semibold mb-1 ${
-								selectedJob.urgency === "Critical"
+								selectedJob.urgency === "HIGH"
 									? "text-red-700"
-									: selectedJob.urgency === "High"
+									: selectedJob.urgency === "MEDIUM"
 										? "text-orange-700"
-										: selectedJob.urgency === "Medium"
+										: selectedJob.urgency === "LOW"
 											? "text-yellow-700"
 											: "text-green-700"
 							}`}
@@ -282,7 +286,7 @@ function JobDetails() {
 				</div>
 
 				{/* Rest of the details */}
-				<div className="mb-4">
+				{/* <div className="mb-4">
 					<h5 className="font-medium mb-2">Job Responsibilities</h5>
 					<ul className="text-sm space-y-1.5">
 						{selectedJob.responsibilities.map((responsibility, index) => (
@@ -292,31 +296,31 @@ function JobDetails() {
 							</li>
 						))}
 					</ul>
-				</div>
+				</div> */}
 
-				<div className="mb-4">
+				{/* <div className="mb-4">
 					<h5 className="font-medium mb-2">Facilities & Support</h5>
 					<p className="text-sm text-muted-foreground">
 						{selectedJob.facilities}
 					</p>
-				</div>
+				</div> */}
 
-				<div className="mb-4">
+				{/* <div className="mb-4">
 					<h5 className="font-medium mb-2">Payment Details</h5>
 					<p className="text-sm text-muted-foreground">{selectedJob.payment}</p>
-				</div>
+				</div> */}
 
 				<div>
 					<h5 className="font-medium mb-2">Contact Person</h5>
-					{selectedJob.contacts.map((contact, index) => (
+					{selectedJob.facility.contactInfo?.map((contact, index) => (
 						<div key={index} className="mb-2">
 							<p className="text-sm font-medium">
 								{contact.name}{" "}
 								<span className="font-normal text-muted-foreground">
-									({contact.role})
+									({contact.position})
 								</span>
 							</p>
-							<p className="text-sm text-muted-foreground">{contact.phone}</p>
+							<p className="text-sm text-muted-foreground">{contact.contact}</p>
 						</div>
 					))}
 				</div>
@@ -325,7 +329,7 @@ function JobDetails() {
 			<div className="sticky bottom-0 bg-card pt-4 pb-2 border-t mt-6">
 				<ApplyJobDialog
 					trigger={<Button>Apply Now</Button>}
-					jobTitle={selectedJob.clinicName}
+					jobTitle={selectedJob.title}
 				/>
 			</div>
 		</div>

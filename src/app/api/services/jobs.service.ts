@@ -86,6 +86,8 @@ export class JobService {
 							id: true,
 							name: true,
 							address: true,
+							reviews: true,
+							contactInfo: true,
 						},
 					},
 					_count: {

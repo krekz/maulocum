@@ -9,7 +9,42 @@ export default function EmployerDashboardLayout({
 }) {
 	return (
 		<SidebarProvider>
-			<AppSidebar variant="inset" />
+			<AppSidebar
+				data={{
+					basic: [
+						{
+							title: "Dashboard",
+							url: "/employer/dashboard",
+						},
+						{
+							title: "Users",
+							url: "/employer/dashboard/users",
+						},
+					],
+					collapsible: [
+						{
+							title: "Doctors",
+							url: "/employer/dashboard/doctors",
+							items: [
+								{
+									title: "Verifications",
+									url: "/employer/dashboard/doctors/verifications",
+								},
+							],
+						},
+						{
+							title: "Facilities",
+							url: "/employer/dashboard/facilities",
+							items: [
+								{
+									title: "Verifications",
+									url: "/employer/dashboard/facilities/verifications",
+								},
+							],
+						},
+					],
+				}}
+			/>
 			<SidebarInset>
 				<SiteHeader />
 				<div className="flex flex-1 flex-col">

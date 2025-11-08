@@ -32,6 +32,10 @@ export default function AdminDashboardLayout({
 						title: "Verifications",
 						url: "/admin/dashboard/doctors/verifications",
 					},
+					{
+						title: "All",
+						url: "/admin/dashboard/doctors",
+					},
 				],
 			},
 			{
@@ -41,6 +45,10 @@ export default function AdminDashboardLayout({
 					{
 						title: "Verifications",
 						url: "/admin/dashboard/facilities/verifications",
+					},
+					{
+						title: "All",
+						url: "/admin/dashboard/facilities",
 					},
 				],
 			},

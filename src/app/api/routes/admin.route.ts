@@ -283,6 +283,35 @@ const app = new Hono()
 			return c.json({ error: "Failed to fetch verified doctors" }, 500);
 		}
 	})
+	// Get all pending facility verifications
+	.get("/facilities/verifications", async (c) => {
+		try {
+			const verifications = await prisma.facilityVerification.findMany({
+				where: { verificationStatus: "PENDING" },
+				include: {
+					facility: {
+						include: {
+							owner: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									phoneNumber: true,
+									createdAt: true,
+								},
+							},
+						},
+					},
+				},
+				orderBy: { createdAt: "desc" },
+			});
+
+			return c.json({ verifications, count: verifications.length });
+		} catch (error) {
+			console.error("Error fetching pending facility verifications:", error);
+			return c.json({ error: "Failed to fetch facility verifications" }, 500);
+		}
+	})
 	// Get all users with role filter
 	.get("/users", async (c) => {
 		const role = c.req.query("role"); // USER, DOCTOR, ADMIN

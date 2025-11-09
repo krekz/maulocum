@@ -52,7 +52,7 @@ class AdminService {
 				prisma.facility.count({ where }),
 			]);
 
-			if (!facilities || !total) {
+			if (!facilities.length || !total) {
 				throw new HTTPException(404, {
 					message: "Facilities not found",
 				});
@@ -95,7 +95,7 @@ class AdminService {
 				orderBy: { createdAt: "desc" },
 			});
 
-			if (!verifications) {
+			if (!verifications.length) {
 				throw new HTTPException(404, {
 					message: "Verifications not found",
 				});
@@ -148,7 +148,7 @@ class AdminService {
 				prisma.doctorProfile.count({ where }),
 			]);
 
-			if (!verifications || !total) {
+			if (!verifications.length || !total) {
 				throw new HTTPException(404, {
 					message: "Verifications not found",
 				});
@@ -250,7 +250,7 @@ class AdminService {
 				prisma.user.count({ where }),
 			]);
 
-			if (!doctors || !total) {
+			if (!doctors.length || !total) {
 				throw new HTTPException(404, {
 					message: "Doctors not found",
 				});
@@ -368,7 +368,7 @@ class AdminService {
 				orderBy: { createdAt: "desc" },
 			});
 
-			if (!verifications) {
+			if (!verifications.length) {
 				throw new HTTPException(404, {
 					message: "Facilities not found",
 				});
@@ -496,7 +496,7 @@ class AdminService {
 				prisma.user.count({ where }),
 			]);
 
-			if (!users || !total) {
+			if (!users.length || !total) {
 				throw new HTTPException(404, {
 					message: "Users not found",
 				});

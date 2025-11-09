@@ -214,6 +214,12 @@ export class FacilityService {
 				prisma.facility.count({ where }),
 			]);
 
+			if (!facilities.length || !total) {
+				throw new HTTPException(404, {
+					message: "Facilities not found",
+				});
+			}
+
 			return {
 				facilities,
 				pagination: {

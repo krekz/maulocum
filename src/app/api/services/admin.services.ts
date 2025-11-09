@@ -283,9 +283,8 @@ class AdminService {
 		rejectionReason?: string;
 	}) {
 		try {
-			const verification = await this.getDoctorsVerificationById(doctorId);
-
-			if (verification.verificationStatus !== "PENDING") {
+			const doctorProfile = await this.getDoctorsVerificationById(doctorId);
+			if (doctorProfile.verificationStatus !== "PENDING") {
 				throw new HTTPException(400, {
 					message: "Verification has already been processed",
 				});
@@ -294,7 +293,7 @@ class AdminService {
 			if (action === "APPROVE") {
 				// Update verification status to APPROVED
 				await prisma.doctorProfile.update({
-					where: { id: verification.id },
+					where: { id: doctorProfile.id },
 					data: {
 						verificationStatus: "APPROVED",
 						reviewAt: new Date(),
@@ -303,7 +302,7 @@ class AdminService {
 
 				// Update user role to DOCTOR
 				await prisma.user.update({
-					where: { id: verification.userId },
+					where: { id: doctorProfile.userId },
 					data: { role: "DOCTOR" },
 				});
 			} else {
@@ -316,7 +315,7 @@ class AdminService {
 
 				// Update verification status to REJECTED
 				await prisma.doctorProfile.update({
-					where: { id: verification.userId },
+					where: { id: doctorProfile.id },
 					data: {
 						verificationStatus: "REJECTED",
 						rejectionReason,
@@ -325,8 +324,8 @@ class AdminService {
 				});
 
 				return {
-					verification: {
-						...verification,
+					doctorProfile: {
+						...doctorProfile,
 						status: "REJECTED",
 						rejectionReason,
 					},

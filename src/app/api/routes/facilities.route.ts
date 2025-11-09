@@ -20,12 +20,80 @@ const app = new Hono()
 		try {
 			const query = c.req.valid("query");
 			const result = await facilityService.getFacilities(query);
-			return c.json(result);
+			return c.json({
+				success: true,
+				message: "Facilities fetched successfully",
+				data: result,
+			});
 		} catch (error) {
 			console.error(error);
 			if (error instanceof HTTPException)
-				return c.json(error.message, error.status);
-			return c.json("Failed to fetch facilities", 500);
+				return c.json(
+					{
+						success: false,
+						message: error.message,
+						data: null,
+					},
+					error.status,
+				);
+			return c.json(
+				{
+					success: false,
+					message: "Failed to fetch facilities",
+					data: null,
+				},
+				500,
+			);
+		}
+	})
+
+	/**
+	 * GET /api/v2/facility/my-fility
+	 * Get current user's facility
+	 */
+	.get("/my-facility", async (c) => {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+
+			if (!session?.user?.id) {
+				throw new HTTPException(401, {
+					message: "Unauthorized",
+				});
+			}
+
+			const facility = await facilityService.getUserFacilityProfile(
+				session.user.id,
+			);
+
+			return c.json(
+				{
+					success: true,
+					message: "Facility fetched successfully",
+					data: facility,
+				},
+				200,
+			);
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException)
+				return c.json(
+					{
+						success: false,
+						message: error.message,
+						data: null,
+					},
+					error.status,
+				);
+			return c.json(
+				{
+					success: false,
+					message: "Failed to fetch facility",
+					data: null,
+				},
+				500,
+			);
 		}
 	})
 
@@ -38,14 +106,39 @@ const app = new Hono()
 			const { id } = c.req.valid("param");
 			const facility = await facilityService.getFacilityById(id);
 			if (!facility) {
-				return c.json({ facility: null }, 404);
+				return c.json(
+					{
+						success: false,
+						message: "Facility not found",
+						data: null,
+					},
+					404,
+				);
 			}
-			return c.json(facility);
+			return c.json({
+				success: true,
+				message: "Facility fetched successfully",
+				data: facility,
+			});
 		} catch (error) {
 			console.error(error);
 			if (error instanceof HTTPException)
-				return c.json(error.message, error.status);
-			return c.json("Failed to fetch facility", 500);
+				return c.json(
+					{
+						success: false,
+						message: error.message,
+						data: null,
+					},
+					error.status,
+				);
+			return c.json(
+				{
+					success: false,
+					message: "Failed to fetch facility",
+					data: null,
+				},
+				500,
+			);
 		}
 	})
 
@@ -57,41 +150,33 @@ const app = new Hono()
 		try {
 			const data = c.req.valid("form");
 			const facility = await facilityService.createFacility(data, c);
-			return c.json(facility, 201);
-		} catch (error) {
-			console.error(error);
-			if (error instanceof HTTPException)
-				return c.json(error.message, error.status);
-			return c.json("Failed to create facility", 500);
-		}
-	})
-	/**
-	 * GET /api/v2/facility/my-fility
-	 * Get current user's facility
-	 */
-	.get("/my-facility", async (c) => {
-		try {
-			const session = await auth.api.getSession({
-				headers: c.req.raw.headers,
-			});
-
-			if (!session?.user?.id) {
-				return c.json("Unauthorized", 401);
-			}
-
-			const facility = await facilityService.getFacilityByOwnerId(
-				session.user.id,
+			return c.json(
+				{
+					success: true,
+					message: "Facility created successfully",
+					data: facility,
+				},
+				201,
 			);
-			if (!facility) {
-				return c.json(null, 200);
-			}
-
-			return c.json(facility, 200);
 		} catch (error) {
 			console.error(error);
 			if (error instanceof HTTPException)
-				return c.json(error.message, error.status);
-			return c.json("Failed to fetch facility", 500);
+				return c.json(
+					{
+						success: false,
+						message: error.message,
+						data: null,
+					},
+					error.status,
+				);
+			return c.json(
+				{
+					success: false,
+					message: "Failed to create facility",
+					data: null,
+				},
+				500,
+			);
 		}
 	})
 
@@ -108,12 +193,30 @@ const app = new Hono()
 				const { id } = c.req.valid("param");
 				const data = c.req.valid("json");
 				const facility = await facilityService.updateFacility(id, data);
-				return c.json(facility);
+				return c.json({
+					success: true,
+					message: "Facility updated successfully",
+					data: facility,
+				});
 			} catch (error) {
 				console.error(error);
 				if (error instanceof HTTPException)
-					return c.json(error.message, error.status);
-				return c.json("Failed to update facility", 500);
+					return c.json(
+						{
+							success: false,
+							message: error.message,
+							data: null,
+						},
+						error.status,
+					);
+				return c.json(
+					{
+						success: false,
+						message: "Failed to update facility",
+						data: null,
+					},
+					500,
+				);
 			}
 		},
 	)
@@ -129,12 +232,30 @@ const app = new Hono()
 			try {
 				const { id } = c.req.valid("param");
 				await facilityService.deleteFacility(id);
-				return c.json({ message: "Facility deleted successfully" });
+				return c.json({
+					success: true,
+					message: "Facility deleted successfully",
+					data: null,
+				});
 			} catch (error) {
 				console.error(error);
 				if (error instanceof HTTPException)
-					return c.json(error.message, error.status);
-				return c.json("Failed to delete facility", 500);
+					return c.json(
+						{
+							success: false,
+							message: error.message,
+							data: null,
+						},
+						error.status,
+					);
+				return c.json(
+					{
+						success: false,
+						message: "Failed to delete facility",
+						data: null,
+					},
+					500,
+				);
 			}
 		},
 	)
@@ -155,12 +276,33 @@ const app = new Hono()
 					...data,
 					facilityId: id,
 				});
-				return c.json(contact, 201);
+				return c.json(
+					{
+						success: true,
+						message: "Contact info added successfully",
+						data: contact,
+					},
+					201,
+				);
 			} catch (error) {
 				console.error(error);
 				if (error instanceof HTTPException)
-					return c.json(error.message, error.status);
-				return c.json("Failed to add contact info", 500);
+					return c.json(
+						{
+							success: false,
+							message: error.message,
+							data: null,
+						},
+						error.status,
+					);
+				return c.json(
+					{
+						success: false,
+						message: "Failed to add contact info",
+						data: null,
+					},
+					500,
+				);
 			}
 		},
 	)
@@ -181,12 +323,33 @@ const app = new Hono()
 					...data,
 					facilityId: id,
 				});
-				return c.json(review, 201);
+				return c.json(
+					{
+						success: true,
+						message: "Review added successfully",
+						data: review,
+					},
+					201,
+				);
 			} catch (error) {
 				console.error(error);
 				if (error instanceof HTTPException)
-					return c.json(error.message, error.status);
-				return c.json("Failed to add review", 500);
+					return c.json(
+						{
+							success: false,
+							message: error.message,
+							data: null,
+						},
+						error.status,
+					);
+				return c.json(
+					{
+						success: false,
+						message: "Failed to add review",
+						data: null,
+					},
+					500,
+				);
 			}
 		},
 	);

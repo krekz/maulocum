@@ -68,7 +68,7 @@ export function FacilityRegistrationForm() {
 
 			if (!response.ok) {
 				const error = await response.json();
-				throw new Error(error || "Failed to register facility");
+				throw new Error(error.message || "Failed to register facility");
 			}
 
 			return response.json();

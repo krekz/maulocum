@@ -36,13 +36,13 @@ export class FacilityService {
 			}
 
 			// Validate file sizes
-			const maxSize = 5 * 1024 * 1024; // 5MB
+			const maxSize = 1 * 1024 * 1024; // 1MB
 			if (
 				data.ssmDocument.size > maxSize ||
 				data.clinicLicense.size > maxSize
 			) {
 				throw new HTTPException(400, {
-					message: "File size must be less than 5MB",
+					message: "File size must be less than 1MB",
 				});
 			}
 
@@ -113,9 +113,10 @@ export class FacilityService {
 			};
 		} catch (error) {
 			console.error("Error in facility.service.createFacility:", error);
-			throw new HTTPException(500, {
-				message: "Failed to create facility",
-			});
+			if (error instanceof HTTPException) {
+				throw error;
+			}
+			throw error;
 		}
 	}
 
@@ -137,6 +138,7 @@ export class FacilityService {
 	}
 
 	// Get facility by ID
+	// Use for general facility information
 	async getFacilityById(id: string) {
 		return prisma.facility.findUnique({
 			where: { id },
@@ -172,7 +174,7 @@ export class FacilityService {
 	async getFacilities(query: FacilityQuery) {
 		const { ownerId, search, page, limit } = query;
 
-		const where: any = {};
+		const where: Prisma.FacilityWhereInput = {};
 
 		if (ownerId) where.ownerId = ownerId;
 		if (search) {
@@ -270,13 +272,46 @@ export class FacilityService {
 			where: { facilityId },
 		});
 	}
-	async getFacilityByOwnerId(ownerId: string) {
-		return prisma.facility.findFirst({
-			where: { ownerId },
-			include: {
-				facilityVerification: true,
-			},
-		});
+
+	// Get facility by owner ID for employer profile
+	async getUserFacilityProfile(userId: string) {
+		try {
+			const facility = await prisma.userFacilityProfile.findUnique({
+				where: {
+					userId,
+				},
+				include: {
+					user: true,
+					facility: {
+						include: {
+							facilityVerification: true,
+							contactInfo: true,
+						},
+					},
+				},
+			});
+
+			if (!facility) {
+				throw new HTTPException(404, {
+					message: "Facility not found",
+				});
+			}
+
+			if (
+				facility.facility.facilityVerification?.verificationStatus !==
+				"APPROVED"
+			) {
+				throw new HTTPException(403, {
+					message: "Facility not approved",
+				});
+			}
+
+			return facility;
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw error;
+		}
 	}
 }
 

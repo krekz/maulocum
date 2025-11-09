@@ -3,9 +3,18 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
+import { adminService } from "../services/admin.services";
+import { facilityQuerySchema } from "../types/facilities.types";
 
 // Schema for verification approval/rejection
 const verificationActionSchema = z.object({
+	verificationId: z.string(),
+	action: z.enum(["APPROVE", "REJECT"]),
+	rejectionReason: z.string().optional(),
+});
+
+// Schema for facility verification action
+const facilityVerificationActionSchema = z.object({
 	verificationId: z.string(),
 	action: z.enum(["APPROVE", "REJECT"]),
 	rejectionReason: z.string().optional(),
@@ -283,6 +292,28 @@ const app = new Hono()
 			return c.json({ error: "Failed to fetch verified doctors" }, 500);
 		}
 	})
+	// Get all facilities (admin only)
+	.get("/facilities", zValidator("query", facilityQuerySchema), async (c) => {
+		try {
+			const query = c.req.valid("query");
+			const result = await adminService.getAdminFacilities(query);
+			return c.json({
+				success: true,
+				message: "Facilities fetched successfully",
+				data: result,
+			});
+		} catch (error) {
+			console.error("Error fetching facilities:", error);
+			return c.json(
+				{
+					success: false,
+					message: "Failed to fetch facilities",
+					data: null,
+				},
+				500,
+			);
+		}
+	})
 	// Get all pending facility verifications
 	.get("/facilities/verifications", async (c) => {
 		try {
@@ -365,6 +396,86 @@ const app = new Hono()
 			} catch (error) {
 				console.error("Error updating user role:", error);
 				return c.json({ error: "Failed to update user role" }, 500);
+			}
+		},
+	)
+	// Approve or reject facility verification
+	.post(
+		"/facilities/verifications/action",
+		zValidator("json", facilityVerificationActionSchema),
+		async (c) => {
+			const { verificationId, action, rejectionReason } = c.req.valid("json");
+
+			try {
+				// Validate rejection reason if action is REJECT
+				if (action === "REJECT" && !rejectionReason) {
+					return c.json(
+						{ error: "Rejection reason is required when rejecting" },
+						400,
+					);
+				}
+
+				// Find the verification
+				const verification = await prisma.facilityVerification.findUnique({
+					where: { id: verificationId },
+					include: {
+						facility: {
+							include: {
+								owner: true,
+							},
+						},
+					},
+				});
+
+				if (!verification) {
+					return c.json({ error: "Verification not found" }, 404);
+				}
+
+				if (verification.verificationStatus !== "PENDING") {
+					return c.json(
+						{
+							error: `Verification already ${verification.verificationStatus.toLowerCase()}`,
+						},
+						400,
+					);
+				}
+
+				// Update verification status
+
+				const updatedVerification = await prisma.facility.update({
+					where: { id: verification.facilityId },
+					data: {
+						facilityVerification: {
+							update: {
+								verificationStatus:
+									action === "APPROVE" ? "APPROVED" : "REJECTED",
+								rejectionReason: action === "REJECT" ? rejectionReason : null,
+								reviewedAt: new Date(),
+								updatedAt: new Date(),
+							},
+						},
+						userFacilityProfiles: {
+							create: {
+								role: "OWNER",
+								userId: verification.facility.ownerId,
+								isActive: true,
+								updatedAt: new Date(),
+								createdAt: new Date(),
+							},
+						},
+					},
+				});
+
+				return c.json({
+					verification: updatedVerification,
+					message: `Facility verification ${action === "APPROVE" ? "approved" : "rejected"} successfully`,
+				});
+			} catch (error) {
+				console.error("Error processing facility verification:", error);
+				return c.json(
+					{ error: "Failed to process facility verification" },
+					500,
+				);
 			}
 		},
 	);

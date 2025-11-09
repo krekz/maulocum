@@ -2,8 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ExternalLink, FileText } from "lucide-react";
+import { Check, ExternalLink, FileText, X } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +16,15 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -21,11 +32,20 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { useFacilityVerificationAction } from "@/lib/hooks/useAdminFacilities";
 import { client } from "@/lib/rpc-client";
 
 export default function FacilitiesVerificationsPage() {
+	const [selectedVerification, setSelectedVerification] = useState<
+		string | null
+	>(null);
+	const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+	const [rejectionReason, setRejectionReason] = useState("");
+
+	const verificationAction = useFacilityVerificationAction();
 	const { data, isLoading, error } = useQuery({
-		queryKey: ["facilities", "verifications"],
+		queryKey: ["admin", "facilities", "verifications"],
 		queryFn: async () => {
 			const response =
 				await client.api.v2.admin.facilities.verifications.$get();
@@ -35,6 +55,52 @@ export default function FacilitiesVerificationsPage() {
 			return response.json();
 		},
 	});
+
+	const handleApprove = async (verificationId: string) => {
+		try {
+			await verificationAction.mutateAsync({
+				verificationId,
+				action: "APPROVE",
+			});
+			toast.success("Facility verification approved successfully");
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to approve verification",
+			);
+		}
+	};
+
+	const handleReject = async () => {
+		if (!selectedVerification || !rejectionReason.trim()) {
+			toast.error("Please provide a rejection reason");
+			return;
+		}
+
+		try {
+			await verificationAction.mutateAsync({
+				verificationId: selectedVerification,
+				action: "REJECT",
+				rejectionReason: rejectionReason.trim(),
+			});
+			toast.success("Facility verification rejected");
+			setRejectDialogOpen(false);
+			setRejectionReason("");
+			setSelectedVerification(null);
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to reject verification",
+			);
+		}
+	};
+
+	const openRejectDialog = (verificationId: string) => {
+		setSelectedVerification(verificationId);
+		setRejectDialogOpen(true);
+	};
 
 	if (isLoading) {
 		return (
@@ -164,9 +230,26 @@ export default function FacilitiesVerificationsPage() {
 												</Badge>
 											</TableCell>
 											<TableCell className="text-right">
-												<Button size="sm" variant="default">
-													Review
-												</Button>
+												<div className="flex items-center justify-end gap-2">
+													<Button
+														size="sm"
+														variant="default"
+														onClick={() => handleApprove(verification.id)}
+														disabled={verificationAction.isPending}
+													>
+														<Check className="h-4 w-4 mr-1" />
+														Approve
+													</Button>
+													<Button
+														size="sm"
+														variant="destructive"
+														onClick={() => openRejectDialog(verification.id)}
+														disabled={verificationAction.isPending}
+													>
+														<X className="h-4 w-4 mr-1" />
+														Reject
+													</Button>
+												</div>
 											</TableCell>
 										</TableRow>
 									))}
@@ -176,6 +259,48 @@ export default function FacilitiesVerificationsPage() {
 					)}
 				</CardContent>
 			</Card>
+
+			<Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Reject Facility Verification</DialogTitle>
+						<DialogDescription>
+							Please provide a reason for rejecting this facility verification
+							request.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4 py-4">
+						<div className="space-y-2">
+							<Label htmlFor="reason">Rejection Reason</Label>
+							<Textarea
+								id="reason"
+								placeholder="Enter the reason for rejection..."
+								value={rejectionReason}
+								onChange={(e) => setRejectionReason(e.target.value)}
+								rows={4}
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setRejectDialogOpen(false);
+								setRejectionReason("");
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleReject}
+							disabled={!rejectionReason.trim() || verificationAction.isPending}
+						>
+							{verificationAction.isPending ? "Rejecting..." : "Reject"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

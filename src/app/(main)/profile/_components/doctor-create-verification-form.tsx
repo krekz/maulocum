@@ -24,7 +24,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useUploadAPC, useVerifyDoctor } from "@/lib/hooks/useVerification";
+import {
+	useUploadAPC,
+	useVerifyDoctor,
+} from "@/lib/hooks/useDoctorSubmitVerification";
 import {
 	type DoctorVerificationCreateData,
 	doctorVerificationCreateSchema,

@@ -6,16 +6,103 @@ import {
 	MapPin,
 	Phone,
 	Shield,
-	User,
+	XCircle,
 } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { backendApi } from "@/lib/rpc-client";
 
-function EmployerProfilePage() {
+async function EmployerProfilePage() {
+	const headersList = await headers();
+	const cookie = headersList.get("cookie");
+	const res = await backendApi.api.v2.facilities["my-facility"].$get(
+		undefined,
+		{
+			headers: {
+				cookie: cookie || "",
+			},
+		},
+	);
+
+	if (!res.ok) {
+		switch (res.status) {
+			case 401:
+			case 403:
+			case 404:
+				return notFound();
+			default:
+				return notFound();
+		}
+	}
+	const data = await res.json();
+
+	const getVerificationBadge = () => {
+		switch (data?.data?.facility.facilityVerification?.verificationStatus) {
+			case "PENDING":
+				return (
+					<Badge
+						variant="secondary"
+						className="flex items-center gap-1 bg-yellow-100 text-yellow-800"
+					>
+						<Clock className="h-3 w-3" /> Pending
+					</Badge>
+				);
+			case "REJECTED":
+				return (
+					<Badge variant="destructive" className="flex items-center gap-1">
+						<XCircle className="h-3 w-3" /> Rejected
+					</Badge>
+				);
+			default:
+				return null;
+		}
+	};
+
 	return (
 		<div className="container mx-auto py-10">
 			<h1 className="text-3xl font-bold mb-6">Clinic Profile</h1>
+
+			{/* Verification Status Alert */}
+			{data.success &&
+				data.data?.facility.facilityVerification &&
+				data.data.facility.facilityVerification.verificationStatus ===
+					"REJECTED" && (
+					<Alert variant="destructive" className="mb-6">
+						<XCircle className="h-4 w-4" />
+						<AlertTitle>Verification Rejected</AlertTitle>
+						<AlertDescription>
+							Your facility verification was rejected.{" "}
+							{data.data.facility.facilityVerification?.rejectionReason && (
+								<>
+									<br />
+									<strong>Reason:</strong>{" "}
+									{data.data.facility.facilityVerification?.rejectionReason}
+								</>
+							)}
+						</AlertDescription>
+					</Alert>
+				)}
+
+			{data.success &&
+				data.data?.facility.facilityVerification &&
+				data.data.facility.facilityVerification.verificationStatus ===
+					"PENDING" && (
+					<Alert className="mb-6 border-yellow-200 bg-yellow-50">
+						<Clock className="h-4 w-4 text-yellow-600" />
+						<AlertTitle className="text-yellow-800">
+							Verification Pending
+						</AlertTitle>
+						<AlertDescription className="text-yellow-700">
+							Your facility verification is currently under review. We'll notify
+							you once it's processed.
+						</AlertDescription>
+					</Alert>
+				)}
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="col-span-1 md:sticky md:top-20 self-start">
@@ -26,31 +113,35 @@ function EmployerProfilePage() {
 								<AvatarImage src="https://source.unsplash.com/random/400x400/?portrait,professional" />
 								<AvatarFallback>AF</AvatarFallback>
 							</Avatar>
-							<h2 className="text-xl font-semibold">Luqman Ariffin</h2>
+							<h2 className="text-xl font-semibold">{data.data?.user.name}</h2>
 							<div className="flex items-center gap-2 my-2">
 								<Badge variant="secondary" className="flex items-center gap-1">
-									<Shield className="h-3 w-3" /> Super Admin
+									<Shield className="h-3 w-3" /> {data.data?.role}
 								</Badge>
 							</div>
 							<p className="text-gray-500 mb-2">Clinic Owner</p>
 
 							<div className="w-full mt-2 mb-4 p-3 bg-blue-50 rounded-md text-center">
 								<p className="text-sm text-gray-500">Managing</p>
-								<p className="font-medium text-blue-800">Klinik One Medic</p>
+								<p className="font-medium text-blue-800">
+									{data.data?.facility.name}
+								</p>
 								<div className="flex justify-center mt-1">
-									<div className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs flex items-center">
-										<span className="mr-1">✓</span> Verified
-									</div>
+									{getVerificationBadge()}
 								</div>
 							</div>
 
 							<div className="w-full space-y-3">
-								<Button className="w-full">
-									<Edit className="mr-2 h-4 w-4" /> Edit Profile
-								</Button>
-								<Button variant="outline" className="w-full justify-center">
-									<User className="mr-2 h-4 w-4" /> User Settings
-								</Button>
+								<Link
+									href="/employer/dashboard"
+									className={buttonVariants({
+										variant: "default",
+										className: "w-full",
+									})}
+								>
+									<Edit className="mr-2 h-4 w-4" />
+									Employer Dashboard
+								</Link>
 							</div>
 						</div>
 					</div>
@@ -64,39 +155,39 @@ function EmployerProfilePage() {
 								<MapPin className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
 								<div>
 									<p className="text-sm text-gray-500 mb-1">Location</p>
-									<p className="font-medium">
-										Block D-12-3, Subang Square, Jalan SS15/4, 47500 Subang
-										Jaya, Selangor
-									</p>
+									<p className="font-medium">{data.data?.facility.address}</p>
 								</div>
 							</div>
 							<div className="flex items-start">
 								<Phone className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
 								<div>
 									<p className="text-sm text-gray-500 mb-1">Phone</p>
-									<p className="font-medium">+60 3-5612 3456</p>
+									<p className="font-medium">
+										+60 {data.data?.facility.contactPhone}
+									</p>
 								</div>
 							</div>
 							<div className="flex items-start">
 								<Mail className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
 								<div>
 									<p className="text-sm text-gray-500 mb-1">Email</p>
-									<p className="font-medium">klinik@onemedic.com</p>
+									<p className="font-medium">
+										{data.data?.facility.contactEmail}
+									</p>
 								</div>
 							</div>
 							<div className="flex items-start">
 								<Globe className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
 								<div>
 									<p className="text-sm text-gray-500 mb-1">Website</p>
-									<p className="font-medium">www.klinikonemedic.com</p>
+									<p className="font-medium">INSERT WEBSITE</p>
 								</div>
 							</div>
 							<div className="flex items-start">
 								<Clock className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
 								<div>
 									<p className="text-sm text-gray-500 mb-1">Operating Hours</p>
-									<p className="font-medium">Mon-Fri: 8:00 AM - 10:00 PM</p>
-									<p className="font-medium">Sat-Sun: 9:00 AM - 6:00 PM</p>
+									<p className="font-medium">INSERT OPERATING HOURS</p>
 								</div>
 							</div>
 						</div>
@@ -143,39 +234,12 @@ function EmployerProfilePage() {
 							))}
 						</div>
 					</div>
-
 					<div className="bg-white rounded-lg shadow p-6">
-						<h3 className="text-xl font-semibold mb-4">Key Staff</h3>
+						<h3 className="text-xl font-semibold mb-4">Contact Information</h3>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							{[
-								{
-									name: "Dr. Ahmad Razak",
-									role: "Medical Director",
-									image:
-										"https://source.unsplash.com/random/100x100/?doctor,male",
-								},
-								{
-									name: "Dr. Sarah Tan",
-									role: "General Practitioner",
-									image:
-										"https://source.unsplash.com/random/100x100/?doctor,female",
-								},
-								{
-									name: "Ms. Lily Wong",
-									role: "Clinic Manager",
-									image:
-										"https://source.unsplash.com/random/100x100/?manager,female",
-								},
-								{
-									name: "Mr. Jason Lee",
-									role: "Administrative Officer",
-									image:
-										"https://source.unsplash.com/random/100x100/?office,male",
-								},
-							].map((staff, index) => (
+							{data.data?.facility.contactInfo.map((staff, index) => (
 								<div key={index} className="flex items-center">
 									<Avatar className="h-12 w-12 mr-4">
-										<AvatarImage src={staff.image} />
 										<AvatarFallback>
 											{staff.name
 												.split(" ")
@@ -185,7 +249,8 @@ function EmployerProfilePage() {
 									</Avatar>
 									<div>
 										<p className="font-medium">{staff.name}</p>
-										<p className="text-sm text-gray-500">{staff.role}</p>
+										<p className="text-sm text-gray-500">{staff.position}</p>
+										<p className="text-sm text-gray-500">+60 {staff.contact}</p>
 									</div>
 								</div>
 							))}

@@ -24,23 +24,35 @@ async function JobsPage() {
 			},
 		},
 	);
-
-	if (!jobs.ok) {
-		throw new Error("Failed to fetch jobs");
-	}
-
 	const data = await jobs.json();
 
 	return (
 		<div>
 			<JobFilter />
 			<div className="px-3 lg:container flex flex-col md:flex-row w-full gap-2 py-5">
-				{/* Left Side (Scrollable Job Listings) */}
-				<Suspense fallback={<div>Loading...</div>}>
-					<JobList jobListings={data} />
-					<JobDetails jobListings={data} />
-				</Suspense>
-				{/* Right Side (Sticky Details Pane) */}
+				{(() => {
+					switch (jobs.status) {
+						case 200:
+							return (
+								<Suspense fallback={<div>Loading...</div>}>
+									<JobList jobListings={data} />
+									<JobDetails jobListings={data} />
+								</Suspense>
+							);
+						case 404:
+							return (
+								<div className="w-full text-center py-10">
+									<p className="text-red-500">Jobs not found</p>
+								</div>
+							);
+						default:
+							return (
+								<div className="w-full text-center py-10">
+									<p className="text-red-500">Failed to fetch jobs</p>
+								</div>
+							);
+					}
+				})()}
 			</div>
 		</div>
 	);

@@ -48,9 +48,10 @@ export default function FacilitiesVerificationsPage() {
 		queryKey: ["admin", "facilities", "verifications"],
 		queryFn: async () => {
 			const response =
-				await client.api.v2.admin.facilities.verifications.$get();
+				await client.api.v2.admin.facilities.verifications.pendings.$get();
 			if (!response.ok) {
-				throw new Error("Failed to fetch verifications");
+				const error = await response.json();
+				throw new Error(error.message || "Failed to fetch verifications");
 			}
 			return response.json();
 		},
@@ -138,11 +139,12 @@ export default function FacilitiesVerificationsPage() {
 						Review and verify facility registration requests
 					</CardDescription>
 					<div className="flex items-center gap-2 mt-2">
-						<Badge variant="secondary">{data?.count || 0} Pending</Badge>
+						<Badge variant="secondary">{data?.data?.count || 0} Pending</Badge>
 					</div>
 				</CardHeader>
 				<CardContent>
-					{!data?.verifications || data.verifications.length === 0 ? (
+					{!data?.data?.verifications ||
+					data?.data?.verifications.length === 0 ? (
 						<div className="text-center py-8 text-muted-foreground">
 							No pending verifications
 						</div>
@@ -162,7 +164,7 @@ export default function FacilitiesVerificationsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{data.verifications.map((verification) => (
+									{data?.data?.verifications.map((verification) => (
 										<TableRow key={verification.id}>
 											<TableCell className="font-medium">
 												{verification.facility.name}

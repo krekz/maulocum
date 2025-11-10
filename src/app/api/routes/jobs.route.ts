@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
+import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { jobApplicationService, jobService } from "../services/jobs.service";
 import {
@@ -22,10 +22,22 @@ const app = new Hono()
 		try {
 			const query = c.req.valid("query");
 			const result = await jobService.getJobs(query, c);
-			return c.json(result);
+			return c.json({
+				success: true,
+				message: "Jobs fetched successfully",
+				data: result,
+			});
 		} catch (error) {
 			console.error(error);
-			throw new HTTPException(500, { message: "Failed to fetch jobs" });
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
 		}
 	})
 
@@ -37,13 +49,23 @@ const app = new Hono()
 		try {
 			const { id } = c.req.valid("param");
 			const job = await jobService.getJobById(id);
-			if (!job) {
-				throw new HTTPException(404, { message: "Job not found" });
-			}
-			return c.json(job);
+
+			return c.json({
+				success: true,
+				message: "Job fetched successfully",
+				data: job,
+			});
 		} catch (error) {
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to fetch job" });
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
 		}
 	})
 
@@ -55,10 +77,25 @@ const app = new Hono()
 		try {
 			const data = c.req.valid("json");
 			const job = await jobService.createJob(data);
-			return c.json(job, 201);
+			return c.json(
+				{
+					success: true,
+					message: "Job created successfully",
+					data: job,
+				},
+				201,
+			);
 		} catch (error) {
 			console.error(error);
-			throw new HTTPException(500, { message: "Failed to create job" });
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
 		}
 	})
 
@@ -75,10 +112,22 @@ const app = new Hono()
 				const { id } = c.req.valid("param");
 				const data = c.req.valid("json");
 				const job = await jobService.updateJob(id, data);
-				return c.json(job);
+				return c.json({
+					success: true,
+					message: "Job updated successfully",
+					data: job,
+				});
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to update job" });
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	)
@@ -94,29 +143,22 @@ const app = new Hono()
 			try {
 				const { id } = c.req.valid("param");
 				await jobService.deleteJob(id);
-				return c.json({ message: "Job deleted successfully" });
+				return c.json({
+					success: true,
+					message: "Job deleted successfully",
+					data: null,
+				});
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, { message: "Failed to delete job" });
-			}
-		},
-	)
-
-	/**
-	 * GET /api/v2/jobs/facility/:facilityId
-	 * Get jobs by facility
-	 */
-	.get(
-		"/facility/:facilityId",
-		zValidator("param", z.object({ facilityId: z.string() })),
-		async (c) => {
-			try {
-				const { facilityId } = c.req.valid("param");
-				const jobs = await jobService.getJobsByFacility(facilityId);
-				return c.json(jobs);
-			} catch (error) {
-				console.error(error);
-				throw new HTTPException(500, { message: "Failed to fetch jobs" });
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	)
@@ -137,17 +179,25 @@ const app = new Hono()
 					...data,
 					jobId,
 				});
-				return c.json(application, 201);
+				return c.json(
+					{
+						success: true,
+						message: "Application submitted successfully",
+						data: application,
+					},
+					201,
+				);
 			} catch (error) {
-				if (
-					error instanceof Error &&
-					error.message.includes("already applied")
-				) {
-					throw new HTTPException(400, { message: error.message });
-				}
-				throw new HTTPException(500, {
-					message: "Failed to submit application",
-				});
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	)
@@ -164,12 +214,22 @@ const app = new Hono()
 				const { jobId } = c.req.valid("param");
 				const applications =
 					await jobApplicationService.getApplicationsByJob(jobId);
-				return c.json(applications);
+				return c.json({
+					success: true,
+					message: "Applications fetched successfully",
+					data: applications,
+				});
 			} catch (error) {
 				console.error(error);
-				throw new HTTPException(500, {
-					message: "Failed to fetch applications",
-				});
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	);

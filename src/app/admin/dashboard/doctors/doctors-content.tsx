@@ -11,8 +11,8 @@ export function DoctorsContent() {
 
 	const { data, isLoading, error } = useVerifiedDoctors({ search });
 
-	const doctors = data?.doctors || [];
-	const total = data?.total || 0;
+	const doctors = data?.data?.doctors || [];
+	const total = data?.data?.total || 0;
 
 	return (
 		<div className="px-6 w-full mx-auto">

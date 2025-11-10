@@ -27,22 +27,14 @@ const app = new Hono()
 			});
 		} catch (error) {
 			console.error(error);
-			if (error instanceof HTTPException)
-				return c.json(
-					{
-						success: false,
-						message: error.message,
-						data: null,
-					},
-					error.status,
-				);
+			const httpError = error as HTTPException;
 			return c.json(
 				{
 					success: false,
-					message: "Failed to fetch facilities",
+					message: httpError.message,
 					data: null,
 				},
-				500,
+				httpError.status,
 			);
 		}
 	})
@@ -77,22 +69,14 @@ const app = new Hono()
 			);
 		} catch (error) {
 			console.error(error);
-			if (error instanceof HTTPException)
-				return c.json(
-					{
-						success: false,
-						message: error.message,
-						data: null,
-					},
-					error.status,
-				);
+			const httpError = error as HTTPException;
 			return c.json(
 				{
 					success: false,
-					message: "Failed to fetch facility",
+					message: httpError.message,
 					data: null,
 				},
-				500,
+				httpError.status,
 			);
 		}
 	})
@@ -122,22 +106,14 @@ const app = new Hono()
 			});
 		} catch (error) {
 			console.error(error);
-			if (error instanceof HTTPException)
-				return c.json(
-					{
-						success: false,
-						message: error.message,
-						data: null,
-					},
-					error.status,
-				);
+			const httpError = error as HTTPException;
 			return c.json(
 				{
 					success: false,
-					message: "Failed to fetch facility",
+					message: httpError.message,
 					data: null,
 				},
-				500,
+				httpError.status,
 			);
 		}
 	})
@@ -153,29 +129,21 @@ const app = new Hono()
 			return c.json(
 				{
 					success: true,
-					message: "Facility created successfully",
+					message: "Facility registered successfully",
 					data: facility,
 				},
 				201,
 			);
 		} catch (error) {
 			console.error(error);
-			if (error instanceof HTTPException)
-				return c.json(
-					{
-						success: false,
-						message: error.message,
-						data: null,
-					},
-					error.status,
-				);
+			const httpError = error as HTTPException;
 			return c.json(
 				{
 					success: false,
-					message: "Failed to create facility",
+					message: httpError.message,
 					data: null,
 				},
-				500,
+				httpError.status,
 			);
 		}
 	})
@@ -200,22 +168,14 @@ const app = new Hono()
 				});
 			} catch (error) {
 				console.error(error);
-				if (error instanceof HTTPException)
-					return c.json(
-						{
-							success: false,
-							message: error.message,
-							data: null,
-						},
-						error.status,
-					);
+				const httpError = error as HTTPException;
 				return c.json(
 					{
 						success: false,
-						message: "Failed to update facility",
+						message: httpError.message,
 						data: null,
 					},
-					500,
+					httpError.status,
 				);
 			}
 		},
@@ -239,22 +199,14 @@ const app = new Hono()
 				});
 			} catch (error) {
 				console.error(error);
-				if (error instanceof HTTPException)
-					return c.json(
-						{
-							success: false,
-							message: error.message,
-							data: null,
-						},
-						error.status,
-					);
+				const httpError = error as HTTPException;
 				return c.json(
 					{
 						success: false,
-						message: "Failed to delete facility",
+						message: httpError.message,
 						data: null,
 					},
-					500,
+					httpError.status,
 				);
 			}
 		},
@@ -286,22 +238,14 @@ const app = new Hono()
 				);
 			} catch (error) {
 				console.error(error);
-				if (error instanceof HTTPException)
-					return c.json(
-						{
-							success: false,
-							message: error.message,
-							data: null,
-						},
-						error.status,
-					);
+				const httpError = error as HTTPException;
 				return c.json(
 					{
 						success: false,
-						message: "Failed to add contact info",
+						message: httpError.message,
 						data: null,
 					},
-					500,
+					httpError.status,
 				);
 			}
 		},
@@ -333,22 +277,14 @@ const app = new Hono()
 				);
 			} catch (error) {
 				console.error(error);
-				if (error instanceof HTTPException)
-					return c.json(
-						{
-							success: false,
-							message: error.message,
-							data: null,
-						},
-						error.status,
-					);
+				const httpError = error as HTTPException;
 				return c.json(
 					{
 						success: false,
-						message: "Failed to add review",
+						message: httpError.message,
 						data: null,
 					},
-					500,
+					httpError.status,
 				);
 			}
 		},

@@ -1,8 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import { adminService } from "../services/admin.services";
 import { facilityQuerySchema } from "../types/facilities.types";
 
@@ -22,31 +21,32 @@ const facilityVerificationActionSchema = z.object({
 
 const app = new Hono()
 	// Get all pending doctor verification requests
+	// @route GET /api/v2/admin/doctors/verifications/pending
 	.get("/doctors/verifications/pending", async (c) => {
 		try {
-			const verifications = await prisma.doctorProfile.findMany({
-				where: { verificationStatus: "PENDING" },
-				include: {
-					user: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-							image: true,
-							createdAt: true,
-						},
-					},
-				},
-				orderBy: { createdAt: "desc" },
-			});
+			const verifications = await adminService.getPendingDoctorsVerifications();
 
-			return c.json({ verifications, count: verifications.length });
+			return c.json({
+				success: true,
+				message: "Pending verifications fetched successfully",
+				data: { verifications, count: verifications.length },
+			});
 		} catch (error) {
 			console.error("Error fetching pending verifications:", error);
-			return c.json({ error: "Failed to fetch verifications" }, 500);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
 		}
 	})
+
 	// Get all verifications with filters
+	// @route GET /api/v2/admin/doctors/verifications
 	.get(
 		"/doctors/verifications",
 		zValidator(
@@ -61,79 +61,40 @@ const app = new Hono()
 			const { status, limit, offset } = c.req.valid("query");
 
 			try {
-				const where: Prisma.DoctorProfileWhereInput = status
-					? { verificationStatus: status }
-					: {};
-
-				const [verifications, total] = await Promise.all([
-					prisma.doctorProfile.findMany({
-						where,
-						include: {
-							user: {
-								select: {
-									id: true,
-									name: true,
-									email: true,
-									image: true,
-									role: true,
-									createdAt: true,
-								},
-							},
-						},
-						orderBy: { createdAt: "desc" },
-						take: limit,
-						skip: offset,
-					}),
-					prisma.doctorProfile.count({ where }),
-				]);
-
-				return c.json({
-					verifications,
-					total,
+				const verifications = await adminService.getDoctorVerifications({
+					status,
 					limit,
 					offset,
-					hasMore: offset + limit < total,
+				});
+
+				return c.json({
+					success: true,
+					message: "Verifications fetched successfully",
+					data: {
+						verifications: verifications.verifications,
+						total: verifications.total,
+						limit,
+						offset,
+						totalPages: verifications.totalPages,
+					},
 				});
 			} catch (error) {
 				console.error("Error fetching verifications:", error);
-				return c.json({ error: "Failed to fetch verifications" }, 500);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	)
-	// Get single verification details
-	.get("/doctors/verifications/:verificationId", async (c) => {
-		const verificationId = c.req.param("verificationId");
 
-		try {
-			const verification = await prisma.doctorProfile.findUnique({
-				where: { id: verificationId },
-				include: {
-					user: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-							image: true,
-							role: true,
-							phoneNumber: true,
-							location: true,
-							createdAt: true,
-						},
-					},
-				},
-			});
-
-			if (!verification) {
-				return c.json({ error: "Verification not found" }, 404);
-			}
-
-			return c.json({ verification });
-		} catch (error) {
-			console.error("Error fetching verification:", error);
-			return c.json({ error: "Failed to fetch verification" }, 500);
-		}
-	})
 	// Approve or reject verification
+	// @route POST /api/v2/admin/doctors/verifications/action
 	.post(
 		"/doctors/verifications/action",
 		zValidator("json", verificationActionSchema),
@@ -141,242 +102,250 @@ const app = new Hono()
 			const { verificationId, action, rejectionReason } = c.req.valid("json");
 
 			try {
-				// Get verification
-				const verification = await prisma.doctorProfile.findUnique({
-					where: { id: verificationId },
-					include: { user: true },
+				const result = await adminService.createDoctorVerificationAction({
+					doctorId: verificationId,
+					action,
+					rejectionReason,
 				});
 
-				if (!verification) {
-					return c.json({ error: "Verification not found" }, 404);
-				}
-
-				if (verification.verificationStatus !== "PENDING") {
-					return c.json(
-						{ error: "Verification has already been processed" },
-						400,
-					);
-				}
-
-				if (action === "APPROVE") {
-					// Update verification status to APPROVED
-					await prisma.doctorProfile.update({
-						where: { id: verificationId },
-						data: {
-							verificationStatus: "APPROVED",
-							reviewAt: new Date(),
-						},
-					});
-
-					// Update user role to DOCTOR
-					await prisma.user.update({
-						where: { id: verification.userId },
-						data: { role: "DOCTOR" },
-					});
-
-					return c.json({
-						message: "Verification approved successfully",
-						verification: {
-							...verification,
-							status: "APPROVED",
-						},
-					});
-				} else {
-					// REJECT
-					if (!rejectionReason) {
-						return c.json({ error: "Rejection reason is required" }, 400);
-					}
-
-					// Update verification status to REJECTED
-					await prisma.doctorProfile.update({
-						where: { id: verificationId },
-						data: {
-							verificationStatus: "REJECTED",
-							rejectionReason,
-							reviewAt: new Date(),
-						},
-					});
-
-					return c.json({
-						message: "Verification rejected",
-						verification: {
-							...verification,
-							status: "REJECTED",
-							rejectionReason,
-						},
-					});
-				}
+				return c.json({
+					success: true,
+					message: "Verification processed successfully",
+					data: result?.doctorProfile,
+				});
 			} catch (error) {
 				console.error("Error processing verification:", error);
-				return c.json({ error: "Failed to process verification" }, 500);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
 			}
 		},
 	)
-	// Get verification statistics
-	.get("/doctors/verifications/stats", async (c) => {
-		try {
-			const [pending, approved, rejected, total] = await Promise.all([
-				prisma.doctorProfile.count({
-					where: { verificationStatus: "PENDING" },
-				}),
-				prisma.doctorProfile.count({
-					where: { verificationStatus: "APPROVED" },
-				}),
-				prisma.doctorProfile.count({
-					where: { verificationStatus: "REJECTED" },
-				}),
-				prisma.doctorProfile.count(),
-			]);
 
-			return c.json({
-				stats: {
-					pending,
-					approved,
-					rejected,
-					total,
-				},
-			});
-		} catch (error) {
-			console.error("Error fetching stats:", error);
-			return c.json({ error: "Failed to fetch statistics" }, 500);
-		}
-	})
 	// Get verified doctors only
-	.get("/doctors/verifications/verified", async (c) => {
-		const search = c.req.query("search") || "";
-		const limit = parseInt(c.req.query("limit") || "50", 10);
-		const offset = parseInt(c.req.query("offset") || "0", 10);
+	// @route GET /api/v2/admin/doctors/verifications/verified
+	.get(
+		"/doctors/verifications/verified",
+		zValidator(
+			"query",
+			z.object({
+				search: z.string().optional(),
+				limit: z.coerce.number().int().min(1).max(100).default(10),
+				offset: z.coerce.number().int().min(0).default(0),
+			}),
+		),
+		async (c) => {
+			const { search, limit, offset } = c.req.valid("query");
 
-		try {
-			const where: Prisma.UserWhereInput = {
-				role: "DOCTOR",
-				doctorProfile: {
-					verificationStatus: "APPROVED",
-				},
-			};
+			try {
+				const { doctors, total, totalPages } =
+					await adminService.getVerifiedDoctors({
+						search,
+						limit,
+						offset,
+					});
 
-			if (search) {
-				where.OR = [
-					{ name: { contains: search, mode: "insensitive" } },
-					{ email: { contains: search, mode: "insensitive" } },
+				return c.json({
+					success: true,
+					message: "Verified doctors fetched successfully",
+					data: {
+						doctors,
+						total,
+						limit,
+						offset,
+						totalPages,
+					},
+				});
+			} catch (error) {
+				console.error("Error fetching verified doctors:", error);
+				const httpError = error as HTTPException;
+				return c.json(
 					{
-						doctorProfile: {
-							apcNumber: { contains: search, mode: "insensitive" },
-						},
+						success: false,
+						message: httpError.message,
+						data: null,
 					},
-				];
+					httpError.status,
+				);
 			}
+		},
+	)
 
-			const [doctors, total] = await Promise.all([
-				prisma.user.findMany({
-					where,
-					include: {
-						doctorProfile: true,
-					},
-					orderBy: { createdAt: "desc" },
-					take: limit,
-					skip: offset,
-				}),
-				prisma.user.count({ where }),
-			]);
-
-			return c.json({
-				doctors,
-				total,
-				limit,
-				offset,
-				hasMore: offset + limit < total,
-			});
-		} catch (error) {
-			console.error("Error fetching verified doctors:", error);
-			return c.json({ error: "Failed to fetch verified doctors" }, 500);
-		}
-	})
+	// ============================================
+	// FACILITIES MANAGEMENT ROUTES
+	// ============================================
 	// Get all facilities (admin only)
+	// @route GET /api/v2/admin/facilities
 	.get("/facilities", zValidator("query", facilityQuerySchema), async (c) => {
 		try {
 			const query = c.req.valid("query");
-			const result = await adminService.getAdminFacilities(query);
+			const result = await adminService.getFacilities(query);
 			return c.json({
 				success: true,
 				message: "Facilities fetched successfully",
 				data: result,
 			});
 		} catch (error) {
-			console.error("Error fetching facilities:", error);
+			const httpError = error as HTTPException;
 			return c.json(
 				{
 					success: false,
-					message: "Failed to fetch facilities",
-					data: null,
+					message: httpError.message,
 				},
-				500,
+				httpError.status,
 			);
 		}
 	})
 	// Get all pending facility verifications
-	.get("/facilities/verifications", async (c) => {
+	.get("/facilities/verifications/pendings", async (c) => {
 		try {
-			const verifications = await prisma.facilityVerification.findMany({
-				where: { verificationStatus: "PENDING" },
-				include: {
-					facility: {
-						include: {
-							owner: {
-								select: {
-									id: true,
-									name: true,
-									email: true,
-									phoneNumber: true,
-									createdAt: true,
-								},
-							},
-						},
-					},
-				},
-				orderBy: { createdAt: "desc" },
-			});
-
-			return c.json({ verifications, count: verifications.length });
-		} catch (error) {
-			console.error("Error fetching pending facility verifications:", error);
-			return c.json({ error: "Failed to fetch facility verifications" }, 500);
-		}
-	})
-	// Get all users with role filter
-	.get("/users", async (c) => {
-		const role = c.req.query("role"); // USER, DOCTOR, ADMIN
-		const limit = parseInt(c.req.query("limit") || "50", 10);
-		const offset = parseInt(c.req.query("offset") || "0", 10);
-
-		try {
-			const where = role ? { role: role as any } : {};
-
-			const [users, total] = await Promise.all([
-				prisma.user.findMany({
-					where,
-					include: {
-						doctorProfile: true,
-					},
-					orderBy: { createdAt: "desc" },
-					take: limit,
-					skip: offset,
-				}),
-				prisma.user.count({ where }),
-			]);
+			const { verifications, count } =
+				await adminService.getFacilitiesPendingVerifications();
 
 			return c.json({
-				users,
-				total,
-				limit,
-				offset,
-				hasMore: offset + limit < total,
+				success: true,
+				message: "Facility verifications fetched successfully",
+				data: { verifications, count },
 			});
 		} catch (error) {
-			console.error("Error fetching users:", error);
-			return c.json({ error: "Failed to fetch users" }, 500);
+			console.error("Error fetching pending facility verifications:", error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
 		}
 	})
+
+	// Approve or reject facility verification
+	.post(
+		"/facilities/verifications/action",
+		zValidator("json", facilityVerificationActionSchema),
+		async (c) => {
+			const { verificationId, action, rejectionReason } = c.req.valid("json");
+
+			try {
+				const updatedVerification =
+					await adminService.facilityVerificationAction({
+						verificationId,
+						action,
+						rejectionReason,
+					});
+
+				return c.json({
+					success: true,
+					message: `Facility verification ${action === "APPROVE" ? "approved" : "rejected"} successfully`,
+					data: { verification: updatedVerification },
+				});
+			} catch (error) {
+				console.error("Error processing facility verification:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	// ============================================
+	// USER MANAGEMENT ROUTES
+	// ============================================
+	// Get all users with role filter
+	.get(
+		"/users",
+		zValidator(
+			"query",
+			z.object({
+				role: z.enum(["USER", "DOCTOR", "ADMIN"]).optional(),
+				limit: z.coerce.number().int().min(1).max(100).default(10),
+				offset: z.coerce.number().int().min(0).default(0),
+			}),
+		),
+		async (c) => {
+			const { role, limit, offset } = c.req.valid("query");
+
+			try {
+				const {
+					users,
+					total,
+					limit: limitResult,
+					offset: offsetResult,
+					totalPages,
+				} = await adminService.getUsers({
+					role,
+					limit,
+					offset,
+				});
+
+				return c.json({
+					success: true,
+					message: "Users fetched successfully",
+					data: {
+						users,
+						total,
+						limit: limitResult,
+						offset: offsetResult,
+						totalPages,
+					},
+				});
+			} catch (error) {
+				console.error("Error fetching users:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	// Get single verification details
+	// @route GET /api/v2/admin/doctors/verifications/:verificationId
+	.get("/doctors/verifications/:verificationId", async (c) => {
+		const verificationId = c.req.param("verificationId");
+
+		try {
+			const verification =
+				await adminService.getDoctorsVerificationById(verificationId);
+
+			return c.json({
+				success: true,
+				message: "Verification fetched successfully",
+				data: { verification },
+			});
+		} catch (error) {
+			console.error("Error fetching verification:", error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
 	// Update user role manually (admin override)
 	.patch(
 		"/users/:userId/role",
@@ -386,95 +355,26 @@ const app = new Hono()
 			const { role } = c.req.valid("json");
 
 			try {
-				const user = await prisma.user.update({
-					where: { id: userId },
-					data: { role },
-					include: { doctorProfile: true },
-				});
-
-				return c.json({ user, message: `User role updated to ${role}` });
-			} catch (error) {
-				console.error("Error updating user role:", error);
-				return c.json({ error: "Failed to update user role" }, 500);
-			}
-		},
-	)
-	// Approve or reject facility verification
-	.post(
-		"/facilities/verifications/action",
-		zValidator("json", facilityVerificationActionSchema),
-		async (c) => {
-			const { verificationId, action, rejectionReason } = c.req.valid("json");
-
-			try {
-				// Validate rejection reason if action is REJECT
-				if (action === "REJECT" && !rejectionReason) {
-					return c.json(
-						{ error: "Rejection reason is required when rejecting" },
-						400,
-					);
-				}
-
-				// Find the verification
-				const verification = await prisma.facilityVerification.findUnique({
-					where: { id: verificationId },
-					include: {
-						facility: {
-							include: {
-								owner: true,
-							},
-						},
-					},
-				});
-
-				if (!verification) {
-					return c.json({ error: "Verification not found" }, 404);
-				}
-
-				if (verification.verificationStatus !== "PENDING") {
-					return c.json(
-						{
-							error: `Verification already ${verification.verificationStatus.toLowerCase()}`,
-						},
-						400,
-					);
-				}
-
-				// Update verification status
-
-				const updatedVerification = await prisma.facility.update({
-					where: { id: verification.facilityId },
-					data: {
-						facilityVerification: {
-							update: {
-								verificationStatus:
-									action === "APPROVE" ? "APPROVED" : "REJECTED",
-								rejectionReason: action === "REJECT" ? rejectionReason : null,
-								reviewedAt: new Date(),
-								updatedAt: new Date(),
-							},
-						},
-						userFacilityProfiles: {
-							create: {
-								role: "OWNER",
-								userId: verification.facility.ownerId,
-								isActive: true,
-								updatedAt: new Date(),
-								createdAt: new Date(),
-							},
-						},
-					},
+				const result = await adminService.updateUserRole({
+					userId,
+					role,
 				});
 
 				return c.json({
-					verification: updatedVerification,
-					message: `Facility verification ${action === "APPROVE" ? "approved" : "rejected"} successfully`,
+					success: true,
+					message: `User role updated to ${role}`,
+					data: result.user,
 				});
 			} catch (error) {
-				console.error("Error processing facility verification:", error);
+				console.error("Error updating user role:", error);
+				const httpError = error as HTTPException;
 				return c.json(
-					{ error: "Failed to process facility verification" },
-					500,
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
 				);
 			}
 		},

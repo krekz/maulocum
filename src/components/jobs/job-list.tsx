@@ -4,7 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/hooks/useSession";
 import type { JobResponse } from "@/lib/rpc-client";
 
-function JobList({ jobListings }: { jobListings: JobResponse }) {
+function JobList({ jobListings: data }: { jobListings: JobResponse }) {
+	const jobListings = data.data;
+
 	const { isPending } = useSession();
 	const handleJobClick = (jobId: string) => {
 		// Update URL with the selected job ID in the query parameters
@@ -16,6 +18,12 @@ function JobList({ jobListings }: { jobListings: JobResponse }) {
 	// Get the currently selected job ID from URL search params
 	const searchParams = useSearchParams();
 	const selectedJobId = searchParams.get("id");
+
+	if (!jobListings) {
+		return (
+			<div className="w-full md:w-2/3 space-y-2">No job listings found</div>
+		);
+	}
 
 	if (isPending) {
 		return (

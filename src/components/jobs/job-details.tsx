@@ -18,13 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
 import ApplyJobDialog from "./apply-jobs-dialog";
 
-function JobDetails({ jobListings }: { jobListings?: JobResponse }) {
+function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
+	const jobListings = data?.data;
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const selectedJobId = searchParams.get("id");
-	const [selectedJob, setSelectedJob] = useState<JobResponse["jobs"][0] | null>(
-		null,
-	);
+
+	type SingleJob = NonNullable<typeof jobListings>["jobs"][number];
+
+	const [selectedJob, setSelectedJob] = useState<SingleJob | null>(null);
 
 	const { session, isPending } = useSession();
 

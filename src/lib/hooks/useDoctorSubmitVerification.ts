@@ -1,16 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/rpc-client";
 
-interface UploadFileParams {
-	file: File;
-	userId: string;
-}
-
-interface UploadFileResponse {
-	url: string;
-	key: string;
-}
-
 interface VerifyDoctorParams {
 	userId: string;
 	fullName: string;
@@ -27,20 +17,18 @@ interface VerifyDoctorParams {
  * Hook to upload APC document to R2
  */
 export function useUploadAPC() {
-	return useMutation<UploadFileResponse, Error, UploadFileParams>({
-		mutationFn: async ({ file, userId }) => {
-			const formData = new FormData();
-			formData.append("file", file);
-			formData.append("userId", userId);
-
-			const res = await fetch("/api/v2/profile/upload-apc", {
-				method: "POST",
-				body: formData,
+	return useMutation({
+		mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
+			const res = await client.api.v2.profile["upload-apc"].$post({
+				form: {
+					file: new File([file], file.name, { type: file.type }),
+					userId,
+				},
 			});
 
 			if (!res.ok) {
 				const error = await res.json();
-				throw new Error(error.error || "Failed to upload file");
+				throw new Error(error.message || "Failed to upload file");
 			}
 
 			return res.json();
@@ -62,7 +50,7 @@ export function useVerifyDoctor() {
 
 			if (!res.ok) {
 				const error = await res.json();
-				throw new Error(error.error || "Failed to submit verification");
+				throw new Error(error.message || "Failed to submit verification");
 			}
 
 			return res.json();

@@ -30,7 +30,10 @@ export function useVerifiedDoctors(params?: UseVerifiedDoctorsParams) {
 			);
 
 			if (!res.ok) {
-				throw new Error("Failed to fetch verified doctors");
+				const { message } = await res.json();
+				throw new Error(message, {
+					cause: res.status,
+				});
 			}
 
 			return res.json();
@@ -46,7 +49,10 @@ export function usePendingVerifications() {
 				await client.api.v2.admin.doctors.verifications.pending.$get();
 
 			if (!res.ok) {
-				throw new Error("Failed to fetch pending verifications");
+				const { message } = await res.json();
+				throw new Error(message, {
+					cause: res.status,
+				});
 			}
 
 			return res.json();
@@ -70,8 +76,8 @@ export function useVerificationAction() {
 			});
 
 			if (!res.ok) {
-				const error = (await res.json()) as { error?: string };
-				throw new Error(error.error || "Failed to process verification");
+				const { message } = await res.json();
+				throw new Error(message || "Failed to process verification");
 			}
 
 			return res.json();

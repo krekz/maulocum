@@ -29,18 +29,16 @@ export default async function ProfilePage() {
 		},
 	});
 
-	if (!res.ok) {
-		return <div>Error loading profile</div>;
-	}
+	const data = await res.json();
 
-	const { user } = await res.json();
+	const user = data.data;
 
-	const needsVerification = user.role === "USER" && !user.doctorProfile;
+	const needsVerification = user?.role === "USER" && !user?.doctorProfile;
 	const verificationPending =
-		user.doctorProfile?.verificationStatus === "PENDING";
+		user?.doctorProfile?.verificationStatus === "PENDING";
 	const verificationRejected =
-		user.doctorProfile?.verificationStatus === "REJECTED";
-	const isVerified = user.role === "DOCTOR";
+		user?.doctorProfile?.verificationStatus === "REJECTED";
+	const isVerified = user?.role === "DOCTOR";
 
 	return (
 		<div className="sm:container px-4 mx-auto py-4 sm:py-6 lg:py-8">
@@ -130,13 +128,13 @@ export default async function ProfilePage() {
 					)}
 
 					{/* Profile header card - Only show if verified or has verification */}
-					{(isVerified || user.doctorProfile) && (
+					{(isVerified || user?.doctorProfile) && (
 						<>
 							<Card className="overflow-hidden">
 								<div className="p-4 sm:p-6 pt-0 relative">
 									<Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background absolute ">
 										<AvatarImage
-											src={user.image || "/placeholder-avatar.jpg"}
+											src={user?.image || "/placeholder-avatar.jpg"}
 											alt={user.name}
 										/>
 										<AvatarFallback>

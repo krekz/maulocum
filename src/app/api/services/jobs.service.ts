@@ -1,313 +1,209 @@
 import type { Context } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
-import type {
-	CreateJobApplicationInput,
-	CreateJobInput,
-	JobQuery,
-	UpdateJobApplicationInput,
-	UpdateJobInput,
+import {
+	type CreateJobApplicationInput,
+	type CreateJobInput,
+	fullAccessSelect,
+	type GetJobsPromiseReturn,
+	type JobQuery,
+	limitedAccessSelect,
+	type UpdateJobApplicationInput,
+	type UpdateJobInput,
 } from "../types/jobs.types";
 
 export class JobService {
 	async createJob(data: CreateJobInput) {
-		return prisma.job.create({
-			data,
-			include: {
-				facility: {
-					select: {
-						id: true,
-						name: true,
-						address: true,
+		try {
+			return prisma.job.create({
+				data,
+				include: {
+					facility: {
+						select: {
+							id: true,
+							name: true,
+							address: true,
+						},
 					},
 				},
-			},
-		});
+			});
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to create job" });
+		}
 	}
 
 	// Get job by ID
 	async getJobById(id: string) {
-		return prisma.job.findUnique({
-			where: { id },
-			include: {
-				facility: {
-					select: {
-						id: true,
-						name: true,
-						address: true,
-						contactEmail: true,
-						contactPhone: true,
-					},
-				},
-				applicants: {
-					include: {
-						DoctorProfile: true,
-					},
-				},
-			},
-		});
-	}
-
-	// Get all jobs with filters and pagination
-	async getJobs(
-		query: JobQuery,
-		c: Context,
-	): Promise<
-		| {
-				jobs: Array<{
-					id: string;
-					title: string;
-					description: string | null;
-					location: string;
-					payRate: string;
-					payBasis: string;
-					startTime: string;
-					endTime: string;
-					startDate: Date;
-					endDate: Date;
-					jobType: string;
-					urgency: string;
-					status: string;
-					requiredSpecialists: string[];
-					documentUrls: string[];
-					facilityId: string;
-					createdAt: Date;
-					updatedAt: Date;
+		try {
+			const job = await prisma.job.findUnique({
+				where: { id },
+				include: {
 					facility: {
-						id: string;
-						name: string;
-						address: string;
-						contactEmail: string;
-						contactPhone: string;
-						profileImage: string | null;
-						description: string | null;
-						createdAt: Date;
-						updatedAt: Date;
-						ownerId: string;
-						reviews: Array<{
-							id: string;
-							rating: number;
-							comment: string | null;
-							createdAt: Date;
-						}>;
-						contactInfo: Array<{
-							id: string;
-							name: string;
-							position: string;
-							contact: string;
-						}>;
-					};
-					_count: {
-						applicants: number;
-					};
-				}>;
-				pagination: {
-					total: number;
-					page: number;
-					limit: number;
-					totalPages: number;
-				};
-		  }
-		| {
-				jobs: Array<{
-					id: string;
-					payBasis: string;
-					startDate: Date;
-					endDate: Date;
-				}>;
-				pagination: {
-					total: number;
-					page: number;
-					limit: number;
-					totalPages: number;
-				};
-		  }
-	> {
-		const session = await auth.api.getSession({
-			headers: c.req.raw.headers,
-		});
-
-		const {
-			status,
-			urgency,
-			facilityId,
-			location,
-			payBasis,
-			startDate,
-			endDate,
-			page,
-			limit,
-		} = query;
-
-		const where: Prisma.JobWhereInput = {};
-
-		if (status) where.status = status;
-		if (urgency) where.urgency = urgency;
-		if (facilityId) where.facilityId = facilityId;
-		if (location) where.location = { contains: location, mode: "insensitive" };
-		if (payBasis) where.payBasis = payBasis;
-		if (startDate) where.startDate = { gte: startDate };
-		if (endDate) where.endDate = { lte: endDate };
-
-		const skip = (page - 1) * limit;
-
-		// Check if user has doctor or admin role
-		let hasFullAccess = false;
-		if (session?.user?.id) {
-			const user = await prisma.user.findUnique({
-				where: { id: session.user.id },
-				select: { role: true },
-			});
-			hasFullAccess = user?.role === "DOCTOR" || user?.role === "ADMIN";
-		}
-
-		// Define select fields based on user role
-		const fullAccessSelect = {
-			id: true,
-			title: true,
-			description: true,
-			location: true,
-			payRate: true,
-			payBasis: true,
-			startTime: true,
-			endTime: true,
-			startDate: true,
-			endDate: true,
-			jobType: true,
-			urgency: true,
-			status: true,
-			requiredSpecialists: true,
-			documentUrls: true,
-			facilityId: true,
-			createdAt: true,
-			updatedAt: true,
-			facility: {
-				select: {
-					id: true,
-					name: true,
-					address: true,
-					contactEmail: true,
-					contactPhone: true,
-					profileImage: true,
-					description: true,
-					createdAt: true,
-					updatedAt: true,
-					ownerId: true,
-					reviews: {
-						select: {
-							id: true,
-							rating: true,
-							comment: true,
-							createdAt: true,
-						},
-					},
-					contactInfo: {
 						select: {
 							id: true,
 							name: true,
-							position: true,
-							contact: true,
+							address: true,
+							contactEmail: true,
+							contactPhone: true,
+						},
+					},
+					applicants: {
+						include: {
+							DoctorProfile: true,
 						},
 					},
 				},
-			},
-			_count: {
-				select: {
-					applicants: true,
-				},
-			},
-		} as const;
+			});
 
-		const limitedAccessSelect = {
-			id: true,
-			payBasis: true,
-			startDate: true,
-			endDate: true,
-		} as const;
+			if (!job) {
+				throw new HTTPException(404, { message: "Job not found" });
+			}
+			return job;
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to fetch job" });
+		}
+	}
 
-		if (hasFullAccess) {
-			const [jobs, total] = await Promise.all([
-				prisma.job.findMany({
-					where,
-					skip,
-					take: limit,
-					orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-					select: fullAccessSelect,
-				}),
-				prisma.job.count({ where }),
-			]);
+	// Get all jobs with filters and pagination
+	async getJobs(query: JobQuery, c: Context): GetJobsPromiseReturn {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
 
-			return {
-				jobs,
-				pagination: {
-					total,
-					page,
-					limit,
-					totalPages: Math.ceil(total / limit),
-				},
-			};
-		} else {
-			const [jobs, total] = await Promise.all([
-				prisma.job.findMany({
-					where,
-					skip,
-					take: limit,
-					orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-					select: limitedAccessSelect,
-				}),
-				prisma.job.count({ where }),
-			]);
+			const {
+				status,
+				urgency,
+				facilityId,
+				location,
+				payBasis,
+				startDate,
+				endDate,
+				page,
+				limit,
+			} = query;
 
-			return {
-				jobs,
-				pagination: {
-					total,
-					page,
-					limit,
-					totalPages: Math.ceil(total / limit),
-				},
-			};
+			const where: Prisma.JobWhereInput = {};
+
+			if (status) where.status = status;
+			if (urgency) where.urgency = urgency;
+			if (facilityId) where.facilityId = facilityId;
+			if (location)
+				where.location = { contains: location, mode: "insensitive" };
+			if (payBasis) where.payBasis = payBasis;
+			if (startDate) where.startDate = { gte: startDate };
+			if (endDate) where.endDate = { lte: endDate };
+
+			const skip = (page - 1) * limit;
+
+			// Check if user has doctor or admin role
+			let hasFullAccess = false;
+			if (session?.user?.id) {
+				const user = await prisma.user.findUnique({
+					where: { id: session.user.id },
+					select: { role: true },
+				});
+				hasFullAccess = user?.role === "DOCTOR" || user?.role === "ADMIN";
+			}
+
+			if (hasFullAccess) {
+				const [jobs, total] = await Promise.all([
+					prisma.job.findMany({
+						where,
+						skip,
+						take: limit,
+						orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+						select: fullAccessSelect,
+					}),
+					prisma.job.count({ where }),
+				]);
+
+				if (!jobs.length) {
+					throw new HTTPException(404, { message: "Jobs not found" });
+				}
+
+				return {
+					jobs,
+					pagination: {
+						total,
+						page,
+						limit,
+						totalPages: Math.ceil(total / limit),
+					},
+				};
+			} else {
+				const [jobs, total] = await Promise.all([
+					prisma.job.findMany({
+						where,
+						skip,
+						take: limit,
+						orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+						select: limitedAccessSelect,
+					}),
+					prisma.job.count({ where }),
+				]);
+
+				if (!jobs.length) {
+					throw new HTTPException(404, { message: "Jobs not found" });
+				}
+
+				return {
+					jobs,
+					pagination: {
+						total,
+						page,
+						limit,
+						totalPages: Math.ceil(total / limit),
+					},
+				};
+			}
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to fetch jobs" });
 		}
 	}
 
 	// Update job
 	async updateJob(id: string, data: UpdateJobInput) {
-		return prisma.job.update({
-			where: { id },
-			data,
-			include: {
-				facility: {
-					select: {
-						id: true,
-						name: true,
-						address: true,
+		try {
+			return prisma.job.update({
+				where: { id },
+				data,
+				include: {
+					facility: {
+						select: {
+							id: true,
+							name: true,
+							address: true,
+						},
 					},
 				},
-			},
-		});
+			});
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to update job" });
+		}
 	}
 
 	// Delete job
 	async deleteJob(id: string) {
-		return prisma.job.delete({
-			where: { id },
-		});
-	}
-
-	// Get jobs by facility
-	async getJobsByFacility(facilityId: string) {
-		return prisma.job.findMany({
-			where: { facilityId },
-			orderBy: { createdAt: "desc" },
-			include: {
-				_count: {
-					select: {
-						applicants: true,
-					},
-				},
-			},
-		});
+		try {
+			return prisma.job.delete({
+				where: { id },
+			});
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, { message: "Failed to delete job" });
+		}
 	}
 }
 

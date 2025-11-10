@@ -1,5 +1,141 @@
 import { z } from "zod";
 
+export type GetJobsPromiseReturn = Promise<
+	| {
+			jobs: Array<{
+				id: string;
+				title: string;
+				description: string | null;
+				location: string;
+				payRate: string;
+				payBasis: string;
+				startTime: string;
+				endTime: string;
+				startDate: Date;
+				endDate: Date;
+				jobType: string;
+				urgency: string;
+				status: string;
+				requiredSpecialists: string[];
+				documentUrls: string[];
+				facilityId: string;
+				createdAt: Date;
+				updatedAt: Date;
+				facility: {
+					id: string;
+					name: string;
+					address: string;
+					contactEmail: string;
+					contactPhone: string;
+					profileImage: string | null;
+					description: string | null;
+					createdAt: Date;
+					updatedAt: Date;
+					ownerId: string;
+					reviews: Array<{
+						id: string;
+						rating: number;
+						comment: string | null;
+						createdAt: Date;
+					}>;
+					contactInfo: Array<{
+						id: string;
+						name: string;
+						position: string;
+						contact: string;
+					}>;
+				};
+				_count: {
+					applicants: number;
+				};
+			}>;
+			pagination: {
+				total: number;
+				page: number;
+				limit: number;
+				totalPages: number;
+			};
+	  }
+	| {
+			jobs: Array<{
+				id: string;
+				payBasis: string;
+				startDate: Date;
+				endDate: Date;
+			}>;
+			pagination: {
+				total: number;
+				page: number;
+				limit: number;
+				totalPages: number;
+			};
+	  }
+>;
+// @/api/services/jobs.service.ts
+export const fullAccessSelect = {
+	id: true,
+	title: true,
+	description: true,
+	location: true,
+	payRate: true,
+	payBasis: true,
+	startTime: true,
+	endTime: true,
+	startDate: true,
+	endDate: true,
+	jobType: true,
+	urgency: true,
+	status: true,
+	requiredSpecialists: true,
+	documentUrls: true,
+	facilityId: true,
+	createdAt: true,
+	updatedAt: true,
+	facility: {
+		select: {
+			id: true,
+			name: true,
+			address: true,
+			contactEmail: true,
+			contactPhone: true,
+			profileImage: true,
+			description: true,
+			createdAt: true,
+			updatedAt: true,
+			ownerId: true,
+			reviews: {
+				select: {
+					id: true,
+					rating: true,
+					comment: true,
+					createdAt: true,
+				},
+			},
+			contactInfo: {
+				select: {
+					id: true,
+					name: true,
+					position: true,
+					contact: true,
+				},
+			},
+		},
+	},
+	_count: {
+		select: {
+			applicants: true,
+		},
+	},
+} as const;
+
+// @/api/services/jobs.service.ts
+export const limitedAccessSelect = {
+	id: true,
+	payBasis: true,
+	startDate: true,
+	endDate: true,
+} as const;
+
 // Enums
 export const JobUrgency = {
 	HIGH: "HIGH",

@@ -33,8 +33,6 @@ import {
 	doctorVerificationCreateSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 
-type FormData = DoctorVerificationCreateData;
-
 interface DoctorVerificationFormProps {
 	userId: string;
 	phoneNumber: string;
@@ -50,7 +48,7 @@ export function DoctorDetailsForm({
 	const uploadMutation = useUploadAPC();
 	const verifyMutation = useVerifyDoctor();
 
-	const form = useForm<FormData>({
+	const form = useForm<DoctorVerificationCreateData>({
 		resolver: zodResolver(doctorVerificationCreateSchema),
 		defaultValues: {
 			fullName: "",
@@ -68,7 +66,7 @@ export function DoctorDetailsForm({
 		form.setValue("apcDocument", file);
 	};
 
-	async function onSubmit(data: FormData) {
+	async function onSubmit(data: DoctorVerificationCreateData) {
 		try {
 			// Validate file is selected
 			if (!selectedFile) {
@@ -82,7 +80,14 @@ export function DoctorDetailsForm({
 				file: selectedFile,
 				userId,
 			});
-			const apcDocumentUrl = uploadResult.url;
+
+			if (!uploadResult.success) {
+				toast.dismiss();
+				toast.error(uploadResult.message);
+				return;
+			}
+
+			const apcDocumentUrl = uploadResult.data?.url;
 			toast.dismiss();
 
 			// Submit verification

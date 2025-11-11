@@ -72,7 +72,7 @@ export function ProfileAvatar({
 			<PopoverTrigger asChild>
 				<Button
 					variant="ghost"
-					className="p-0 h-auto rounded-full focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2"
+					className="p-0 w-10 h-10 rounded-full focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2"
 				>
 					<Avatar className={cn("cursor-pointer", className)}>
 						{imageSrc && <AvatarImage src={imageSrc} alt="Profile" />}

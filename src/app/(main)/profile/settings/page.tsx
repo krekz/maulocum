@@ -14,23 +14,23 @@ export default async function SettingsPage() {
 	}
 
 	return (
-		<div className="container mx-auto py-8 max-w-4xl">
-			<div className="space-y-6">
-				<div>
-					<h1 className="text-3xl font-bold">Account Settings</h1>
-					<p className="text-muted-foreground mt-2">
-						Manage your profile image and phone number
-					</p>
-				</div>
-
-				<Card className="p-6">
-					<PhoneNumberUpdate
-						currentPhoneNumber={session.user.phoneNumber}
-						phoneNumberVerified={session.user.phoneNumberVerified ?? false}
-						userEmail={session.user.email}
-					/>
-				</Card>
+		<>
+			{/* Desktop Header */}
+			<div className="hidden md:flex flex-col">
+				<h1 className="text-3xl font-bold">Account Settings</h1>
+				<p className="text-muted-foreground mt-2">
+					Manage your profile image and phone number
+				</p>
 			</div>
-		</div>
+
+			{/* Phone Number / Profile Update Card */}
+			<Card className="p-6">
+				<PhoneNumberUpdate
+					currentPhoneNumber={session.user.phoneNumber}
+					phoneNumberVerified={session.user.phoneNumberVerified ?? false}
+					userEmail={session.user.email}
+				/>
+			</Card>
+		</>
 	);
 }

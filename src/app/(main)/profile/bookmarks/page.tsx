@@ -38,9 +38,13 @@ function BookmarkPage() {
 	};
 
 	return (
-		<div className="container py-10">
-			<h1 className="text-2xl font-bold mb-6">Your Bookmarked Jobs</h1>
+		<>
+			{/* Page Title (Desktop only) */}
+			<div className="hidden md:flex items-center justify-between">
+				<h1 className="text-3xl font-bold">Your Bookmarked Jobs</h1>
+			</div>
 
+			{/* No Bookmarks Message */}
 			{bookmarkedJobs.length === 0 ? (
 				<div className="text-center py-12">
 					<p className="text-muted-foreground">
@@ -94,7 +98,7 @@ function BookmarkPage() {
 					))}
 				</div>
 			)}
-		</div>
+		</>
 	);
 }
 

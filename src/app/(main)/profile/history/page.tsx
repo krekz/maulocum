@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
+import { Button } from "@/components/ui/button";
 import ReviewsDialog from "./reviews-dialog";
 
 function HistoryPage() {
@@ -129,88 +130,107 @@ function HistoryPage() {
 	};
 
 	return (
-		<div className="container mx-auto py-8">
-			<h1 className="text-2xl font-bold mb-6">My Applied Locums</h1>
-
-			<div className="mb-6 flex gap-2">
-				<button
-					onClick={() => setStatusFilter("all")}
-					className={`px-4 py-2 rounded-md ${statusFilter === "all" ? "bg-primary text-white" : "bg-gray-100"}`}
-				>
-					All
-				</button>
-				<button
-					onClick={() => setStatusFilter("completed")}
-					className={`px-4 py-2 rounded-md ${statusFilter === "completed" ? "bg-green-600 text-white" : "bg-gray-100"}`}
-				>
-					Completed
-				</button>
-				<button
-					onClick={() => setStatusFilter("pending")}
-					className={`px-4 py-2 rounded-md ${statusFilter === "pending" ? "bg-yellow-600 text-white" : "bg-gray-100"}`}
-				>
-					Pending
-				</button>
-				<button
-					onClick={() => setStatusFilter("cancelled")}
-					className={`px-4 py-2 rounded-md ${statusFilter === "cancelled" ? "bg-red-600 text-white" : "bg-gray-100"}`}
-				>
-					Cancelled
-				</button>
-			</div>
-
-			<div className="grid gap-4">
-				{filteredLocums.map((locum) => (
-					<div
-						key={locum.id}
-						className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+		<>
+			<div className="flex items-center justify-between">
+				<h1 className="hidden md:flex text-3xl font-bold">My Applied Locums</h1>
+				{/* Filter Buttons */}
+				<div className="flex flex-wrap gap-2">
+					<button
+						onClick={() => setStatusFilter("all")}
+						className={`px-4 py-2 rounded-md ${statusFilter === "all" ? "bg-primary text-white" : "bg-gray-100"}`}
 					>
-						<div className="flex justify-between items-start">
-							<div>
-								<h2 className="text-xl font-semibold">{locum.clinicName}</h2>
-								<p className="text-gray-600">{locum.location}</p>
-							</div>
-							<span
-								className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(locum.status)}`}
-							>
-								{locum.status.charAt(0).toUpperCase() + locum.status.slice(1)}
-							</span>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-							<div>
-								<p className="text-sm text-gray-500">Specialty</p>
-								<p className="font-medium">{locum.specialist}</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500">Date</p>
-								<p className="font-medium">{locum.date}</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500">Time</p>
-								<p className="font-medium">{locum.time}</p>
-							</div>
-						</div>
-
-						<div className="mt-4 flex justify-between items-center">
-							<p className="font-semibold text-primary">{locum.rate}</p>
-							<div className="flex gap-1">
-								<Link
-									href="/jobs/job1"
-									className="px-4 py-2 bg-accent rounded-md hover:bg-accent/80 transition-colors"
-								>
-									View Details
-								</Link>
-								<ReviewsDialog
-									facilityId="123"
-									facilityName="KL City Medical Center"
-								/>
-							</div>
-						</div>
-					</div>
-				))}
+						All
+					</button>
+					<button
+						onClick={() => setStatusFilter("completed")}
+						className={`px-4 py-2 rounded-md ${statusFilter === "completed" ? "bg-green-600 text-white" : "bg-gray-100"}`}
+					>
+						Completed
+					</button>
+					<button
+						onClick={() => setStatusFilter("pending")}
+						className={`px-4 py-2 rounded-md ${statusFilter === "pending" ? "bg-yellow-600 text-white" : "bg-gray-100"}`}
+					>
+						Pending
+					</button>
+					<button
+						onClick={() => setStatusFilter("cancelled")}
+						className={`px-4 py-2 rounded-md ${statusFilter === "cancelled" ? "bg-red-600 text-white" : "bg-gray-100"}`}
+					>
+						Cancelled
+					</button>
+				</div>
 			</div>
-		</div>
+
+			{/* Applied Locums List */}
+			{filteredLocums.length === 0 ? (
+				<div className="text-center py-12">
+					<p className="text-muted-foreground">
+						You haven't applied for any locum jobs yet.
+					</p>
+					<Button className="mt-4" variant="outline" asChild>
+						<Link href="/jobs">Browse Jobs</Link>
+					</Button>
+				</div>
+			) : (
+				<div className="grid gap-4">
+					{filteredLocums.map((locum) => (
+						<div
+							key={locum.id}
+							className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-shadow"
+						>
+							{/* Header */}
+							<div className="flex justify-between items-start">
+								<div>
+									<h2 className="text-xl font-semibold">{locum.clinicName}</h2>
+									<p className="text-muted-foreground">{locum.location}</p>
+								</div>
+								<span
+									className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
+										locum.status,
+									)}`}
+								>
+									{locum.status.charAt(0).toUpperCase() + locum.status.slice(1)}
+								</span>
+							</div>
+
+							{/* Details */}
+							<div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2">
+								<div>
+									<p className="text-sm text-muted-foreground">Specialty</p>
+									<p className="font-medium">{locum.specialist}</p>
+								</div>
+								<div>
+									<p className="text-sm text-muted-foreground">Date</p>
+									<p className="font-medium">{locum.date}</p>
+								</div>
+								<div>
+									<p className="text-sm text-muted-foreground">Time</p>
+									<p className="font-medium">{locum.time}</p>
+								</div>
+							</div>
+
+							{/* Footer */}
+							<div className="mt-4 flex justify-between items-center">
+								<p className="font-semibold text-primary">{locum.rate}</p>
+								<div className="flex gap-2">
+									<Link
+										href={`/jobs/${locum.id}`}
+										className="px-4 py-2 bg-accent rounded-md hover:bg-accent/80 transition-colors"
+									>
+										View Details
+									</Link>
+									<ReviewsDialog
+										facilityId="123"
+										facilityName="KL City Medical Center"
+									/>
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</>
 	);
 }
 

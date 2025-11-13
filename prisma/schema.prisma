@@ -170,9 +170,9 @@ model Facility {
 
 model Job {
   id                    String               @id @default(cuid())
-  title                 String
+  title                 String?
   description           String?
-  location              String
+  location              String?
   payRate               String
   payBasis              PayBasis
   startTime             String
@@ -183,7 +183,6 @@ model Job {
   urgency               JobUrgency           @default(LOW)
   status                JobStatus            @default(OPEN)
   requiredSpecialists   String[]
-  documentUrls          String[]
   facilityId            String
   facility              Facility             @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   applicants            JobApplication[]

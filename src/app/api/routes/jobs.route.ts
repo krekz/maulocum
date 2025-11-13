@@ -5,10 +5,7 @@ import { z } from "zod";
 import { jobApplicationService, jobService } from "../services/jobs.service";
 import {
 	createJobApplicationSchema,
-	createJobSchema,
 	jobQuerySchema,
-	// updateJobApplicationSchema,
-	updateJobSchema,
 } from "../types/jobs.types";
 
 // Initialize jobs route
@@ -68,100 +65,6 @@ const app = new Hono()
 			);
 		}
 	})
-
-	/**
-	 * POST /api/v2/jobs
-	 * Create a new job
-	 */
-	.post("/", zValidator("json", createJobSchema), async (c) => {
-		try {
-			const data = c.req.valid("json");
-			const job = await jobService.createJob(data);
-			return c.json(
-				{
-					success: true,
-					message: "Job created successfully",
-					data: job,
-				},
-				201,
-			);
-		} catch (error) {
-			console.error(error);
-			const httpError = error as HTTPException;
-			return c.json(
-				{
-					success: false,
-					message: httpError.message,
-					data: null,
-				},
-				httpError.status,
-			);
-		}
-	})
-
-	/**
-	 * PATCH /api/v2/jobs/:id
-	 * Update an existing job
-	 */
-	.patch(
-		"/:id",
-		zValidator("param", z.object({ id: z.string() })),
-		zValidator("json", updateJobSchema),
-		async (c) => {
-			try {
-				const { id } = c.req.valid("param");
-				const data = c.req.valid("json");
-				const job = await jobService.updateJob(id, data);
-				return c.json({
-					success: true,
-					message: "Job updated successfully",
-					data: job,
-				});
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
-
-	/**
-	 * DELETE /api/v2/jobs/:id
-	 * Delete a job
-	 */
-	.delete(
-		"/:id",
-		zValidator("param", z.object({ id: z.string() })),
-		async (c) => {
-			try {
-				const { id } = c.req.valid("param");
-				await jobService.deleteJob(id);
-				return c.json({
-					success: true,
-					message: "Job deleted successfully",
-					data: null,
-				});
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
 
 	/**
 	 * POST /api/v2/jobs/:jobId/apply

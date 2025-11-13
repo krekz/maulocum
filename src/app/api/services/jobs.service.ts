@@ -5,37 +5,15 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import {
 	type CreateJobApplicationInput,
-	type CreateJobInput,
 	fullAccessSelect,
 	type GetJobsPromiseReturn,
 	type JobQuery,
 	limitedAccessSelect,
 	type UpdateJobApplicationInput,
-	type UpdateJobInput,
 } from "../types/jobs.types";
 
+// This is for public endpoint in /jobs page. for creating/updating/deleting jobs, is on facility service
 export class JobService {
-	async createJob(data: CreateJobInput) {
-		try {
-			return prisma.job.create({
-				data,
-				include: {
-					facility: {
-						select: {
-							id: true,
-							name: true,
-							address: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			console.error(error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to create job" });
-		}
-	}
-
 	// Get job by ID
 	async getJobById(id: string) {
 		try {
@@ -167,42 +145,6 @@ export class JobService {
 			console.error(error);
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, { message: "Failed to fetch jobs" });
-		}
-	}
-
-	// Update job
-	async updateJob(id: string, data: UpdateJobInput) {
-		try {
-			return prisma.job.update({
-				where: { id },
-				data,
-				include: {
-					facility: {
-						select: {
-							id: true,
-							name: true,
-							address: true,
-						},
-					},
-				},
-			});
-		} catch (error) {
-			console.error(error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to update job" });
-		}
-	}
-
-	// Delete job
-	async deleteJob(id: string) {
-		try {
-			return prisma.job.delete({
-				where: { id },
-			});
-		} catch (error) {
-			console.error(error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to delete job" });
 		}
 	}
 }

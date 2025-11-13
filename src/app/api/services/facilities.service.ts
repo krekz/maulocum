@@ -10,6 +10,7 @@ import type {
 	FacilityQuery,
 	FacilityRegistrationApiInput,
 } from "../types/facilities.types";
+import type { JobPostFormValues } from "../types/jobs.types";
 
 // Facility Service (Single Responsibility Principle)
 export class FacilityService {
@@ -367,6 +368,129 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to get user facility profile",
+			});
+		}
+	}
+
+	// Post a job for employer's facility
+	async postJob(data: JobPostFormValues, c: Context) {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+
+			if (!session?.user?.id) {
+				throw new HTTPException(401, {
+					message: "Unauthorized",
+				});
+			}
+
+			// Get user's facility profile
+			const facilityProfile = await prisma.userFacilityProfile.findUnique({
+				where: {
+					userId: session.user.id,
+				},
+				include: {
+					facility: {
+						include: {
+							facilityVerification: true,
+						},
+					},
+				},
+			});
+
+			if (!facilityProfile) {
+				throw new HTTPException(404, {
+					message:
+						"Facility profile not found. Please register your facility first.",
+				});
+			}
+
+			// Check if facility is approved
+			if (
+				facilityProfile.facility.facilityVerification?.verificationStatus !==
+				"APPROVED"
+			) {
+				throw new HTTPException(403, {
+					message: "Your facility must be approved before posting jobs",
+				});
+			}
+
+			// Create the job
+			await prisma.job.create({
+				data: {
+					...data,
+					facilityId: facilityProfile.facilityId,
+					userFacilityProfileId: facilityProfile.id,
+				},
+			});
+
+			return;
+		} catch (error) {
+			console.error("Error in facility.service.postJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to post job",
+			});
+		}
+	}
+
+	// Get jobs posted by employer's facility
+	async getMyFacilityJobs(c: Context) {
+		try {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+
+			if (!session?.user?.id) {
+				throw new HTTPException(401, {
+					message: "Unauthorized",
+				});
+			}
+
+			// Get user's facility profile
+			const facilityProfile = await prisma.userFacilityProfile.findUnique({
+				where: {
+					userId: session.user.id,
+				},
+			});
+
+			if (!facilityProfile) {
+				throw new HTTPException(404, {
+					message: "Facility profile not found",
+				});
+			}
+
+			// Get all jobs for this facility
+			const jobs = await prisma.job.findMany({
+				where: {
+					facilityId: facilityProfile.facilityId,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+				include: {
+					facility: {
+						select: {
+							id: true,
+							name: true,
+							address: true,
+						},
+					},
+					_count: {
+						select: {
+							applicants: true,
+						},
+					},
+				},
+			});
+
+			return jobs;
+		} catch (error) {
+			console.error("Error in facility.service.getMyFacilityJobs:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch facility jobs",
 			});
 		}
 	}

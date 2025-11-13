@@ -10,6 +10,7 @@ import {
 	facilityQuerySchema,
 	facilityRegistrationApiSchema,
 } from "../types/facilities.types";
+import { jobPostSchema } from "../types/jobs.types";
 
 const app = new Hono()
 	/**
@@ -67,6 +68,60 @@ const app = new Hono()
 				},
 				200,
 			);
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
+	 * POST /api/v2/facilities/jobs
+	 * Post a job for employer's facility
+	 */
+	.post("/jobs", zValidator("json", jobPostSchema), async (c) => {
+		try {
+			const data = c.req.valid("json");
+			await facilityService.postJob(data, c);
+			return c.json(
+				{
+					success: true,
+					message: "Job posted successfully",
+				},
+				201,
+			);
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
+	 * GET /api/v2/facilities/jobs
+	 * Get all jobs posted by employer's facility
+	 */
+	.get("/jobs", async (c) => {
+		try {
+			const jobs = await facilityService.getMyFacilityJobs(c);
+			return c.json({
+				success: true,
+				message: "Jobs fetched successfully",
+				data: jobs,
+			});
 		} catch (error) {
 			console.error(error);
 			const httpError = error as HTTPException;

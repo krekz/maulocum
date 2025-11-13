@@ -16,29 +16,29 @@ export default function EmployerDashboardLayout({
 							title: "Dashboard",
 							url: "/employer/dashboard",
 						},
-						{
-							title: "Users",
-							url: "/employer/dashboard/users",
-						},
 					],
 					collapsible: [
 						{
-							title: "Doctors",
-							url: "/employer/dashboard/doctors",
+							title: "Jobs",
+							url: "/employer/dashboard/jobs",
 							items: [
 								{
-									title: "Verifications",
-									url: "/employer/dashboard/doctors/verifications",
+									title: "Post Job",
+									url: "/employer/dashboard/jobs/post",
+								},
+								{
+									title: "All Jobs",
+									url: "/employer/dashboard/jobs/all",
 								},
 							],
 						},
 						{
-							title: "Facilities",
-							url: "/employer/dashboard/facilities",
+							title: "Staff",
+							url: "/employer/dashboard/staff",
 							items: [
 								{
-									title: "Verifications",
-									url: "/employer/dashboard/facilities/verifications",
+									title: "All Staff",
+									url: "/employer/dashboard/staff/all",
 								},
 							],
 						},

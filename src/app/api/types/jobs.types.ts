@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "../../../../prisma/generated/prisma/client";
 
 export type GetJobsPromiseReturn = Promise<
 	| {
@@ -17,7 +18,6 @@ export type GetJobsPromiseReturn = Promise<
 				urgency: string;
 				status: string;
 				requiredSpecialists: string[];
-				documentUrls: string[];
 				facilityId: string;
 				createdAt: Date;
 				updatedAt: Date;
@@ -72,7 +72,7 @@ export type GetJobsPromiseReturn = Promise<
 	  }
 >;
 // @/api/services/jobs.service.ts
-export const fullAccessSelect = {
+export const fullAccessSelect: Prisma.JobSelect = {
 	id: true,
 	title: true,
 	description: true,
@@ -87,7 +87,6 @@ export const fullAccessSelect = {
 	urgency: true,
 	status: true,
 	requiredSpecialists: true,
-	documentUrls: true,
 	facilityId: true,
 	createdAt: true,
 	updatedAt: true,
@@ -129,7 +128,7 @@ export const fullAccessSelect = {
 } as const;
 
 // @/api/services/jobs.service.ts
-export const limitedAccessSelect = {
+export const limitedAccessSelect: Prisma.JobSelect = {
 	id: true,
 	payBasis: true,
 	startDate: true,

@@ -12,7 +12,8 @@
     "test:watch": "bun test --watch",
     "test:deploy": "bun run lint:biome && bun run build",
     "vercel-deploy": "prisma generate && prisma migrate deploy && next build",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.922.0",

@@ -74,7 +74,7 @@ interface EmployerNavbarProps {
 	};
 }
 
-const NavbarEmployer = async ({
+const NavbarEmployer = ({
 	logo = {
 		url: "/employer",
 		src: "https://www.shadcnblocks.com/images/block/block-1.svg",

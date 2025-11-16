@@ -1,3 +1,4 @@
+"use client";
 import {
 	Bell,
 	Book,
@@ -37,7 +38,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { getSession } from "@/lib/session";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -122,7 +123,7 @@ const NavbarEmployer = async ({
 		signup: { text: "Post a Job", url: "/employer/signup" },
 	},
 }: EmployerNavbarProps) => {
-	const session = await getSession();
+	const { data: session } = authClient.useSession();
 
 	return (
 		<section className="py-4 sticky top-0 z-50 bg-card shadow-sm">

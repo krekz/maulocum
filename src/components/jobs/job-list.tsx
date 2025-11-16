@@ -1,13 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useSession } from "@/lib/hooks/useSession";
+import { authClient } from "@/lib/auth-client";
 import type { JobResponse } from "@/lib/rpc-client";
 
 function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 	const jobListings = data.data;
 
-	const { isPending } = useSession();
+	const { isPending } = authClient.useSession();
 	const handleJobClick = (jobId: string) => {
 		// Update URL with the selected job ID in the query parameters
 		const url = new URL(window.location.href);

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSession } from "@/lib/hooks/useSession";
+import { authClient } from "@/lib/auth-client";
 import type { JobResponse } from "@/lib/rpc-client";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent } from "../ui/tooltip";
 import ApplyJobDialog from "./apply-jobs-dialog";
 
 function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
+	const { data: session, isPending } = authClient.useSession();
 	const jobListings = data?.data;
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -27,8 +28,6 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 	type SingleJob = NonNullable<typeof jobListings>["jobs"][number];
 
 	const [selectedJob, setSelectedJob] = useState<SingleJob | null>(null);
-
-	const { session, isPending } = useSession();
 
 	useEffect(() => {
 		if (selectedJobId && jobListings?.jobs) {
@@ -99,7 +98,7 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 		);
 	}
 
-	const hasFullAccess = "title" in selectedJob;
+	const hasFullAccess = "createdAt" in selectedJob;
 
 	if (!hasFullAccess) {
 		const limitedJob = selectedJob;

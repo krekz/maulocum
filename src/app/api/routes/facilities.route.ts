@@ -86,10 +86,21 @@ const app = new Hono()
 	 * POST /api/v2/facilities/jobs
 	 * Post a job for employer's facility
 	 */
-	.post("/jobs", zValidator("json", jobPostSchema), async (c) => {
+	.post("/jobs", async (c) => {
 		try {
-			const data = c.req.valid("json");
-			await facilityService.postJob(data, c);
+			const body = await c.req.json();
+
+			// Transform string dates to Date objects before validation
+			const transformedData = {
+				...body,
+				startDate: body.startDate ? new Date(body.startDate) : undefined,
+				endDate: body.endDate ? new Date(body.endDate) : undefined,
+			};
+
+			// Validate with transformed data
+			const validatedData = jobPostSchema.parse(transformedData);
+
+			await facilityService.postJob(validatedData, c);
 			return c.json(
 				{
 					success: true,
@@ -105,7 +116,7 @@ const app = new Hono()
 					success: false,
 					message: httpError.message,
 				},
-				httpError.status,
+				httpError.status || 400,
 			);
 		}
 	})

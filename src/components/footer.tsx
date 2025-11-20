@@ -48,12 +48,12 @@ function Footerdemo() {
 							<Input
 								type="email"
 								placeholder="Enter your email"
-								className="pr-12 backdrop-blur-sm"
+								className="w-full h-10 sm:h-12 pl-4 pr-12 rounded-full backdrop-blur-sm placeholder:text-muted-foreground"
 							/>
 							<Button
 								type="submit"
 								size="icon"
-								className="absolute right-1 top-1 h-8 w-8 rounded-full bg-primary text-primary-foreground transition-transform hover:scale-105"
+								className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-primary text-primary-foreground transition-transform hover:scale-105"
 							>
 								<Send className="h-4 w-4" />
 								<span className="sr-only">Subscribe</span>

@@ -56,6 +56,8 @@ function FacilitiesPage() {
 				<Image
 					src="https://plus.unsplash.com/premium_photo-1665657351119-b7283189656c?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDE3fGJvOGpRS1RhRTBZfHxlbnwwfHx8fHw%3D"
 					alt="Medical facilities banner"
+					width={1600}
+					height={480}
 					className="w-full h-full object-cover brightness-20"
 				/>
 			</div>
@@ -69,27 +71,27 @@ function FacilitiesPage() {
 						Browse through clinics, hospitals and medical centers looking for
 						locum doctors
 					</p>
-
-					<div className="relative w-full max-w-xl sm:max-w-2xl mx-auto text-primary-foreground">
-						<div className="flex items-center relative">
-							<Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none" />
-							<input
-								type="text"
-								placeholder="Search facilities..."
-								className="border border-black w-full h-10 sm:h-12 md:h-14 pl-10 sm:pl-12 pr-16 sm:pr-20 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base bg-white text-foreground"
-							/>
-							<Button
-								className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 sm:h-8 md:h-10 text-xs sm:text-sm"
-								size="sm"
-							>
-								Search
-							</Button>
-						</div>
-					</div>
 				</div>
 			</div>
 
 			<div className="container pb-8 sm:pb-10 md:pb-12 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8">
+				<div className="relative w-full max-w-xl sm:max-w-2xl mx-auto text-primary-foreground my-6">
+					<div className="flex items-center relative">
+						<Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground pointer-events-none" />
+						<input
+							type="text"
+							placeholder="Search facilities..."
+							className="border border-stone-300 w-full h-10 sm:h-12 md:h-14 pl-10 sm:pl-12 pr-16 sm:pr-20 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm sm:text-base bg-white text-foreground"
+						/>
+						<Button
+							className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 sm:h-8 md:h-10 text-xs sm:text-sm"
+							size="sm"
+						>
+							Search
+						</Button>
+					</div>
+				</div>
+
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
 					{facilities.map((facility) => (
 						<Card
@@ -103,6 +105,8 @@ function FacilitiesPage() {
 											<Image
 												src={facility.logoUrl}
 												alt={facility.name}
+												width={40}
+												height={40}
 												className="h-7 sm:h-8 w-7 sm:w-8 object-contain"
 											/>
 										) : (

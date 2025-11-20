@@ -100,7 +100,7 @@ const features = [
 
 export default function Home() {
 	return (
-		<section className="lg:container">
+		<section className="px-4 sm:px-6 lg:container">
 			<Hero />
 			<BentoGrid className="lg:grid-rows-3">
 				{features.map((feature) => (

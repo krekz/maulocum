@@ -11,6 +11,10 @@ export default function EmployerDashboardLayout({
 		<SidebarProvider>
 			<AppSidebar
 				data={{
+					header: {
+						title: "MauLocum",
+						url: "/employer/dashboard",
+					},
 					basic: [
 						{
 							title: "Dashboard",
@@ -28,7 +32,7 @@ export default function EmployerDashboardLayout({
 								},
 								{
 									title: "All Jobs",
-									url: "/employer/dashboard/jobs/all",
+									url: "/employer/dashboard/jobs",
 								},
 							],
 						},

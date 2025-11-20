@@ -1,6 +1,16 @@
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { JobPostForm } from "@/components/jobs/job-post-form";
+import { auth } from "@/lib/auth";
 
-function PostJobPage() {
+async function PostJobPage() {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	if (!session) notFound();
+	if (!session.user.isEmployer) notFound();
+
 	return (
 		<div className="px-6 mx-auto w-full">
 			<div className="mb-8">

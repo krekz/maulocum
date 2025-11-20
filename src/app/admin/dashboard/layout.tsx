@@ -13,6 +13,10 @@ export default function AdminDashboardLayout({
 	children: React.ReactNode;
 }) {
 	const data = {
+		header: {
+			title: "MauLocum",
+			url: "/admin/dashboard",
+		},
 		basic: [
 			{
 				title: "Dashboard",

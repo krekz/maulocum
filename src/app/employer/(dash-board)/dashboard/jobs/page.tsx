@@ -1,87 +1,126 @@
-function JobsPage() {
-	const applicantJobs = [
-		{
-			id: "job1",
-			clinicName: "One Medic",
-			dateNeeded: "20 May 2025",
-			postedAt: "5 days ago",
-			specialist: "General Practice",
-			payRate: "RM40/hour",
-			workingHours: "9:00 AM - 6:00 PM",
-			status: "Open",
+import { format } from "date-fns";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { backendApi } from "@/lib/rpc";
+
+export const dynamic = "force-dynamic";
+
+async function JobsPage() {
+	const cookie = (await headers()).get("cookie");
+	const response = await backendApi.api.v2.facilities.jobs.$get(undefined, {
+		headers: {
+			cookie: cookie || "",
 		},
-		{
-			id: "job2",
-			clinicName: "One Medic",
-			dateNeeded: "11 May 2025",
-			postedAt: "3 days ago",
-			specialist: "Orthopaedics",
-			payRate: "RM45/hour",
-			workingHours: "6:00 PM - 10:00 PM",
-			status: "Open",
-		},
-		{
-			id: "job3",
-			clinicName: "One Medic",
-			dateNeeded: "15 May 2025",
-			postedAt: "1 day ago",
-			specialist: "Paediatrics",
-			payRate: "RM50/hour",
-			workingHours: "8:00 AM - 5:00 PM",
-			status: "Closed",
-		},
-	];
+	});
+
+	const data = await response.json();
+
+	if (!response.ok) {
+		switch (response.status) {
+			case 401:
+			case 403:
+				return notFound();
+			case 404:
+				return (
+					<div className="px-6 w-full">
+						<div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg">
+							{data.message}
+						</div>
+					</div>
+				);
+			default:
+				return (
+					<div className="px-6 w-full">
+						<div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg">
+							Error loading jobs: {data.message}
+						</div>
+					</div>
+				);
+		}
+	}
+
+	const jobs = data?.data || [];
+
+	if (jobs.length === 0) {
+		return (
+			<div className="px-6 w-full">
+				<h1 className="text-2xl font-bold mb-6">Your Job Postings</h1>
+				<div className="bg-muted/50 rounded-lg p-8 text-center">
+					<p className="text-muted-foreground">
+						No jobs posted yet. Create your first job posting!
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="px-6 w-full">
 			<h1 className="text-2xl font-bold mb-6">Your Job Postings</h1>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-				{applicantJobs.map((job) => (
+				{jobs.map((job) => (
 					<a
 						key={job.id}
-						href={`/employer/jobs/${job.id}`}
+						href={`/employer/dashboard/jobs/${job.id}`}
 						className="block group"
 					>
 						<div className="bg-card border rounded-lg shadow-sm p-6 h-full transition-all duration-200 hover:shadow-md hover:border-primary">
 							<div className="flex justify-between items-start mb-4">
 								<h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-									{job.clinicName}
+									{job.title || job.facility.name}
 								</h3>
 								<div className="flex flex-col items-end gap-1">
 									<span className="text-xs bg-muted px-2 py-1 rounded-full">
-										Posted {job.postedAt}
+										Posted {format(new Date(job.createdAt), "MMM d, yyyy")}
 									</span>
 									<span
-										className={`text-xs px-2 py-1 rounded-full ${job.status === "Open" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+										className={`text-xs px-2 py-1 rounded-full ${
+											job.status === "OPEN"
+												? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+												: job.status === "FILLED"
+													? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+													: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+										}`}
 									>
 										{job.status}
 									</span>
+									{job.urgency === "HIGH" && (
+										<span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+											Urgent
+										</span>
+									)}
 								</div>
 							</div>
 
 							<div className="space-y-3 text-sm text-muted-foreground">
 								<div className="flex justify-between">
-									<span>Date Needed:</span>
+									<span>Start Date:</span>
 									<span className="font-medium text-foreground">
-										{job.dateNeeded}
+										{format(new Date(job.startDate), "MMM d, yyyy")}
 									</span>
 								</div>
 								<div className="flex justify-between">
 									<span>Specialization:</span>
 									<span className="font-medium text-foreground">
-										{job.specialist}
+										{job.requiredSpecialists.join(", ")}
 									</span>
 								</div>
 								<div className="flex justify-between">
 									<span>Pay Rate:</span>
 									<span className="font-medium text-foreground">
-										{job.payRate}
+										RM{job.payRate}/{job.payBasis.toLowerCase()}
 									</span>
 								</div>
 								<div className="flex justify-between">
 									<span>Working Hours:</span>
 									<span className="font-medium text-foreground">
-										{job.workingHours}
+										{job.startTime} - {job.endTime}
+									</span>
+								</div>
+								<div className="flex justify-between">
+									<span>Applicants:</span>
+									<span className="font-medium text-foreground">
+										{job._count.applicants}
 									</span>
 								</div>
 							</div>

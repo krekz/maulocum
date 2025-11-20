@@ -51,10 +51,13 @@ export default function FacilitiesVerificationsPage() {
 				await client.api.v2.admin.facilities.verifications.pendings.$get();
 			if (!response.ok) {
 				const error = await response.json();
-				throw new Error(error.message || "Failed to fetch verifications");
+				throw new Error(error.message, {
+					cause: response.status,
+				});
 			}
 			return response.json();
 		},
+		retry: 1,
 	});
 
 	const handleApprove = async (verificationId: string) => {
@@ -116,18 +119,34 @@ export default function FacilitiesVerificationsPage() {
 	}
 
 	if (error) {
-		return (
-			<div className="px-3">
-				<Card>
-					<CardHeader>
-						<CardTitle>Error</CardTitle>
-						<CardDescription className="text-destructive">
-							{error.message}
-						</CardDescription>
-					</CardHeader>
-				</Card>
-			</div>
-		);
+		switch (error.cause) {
+			case 404:
+				return (
+					<div className="px-3">
+						<Card>
+							<CardHeader>
+								<CardTitle>Error</CardTitle>
+								<CardDescription className="text-destructive">
+									Facilities not found
+								</CardDescription>
+							</CardHeader>
+						</Card>
+					</div>
+				);
+			default:
+				return (
+					<div className="px-3">
+						<Card>
+							<CardHeader>
+								<CardTitle>Error</CardTitle>
+								<CardDescription className="text-destructive">
+									{error.message}
+								</CardDescription>
+							</CardHeader>
+						</Card>
+					</div>
+				);
+		}
 	}
 
 	return (

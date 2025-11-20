@@ -328,7 +328,10 @@ export class FacilityService {
 		}
 	}
 
-	// Get facility by owner ID for employer profile
+	/**
+	 * @deprecated This method is no longer used. Facility profile is now fetched by requireActiveEmployer middleware.
+	 * Get facility by owner ID for employer profile
+	 */
 	async getUserFacilityProfile(userId: string) {
 		try {
 			const facility = await prisma.userFacilityProfile.findUnique({
@@ -373,59 +376,20 @@ export class FacilityService {
 	}
 
 	// Post a job for employer's facility
-	async postJob(data: JobPostFormValues, c: Context) {
+	async postJob(
+		data: JobPostFormValues,
+		facilityId: string,
+		userFacilityProfileId: string,
+	) {
 		try {
-			const session = await auth.api.getSession({
-				headers: c.req.raw.headers,
-			});
-
-			if (!session?.user?.id) {
-				throw new HTTPException(401, {
-					message: "Unauthorized",
-				});
-			}
-
-			// Get user's facility profile
-			const facilityProfile = await prisma.userFacilityProfile.findUnique({
-				where: {
-					userId: session.user.id,
-				},
-				include: {
-					facility: {
-						include: {
-							facilityVerification: true,
-						},
-					},
-				},
-			});
-
-			if (!facilityProfile) {
-				throw new HTTPException(404, {
-					message:
-						"Facility profile not found. Please register your facility first.",
-				});
-			}
-
-			// Check if facility is approved
-			if (
-				facilityProfile.facility.facilityVerification?.verificationStatus !==
-				"APPROVED"
-			) {
-				throw new HTTPException(403, {
-					message: "Your facility must be approved before posting jobs",
-				});
-			}
-
 			// Create the job
 			await prisma.job.create({
 				data: {
 					...data,
-					facilityId: facilityProfile.facilityId,
-					userFacilityProfileId: facilityProfile.id,
+					facilityId,
+					userFacilityProfileId,
 				},
 			});
-
-			return;
 		} catch (error) {
 			console.error("Error in facility.service.postJob:", error);
 			if (error instanceof HTTPException) throw error;
@@ -436,35 +400,12 @@ export class FacilityService {
 	}
 
 	// Get jobs posted by employer's facility
-	async getMyFacilityJobs(c: Context) {
+	async getMyFacilityJobs(facilityId: string) {
 		try {
-			const session = await auth.api.getSession({
-				headers: c.req.raw.headers,
-			});
-
-			if (!session?.user?.id) {
-				throw new HTTPException(401, {
-					message: "Unauthorized",
-				});
-			}
-
-			// Get user's facility profile
-			const facilityProfile = await prisma.userFacilityProfile.findUnique({
-				where: {
-					userId: session.user.id,
-				},
-			});
-
-			if (!facilityProfile) {
-				throw new HTTPException(404, {
-					message: "Facility profile not found",
-				});
-			}
-
 			// Get all jobs for this facility
 			const jobs = await prisma.job.findMany({
 				where: {
-					facilityId: facilityProfile.facilityId,
+					facilityId,
 				},
 				orderBy: {
 					createdAt: "desc",
@@ -491,6 +432,183 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to fetch facility jobs",
+			});
+		}
+	}
+	async getJobById(id: string, facilityId?: string) {
+		try {
+			const job = await prisma.job.findUnique({
+				where: { id },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// If facilityId is provided, verify ownership
+			if (facilityId && job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			return job;
+		} catch (error) {
+			console.error("Error in facility.service.getJobById:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch job",
+			});
+		}
+	}
+
+	// Close a job posting
+	async closeJob(jobId: string, facilityId: string) {
+		try {
+			// First verify the job belongs to this facility
+			const job = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: { facilityId: true, status: true },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Security: Verify ownership
+			if (job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			// Check if job is already closed
+			if (job.status === "CLOSED") {
+				throw new HTTPException(400, {
+					message: "Job is already closed",
+				});
+			}
+
+			// Update job status to CLOSED
+			await prisma.job.update({
+				where: { id: jobId },
+				data: {
+					status: "CLOSED",
+					updatedAt: new Date(),
+				},
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.closeJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to close job",
+			});
+		}
+	}
+
+	// Reopen a closed job posting
+	async reopenJob(jobId: string, facilityId: string) {
+		try {
+			// First verify the job belongs to this facility
+			const job = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: { facilityId: true, status: true },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Security: Verify ownership
+			if (job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			// Check if job is not closed
+			if (job.status !== "CLOSED") {
+				throw new HTTPException(400, {
+					message: "Only closed jobs can be reopened",
+				});
+			}
+
+			// Update job status to OPEN
+			await prisma.job.update({
+				where: { id: jobId },
+				data: {
+					status: "OPEN",
+					updatedAt: new Date(),
+				},
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.reopenJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to reopen job",
+			});
+		}
+	}
+
+	// Delete a job posting
+	async deleteJob(jobId: string, facilityId: string) {
+		try {
+			// First verify the job belongs to this facility
+			const job = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: {
+					facilityId: true,
+					status: true,
+					_count: {
+						select: {
+							applicants: true,
+						},
+					},
+				},
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Security: Verify ownership
+			if (job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			// Prevent deletion if job has applicants
+			if (job._count.applicants > 0) {
+				throw new HTTPException(400, {
+					message:
+						"Cannot delete job with applicants. Please close the job instead.",
+				});
+			}
+
+			// Delete the job
+			await prisma.job.delete({
+				where: { id: jobId },
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.deleteJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to delete job",
 			});
 		}
 	}

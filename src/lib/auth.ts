@@ -1,6 +1,11 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { emailOTP, magicLink, phoneNumber } from "better-auth/plugins";
+import {
+	customSession,
+	emailOTP,
+	magicLink,
+	phoneNumber,
+} from "better-auth/plugins";
 import { prisma } from "./prisma";
 // If your Prisma file is located elsewhere, you can change the path
 
@@ -20,6 +25,32 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		customSession(async ({ user, session }) => {
+			const isEmployer = await prisma.user.findUnique({
+				where: {
+					id: user.id,
+				},
+				select: {
+					facilityProfile: {
+						select: {
+							isActive: true,
+						},
+					},
+					phoneNumber: true,
+					phoneNumberVerified: true,
+				},
+			});
+
+			return {
+				user: {
+					...user,
+					isEmployer: isEmployer?.facilityProfile?.isActive ?? false,
+					phoneNumber: isEmployer?.phoneNumber,
+					phoneNumberVerified: isEmployer?.phoneNumberVerified,
+				},
+				session,
+			};
+		}),
 		emailOTP({
 			async sendVerificationOTP({ email, otp, type }) {
 				// TODO: Implement email sending service (e.g., Resend, SendGrid, etc.)

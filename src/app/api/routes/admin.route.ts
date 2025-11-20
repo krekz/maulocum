@@ -286,7 +286,7 @@ const app = new Hono()
 					limit: limitResult,
 					offset: offsetResult,
 					totalPages,
-				} = await adminService.getUsers({
+				} = await adminService.getAllUsers({
 					role,
 					limit,
 					offset,

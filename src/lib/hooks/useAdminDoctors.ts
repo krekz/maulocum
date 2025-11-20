@@ -38,6 +38,7 @@ export function useVerifiedDoctors(params?: UseVerifiedDoctorsParams) {
 
 			return res.json();
 		},
+		retry: 1,
 	});
 }
 
@@ -57,6 +58,7 @@ export function usePendingVerifications() {
 
 			return res.json();
 		},
+		retry: 1,
 	});
 }
 

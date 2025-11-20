@@ -16,11 +16,10 @@ export function useFacilityVerificationAction() {
 				});
 
 			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(
-					(error as { error?: string }).error ||
-						"Failed to process verification",
-				);
+				const { message } = await response.json();
+				throw new Error(message, {
+					cause: response.status,
+				});
 			}
 
 			return response.json();

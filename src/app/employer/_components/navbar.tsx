@@ -1,13 +1,5 @@
 "use client";
-import {
-	Bell,
-	Book,
-	Building,
-	LogOut,
-	Menu,
-	Trees,
-	UserCog,
-} from "lucide-react";
+import { Book, Building, LogOut, Menu, Trees, UserCog } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -62,16 +54,6 @@ interface EmployerNavbarProps {
 		name: string;
 		url: string;
 	}[];
-	auth?: {
-		login: {
-			text: string;
-			url: string;
-		};
-		signup: {
-			text: string;
-			url: string;
-		};
-	};
 }
 
 const NavbarEmployer = ({
@@ -118,10 +100,6 @@ const NavbarEmployer = ({
 		{ name: "About Us", url: "/employer/about" },
 		{ name: "Blog", url: "/employer/blog" },
 	],
-	auth = {
-		login: { text: "Employer Login", url: "/employer/login" },
-		signup: { text: "Post a Job", url: "/employer/signup" },
-	},
 }: EmployerNavbarProps) => {
 	const { data: session } = authClient.useSession();
 
@@ -150,38 +128,26 @@ const NavbarEmployer = ({
 							</NavigationMenu>
 						</div>
 					</div>
-					<div className="flex gap-2 ">
-						{/* Notifications */}
-						{session && (
-							<Popover>
-								<PopoverTrigger asChild>
-									<Button
-										variant="ghost"
-										className="p-3 h-auto rounded-full focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2"
-									>
-										<div className="relative">
-											<Bell className="h-5 w-5" />
-											<span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
-										</div>
-									</Button>
-								</PopoverTrigger>
-								<PopoverContent className="w-80 p-4">
-									<div className="space-y-4 ">
-										<h4 className="font-medium">Notifications</h4>
-										<div className="border-t pt-4">
-											<div className="text-sm">
-												You have no new notifications
-											</div>
-										</div>
-									</div>
-								</PopoverContent>
-							</Popover>
+					<div className="flex gap-2">
+						{/* Not logged in */}
+						{!session && (
+							<Button asChild variant="outline" size="sm">
+								<Link href="/login">Login</Link>
+							</Button>
 						)}
 
-						{session ? (
+						{/* Logged in but not employer - show register button */}
+						{session && !session.user.isEmployer && (
+							<Button asChild size="sm">
+								<Link href="/employer/register">Register as Employer</Link>
+							</Button>
+						)}
+
+						{/* Logged in as employer */}
+						{session?.user.isEmployer && (
 							<div className="flex items-center gap-3">
 								<Button asChild size="sm">
-									<Link href="/employer/dashboard/job-post">Post a Job</Link>
+									<Link href="/employer/dashboard/jobs/post">Post a Job</Link>
 								</Button>
 								<Popover>
 									<PopoverTrigger asChild>
@@ -191,10 +157,12 @@ const NavbarEmployer = ({
 										>
 											<Avatar className="cursor-pointer">
 												<AvatarImage
-													src="https://plus.unsplash.com/premium_photo-1667354097023-4b8d9c3f7767?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bG9nbyUyMGNsaW5pY3xlbnwwfHwwfHx8MA%3D%3D"
-													alt="Clinic"
+													src={session.user.image || ""}
+													alt={session.user.name}
 												/>
-												<AvatarFallback>EM</AvatarFallback>
+												<AvatarFallback>
+													{session.user.name?.charAt(0).toUpperCase()}
+												</AvatarFallback>
 											</Avatar>
 										</Button>
 									</PopoverTrigger>
@@ -236,19 +204,6 @@ const NavbarEmployer = ({
 									</PopoverContent>
 								</Popover>
 							</div>
-						) : (
-							<>
-								<Button asChild variant="outline" size="sm">
-									<Link href={auth.login.url}>{auth.login.text}</Link>
-								</Button>
-								<Button
-									asChild
-									size="sm"
-									className="bg-primary hover:bg-primary/90"
-								>
-									<Link href={auth.signup.url}>{auth.signup.text}</Link>
-								</Button>
-							</>
 						)}
 					</div>
 				</nav>
@@ -311,26 +266,37 @@ const NavbarEmployer = ({
 										</div>
 									</div>
 									<div className="flex flex-col gap-3">
+										{/* Not logged in */}
 										{!session && (
+											<Button asChild variant="outline">
+												<Link href="/login">Login</Link>
+											</Button>
+										)}
+
+										{/* Logged in but not employer */}
+										{session && !session.user.isEmployer && (
+											<Button asChild>
+												<Link href="/employer/register">
+													Register as Employer
+												</Link>
+											</Button>
+										)}
+
+										{/* Logged in as employer */}
+										{session?.user.isEmployer && (
 											<>
-												<Button asChild variant="outline">
-													<Link href={auth.login.url}>{auth.login.text}</Link>
+												<Button asChild>
+													<Link href="/employer/dashboard/jobs/post">
+														Post a Job
+													</Link>
 												</Button>
-												<Button
-													asChild
-													className="bg-primary hover:bg-primary/90"
-												>
-													<Link href={auth.signup.url}>{auth.signup.text}</Link>
+												<Button asChild variant="outline">
+													<Link href="/employer/dashboard">Dashboard</Link>
+												</Button>
+												<Button asChild variant="outline">
+													<Link href="/employer/profile">Profile</Link>
 												</Button>
 											</>
-										)}
-										{session && (
-											<Button
-												asChild
-												className="bg-primary hover:bg-primary/90"
-											>
-												<Link href="/employer/post-job">Post a Job</Link>
-											</Button>
 										)}
 									</div>
 								</div>

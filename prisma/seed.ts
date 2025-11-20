@@ -14,7 +14,7 @@ async function main() {
       name: "Dr. Ahmad Clinic Owner",
       email: "clinic.owner@maulocum.com",
       emailVerified: true,
-      role: UserRole.EMPLOYER,
+      roles: [UserRole.EMPLOYER],
       phoneNumber: "+60123456789",
       phoneNumberVerified: true,
       location: "Kuala Lumpur, Malaysia",

@@ -150,7 +150,7 @@ const NavbarEmployer = ({
 							</NavigationMenu>
 						</div>
 					</div>
-					<div className="flex gap-2">
+					<div className="flex gap-2 ">
 						{/* Notifications */}
 						{session && (
 							<Popover>
@@ -166,7 +166,7 @@ const NavbarEmployer = ({
 									</Button>
 								</PopoverTrigger>
 								<PopoverContent className="w-80 p-4">
-									<div className="space-y-4">
+									<div className="space-y-4 ">
 										<h4 className="font-medium">Notifications</h4>
 										<div className="border-t pt-4">
 											<div className="text-sm">
@@ -253,7 +253,7 @@ const NavbarEmployer = ({
 					</div>
 				</nav>
 				<div className="block lg:hidden">
-					<div className="flex items-center justify-between">
+					<div className="flex items-center justify-between px-2">
 						<Link href={logo.url} className="flex items-center gap-2">
 							<Image
 								width={24}
@@ -283,26 +283,26 @@ const NavbarEmployer = ({
 												className="w-8"
 												alt={logo.alt}
 											/>
-											<span className="text-lg font-semibold text-primary">
+											<span className="text-lg font-semibold text-primary p-4">
 												{logo.title}
 											</span>
 										</Link>
 									</SheetTitle>
 								</SheetHeader>
-								<div className="my-6 flex flex-col gap-6">
+								<div className="m-4 flex flex-col gap-6">
 									<Accordion
 										type="single"
 										collapsible
-										className="flex w-full flex-col gap-4"
+										className="flex w-full flex-col gap-2"
 									>
 										{menu.map((item) => renderMobileMenuItem(item))}
 									</Accordion>
-									<div className="border-t py-4">
-										<div className="grid grid-cols-2 justify-start">
+									<div className="border-t py-4 ">
+										<div className="grid grid-cols-2 justify-start ">
 											{mobileExtraLinks.map((link, idx) => (
 												<Link
 													key={idx}
-													className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-accent-foreground"
+													className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-accent-foreground"
 													href={link.url}
 												>
 													{link.name}
@@ -356,7 +356,7 @@ const renderMenuItem = (item: MenuItem) => {
 							<li key={subItem.title}>
 								<NavigationMenuLink asChild>
 									<Link
-										className="flex select-none gap-4 rounded-md p-3 leading-none no-underline "
+										className="flex select-none text-base gap-4 rounded-md p-3 leading-none no-underline "
 										href={subItem.url}
 									>
 										{subItem.icon}
@@ -401,7 +401,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
 	if (item.items) {
 		return (
 			<AccordionItem key={item.title} value={item.title} className="border-b-0">
-				<AccordionTrigger className="py-0 font-semibold hover:no-underline">
+				<AccordionTrigger className="py-2 text-base font-semibold hover:no-underline">
 					{item.title}
 				</AccordionTrigger>
 				<AccordionContent className="mt-2">

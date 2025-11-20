@@ -191,13 +191,13 @@ const MainNavbar = ({
 					</div>
 				</nav>
 				<div className="block lg:hidden">
-					<div className="flex items-center justify-between px-3">
+					<div className="flex items-center justify-between px-3 ">
 						<Link href={logo.url} className="flex items-center gap-2">
 							<Image
 								width={24}
 								height={24}
 								src={logo.src}
-								className="w-8"
+								className="w-8 min-w-[24px]"
 								alt={logo.alt}
 							/>
 							<span className="text-lg font-semibold">{logo.title}</span>
@@ -212,14 +212,20 @@ const MainNavbar = ({
 								<SheetHeader>
 									<SheetTitle>
 										<Link href={logo.url} className="flex items-center gap-2">
-											<Image src={logo.src} className="w-8" alt={logo.alt} />
+											<Image
+												src={logo.src}
+												width={32}
+												height={32}
+												className="w-8 min-w-[32px]"
+												alt={logo.alt}
+											/>
 											<span className="text-lg font-semibold">
 												{logo.title}
 											</span>
 										</Link>
 									</SheetTitle>
 								</SheetHeader>
-								<div className="my-6 flex flex-col gap-6">
+								<div className="m-4 flex flex-col gap-4 ">
 									<Accordion
 										type="single"
 										collapsible
@@ -243,10 +249,10 @@ const MainNavbar = ({
 									<div className="flex flex-col gap-3">
 										{session?.user ? (
 											<>
-												<div className="flex items-center gap-3 p-3 border rounded-md">
+												<div className="flex items-center gap-3 p-3 text-center rounded-md ">
 													<div className="flex-1">
 														<p className="font-medium">{session.user.name}</p>
-														<p className="text-sm text-muted-foreground">
+														<p className="text-base tracking-wider font-light text-muted-foreground">
 															{session.user.email}
 														</p>
 													</div>
@@ -345,7 +351,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
 	if (item.items) {
 		return (
 			<AccordionItem key={item.title} value={item.title} className="border-b-0">
-				<AccordionTrigger className="py-0 font-semibold hover:no-underline">
+				<AccordionTrigger className="py-0 font-semibold hover:no-underline text-base">
 					{item.title}
 				</AccordionTrigger>
 				<AccordionContent className="mt-2">

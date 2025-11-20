@@ -61,7 +61,7 @@ model User {
   email               String
   emailVerified       Boolean              @default(false)
   image               String?
-  role                UserRole             @default(USER)
+  roles               UserRole[]           @default([USER])
   phoneNumber         String?              @unique
   phoneNumberVerified Boolean              @default(false)
   location            String?

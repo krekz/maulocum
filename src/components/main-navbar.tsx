@@ -25,6 +25,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ProfileAvatar } from "./profile/profile-avatar";
@@ -119,7 +120,7 @@ const MainNavbar = ({
 		signup: { text: "Sign up", url: "/register" },
 	},
 }: Navbar1Props) => {
-	const { data: session } = authClient.useSession();
+	const { data: session, isPending } = authClient.useSession();
 
 	const handleLogout = async () => {
 		await authClient.signOut({
@@ -148,7 +149,12 @@ const MainNavbar = ({
 						</div>
 					</div>
 					<div className="flex gap-2">
-						{session?.user ? (
+						{isPending ? (
+							<div className="flex items-center gap-2">
+								<Skeleton className="h-10 w-10 rounded-full" />
+								<Skeleton className="h-10 w-10 rounded-full" />
+							</div>
+						) : session?.user ? (
 							<>
 								{/* Notifications */}
 								<Popover>
@@ -247,7 +253,18 @@ const MainNavbar = ({
 										</div>
 									</div>
 									<div className="flex flex-col gap-3">
-										{session?.user ? (
+										{isPending ? (
+											<div className="space-y-3">
+												<div className="flex items-center gap-3 p-3 border rounded-md">
+													<Skeleton className="h-10 w-10 rounded-full" />
+													<div className="flex-1 space-y-2">
+														<Skeleton className="h-4 w-24" />
+														<Skeleton className="h-3 w-32" />
+													</div>
+												</div>
+												<Skeleton className="h-10 w-full" />
+											</div>
+										) : session?.user ? (
 											<>
 												<div className="flex items-center gap-3 p-3 text-center rounded-md ">
 													<div className="flex-1">

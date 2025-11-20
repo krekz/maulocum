@@ -136,7 +136,7 @@ class AdminService {
 								name: true,
 								email: true,
 								image: true,
-								role: true,
+								roles: true,
 								createdAt: true,
 							},
 						},
@@ -182,7 +182,7 @@ class AdminService {
 							name: true,
 							email: true,
 							image: true,
-							role: true,
+							roles: true,
 							phoneNumber: true,
 							location: true,
 							createdAt: true,
@@ -219,7 +219,7 @@ class AdminService {
 	}) {
 		try {
 			const where: Prisma.UserWhereInput = {
-				role: "DOCTOR",
+				roles: { has: "DOCTOR" },
 				doctorProfile: {
 					verificationStatus: "APPROVED",
 				},
@@ -300,10 +300,12 @@ class AdminService {
 					},
 				});
 
-				// Update user role to DOCTOR
+				const hasEmployer = doctorProfile.user.roles.includes("EMPLOYER");
 				await prisma.user.update({
 					where: { id: doctorProfile.userId },
-					data: { role: "DOCTOR" },
+					data: {
+						roles: hasEmployer ? { push: "DOCTOR" } : { set: ["DOCTOR"] },
+					},
 				});
 			} else {
 				// REJECT
@@ -428,10 +430,18 @@ class AdminService {
 					message: `Verification already ${verification.verificationStatus.toLowerCase()}`,
 				});
 			}
-
+			const roles = verification.facility.owner.roles;
+			const isDoctor = roles.includes("DOCTOR");
 			const updatedVerification = await prisma.facility.update({
 				where: { id: verification.facilityId },
 				data: {
+					owner: {
+						update: {
+							roles: {
+								set: isDoctor ? ["EMPLOYER", "DOCTOR"] : ["EMPLOYER"],
+							},
+						},
+					},
 					facilityVerification: {
 						update: {
 							verificationStatus:
@@ -470,7 +480,7 @@ class AdminService {
 	// USER SERVICES
 	// ============================================
 
-	async getUsers({
+	async getAllUsers({
 		role,
 		limit,
 		offset,
@@ -480,7 +490,7 @@ class AdminService {
 		offset: number;
 	}) {
 		try {
-			const where: Prisma.UserWhereInput = role ? { role: role } : {};
+			const where: Prisma.UserWhereInput = role ? { roles: { has: role } } : {};
 
 			const [users, total] = await Promise.all([
 				prisma.user.findMany({
@@ -528,7 +538,7 @@ class AdminService {
 		try {
 			const user = await prisma.user.update({
 				where: { id: userId },
-				data: { role },
+				data: { roles: { set: [role] } },
 				include: { doctorProfile: true },
 			});
 

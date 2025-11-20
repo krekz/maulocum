@@ -1,7 +1,7 @@
 import { hc } from "hono/client";
 import { AlertCircle, Check, Clock, XCircle } from "lucide-react";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { APIType } from "@/app/api/[...route]/route";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -28,16 +28,36 @@ export default async function ProfilePage() {
 		},
 	});
 
+	if (!res.ok) {
+		switch (res.status) {
+			case 401:
+			case 403:
+			case 404:
+				return notFound();
+			default:
+				return (
+					<div className="min-h-screen flex items-center justify-center">
+						<p>Something went wrong. Please try again later.</p>
+					</div>
+				);
+		}
+	}
+
 	const data = await res.json();
 
 	const user = data.data;
+	if (!user) {
+		throw new Error("User not found");
+	}
 
-	const needsVerification = user?.role === "USER" && !user?.doctorProfile;
+	const needsVerification =
+		(user?.roles?.includes("USER") || user?.roles?.includes("EMPLOYER")) &&
+		!user?.doctorProfile;
 	const verificationPending =
 		user?.doctorProfile?.verificationStatus === "PENDING";
 	const verificationRejected =
 		user?.doctorProfile?.verificationStatus === "REJECTED";
-	const isVerified = user?.role === "DOCTOR";
+	const isVerified = user?.roles?.includes("DOCTOR");
 
 	return (
 		<>

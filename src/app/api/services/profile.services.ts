@@ -39,7 +39,7 @@ class ProfileServices {
 		try {
 			const user = await prisma.user.update({
 				where: { id: userId },
-				data: { role },
+				data: { roles: { set: [role] } },
 			});
 
 			if (!user) {

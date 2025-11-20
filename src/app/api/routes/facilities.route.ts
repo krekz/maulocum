@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireActiveEmployer } from "../lib/api-utils";
 import { facilityService } from "../services/facilities.service";
 import {
 	createContactInfoSchema,
@@ -10,12 +10,14 @@ import {
 	facilityQuerySchema,
 	facilityRegistrationApiSchema,
 } from "../types/facilities.types";
+import type { AppVariables } from "../types/hono.types";
 import { jobPostSchema } from "../types/jobs.types";
 
-const app = new Hono()
+const app = new Hono<{ Variables: AppVariables }>()
 	/**
 	 * GET /api/v2/facilities
 	 * Get all facilities with pagination and filtering
+	 * @PUBLIC endpoint
 	 */
 	.get("/", zValidator("query", facilityQuerySchema), async (c) => {
 		try {
@@ -43,28 +45,33 @@ const app = new Hono()
 	/**
 	 * GET /api/v2/facility/my-fility
 	 * Get current user's facility
+	 * @PROTECTED route
 	 */
-	.get("/my-facility", async (c) => {
+	.get("/my-facility", requireActiveEmployer, async (c) => {
 		try {
-			const session = await auth.api.getSession({
-				headers: c.req.raw.headers,
-			});
+			// Facility profile is already fetched and validated by middleware
+			const facilityProfile = c.get("facilityProfile");
 
-			if (!session?.user?.id) {
-				throw new HTTPException(401, {
-					message: "Unauthorized",
-				});
-			}
-
-			const facility = await facilityService.getUserFacilityProfile(
-				session.user.id,
-			);
-
+			// Omit sensitive owner data from response
+			const { user, facility, ...facilityData } = facilityProfile;
 			return c.json(
 				{
 					success: true,
 					message: "Facility fetched successfully",
-					data: facility,
+					data: {
+						...facilityData,
+						facility: {
+							name: facility.name,
+							address: facility.address,
+							contactPhone: facility.contactPhone,
+							contactEmail: facility.contactEmail,
+							contactInfo: facility.contactInfo,
+							facilityVerification: facility.facilityVerification,
+						},
+						user: {
+							name: user.name,
+						},
+					},
 				},
 				200,
 			);
@@ -85,8 +92,9 @@ const app = new Hono()
 	/**
 	 * POST /api/v2/facilities/jobs
 	 * Post a job for employer's facility
+	 * @PROTECTED route
 	 */
-	.post("/jobs", async (c) => {
+	.post("/jobs", requireActiveEmployer, async (c) => {
 		try {
 			const body = await c.req.json();
 
@@ -98,9 +106,21 @@ const app = new Hono()
 			};
 
 			// Validate with transformed data
-			const validatedData = jobPostSchema.parse(transformedData);
+			const validatedData = jobPostSchema.safeParse(transformedData);
+			if (!validatedData.success) {
+				console.error(validatedData.error);
+				throw new HTTPException(400, {
+					message: "Validation data failed",
+				});
+			}
 
-			await facilityService.postJob(validatedData, c);
+			// Get facility data from middleware context
+			const facilityProfile = c.get("facilityProfile");
+			await facilityService.postJob(
+				validatedData.data,
+				facilityProfile.facilityId,
+				facilityProfile.id,
+			);
 			return c.json(
 				{
 					success: true,
@@ -124,10 +144,14 @@ const app = new Hono()
 	/**
 	 * GET /api/v2/facilities/jobs
 	 * Get all jobs posted by employer's facility
+	 * @PROTECTED route
 	 */
-	.get("/jobs", async (c) => {
+	.get("/jobs", requireActiveEmployer, async (c) => {
 		try {
-			const jobs = await facilityService.getMyFacilityJobs(c);
+			const facilityProfile = c.get("facilityProfile");
+			const jobs = await facilityService.getMyFacilityJobs(
+				facilityProfile.facilityId,
+			);
 			return c.json({
 				success: true,
 				message: "Jobs fetched successfully",
@@ -147,9 +171,150 @@ const app = new Hono()
 		}
 	})
 
+	.get(
+		"/jobs/:id",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Fetch job with ownership verification
+				const job = await facilityService.getJobById(
+					id,
+					facilityProfile.facilityId,
+				);
+
+				return c.json({
+					success: true,
+					message: "Job fetched successfully",
+					data: job,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/jobs/:id/close
+	 * Close a job posting
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/jobs/:id/close",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Close job with ownership verification
+				await facilityService.closeJob(id, facilityProfile.facilityId);
+
+				return c.json({
+					success: true,
+					message: "Job closed successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/jobs/:id/reopen
+	 * Reopen a closed job posting
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/jobs/:id/reopen",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Reopen job with ownership verification
+				await facilityService.reopenJob(id, facilityProfile.facilityId);
+
+				return c.json({
+					success: true,
+					message: "Job reopened successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * DELETE /api/v2/facilities/jobs/:id
+	 * Delete a job posting
+	 * @PROTECTED route
+	 */
+	.delete(
+		"/jobs/:id",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Delete job with ownership verification
+				await facilityService.deleteJob(id, facilityProfile.facilityId);
+
+				return c.json({
+					success: true,
+					message: "Job deleted successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
 	/**
 	 * GET /api/v2/facilities/:id
 	 * Get a single facility by ID
+	 * @PUBLIC endpoint
 	 */
 	.get("/:id", zValidator("param", z.object({ id: z.string() })), async (c) => {
 		try {
@@ -187,6 +352,7 @@ const app = new Hono()
 	/**
 	 * POST /api/v2/facilities
 	 * Create or Register a new facility with file uploads
+	 * @USER endpoint
 	 */
 	.post("/", zValidator("form", facilityRegistrationApiSchema), async (c) => {
 		try {
@@ -216,16 +382,27 @@ const app = new Hono()
 
 	/**
 	 * PATCH /api/v2/facilities/:id
-	 * Update an existing facility
+	 * Update an existing facility while in pending verification
+	 * @PROTECTED route
 	 */
 	.patch(
 		"/:id",
+		requireActiveEmployer,
 		zValidator("param", z.object({ id: z.string() })),
-		zValidator("json", facilityRegistrationApiSchema),
+		zValidator("form", facilityRegistrationApiSchema),
 		async (c) => {
 			try {
 				const { id } = c.req.valid("param");
-				const data = c.req.valid("json");
+				const data = c.req.valid("form");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Security: Verify facility ownership
+				if (id !== facilityProfile.facilityId) {
+					throw new HTTPException(403, {
+						message: "Forbidden - You don't have access to this facility",
+					});
+				}
+
 				const facility = await facilityService.updateFacility(id, data);
 				return c.json({
 					success: true,
@@ -250,46 +427,55 @@ const app = new Hono()
 	/**
 	 * DELETE /api/v2/facilities/:id
 	 * Delete a facility
+	 * @PROTECTED route
 	 */
-	.delete(
-		"/:id",
-		zValidator("param", z.object({ id: z.string() })),
-		async (c) => {
-			try {
-				const { id } = c.req.valid("param");
-				await facilityService.deleteFacility(id);
-				return c.json({
-					success: true,
-					message: "Facility deleted successfully",
+	.delete("/:id", requireActiveEmployer, async (c) => {
+		try {
+			// Facility profile is already fetched and validated by middleware
+			const facilityProfile = c.get("facilityProfile");
+			await facilityService.deleteFacility(facilityProfile.id);
+			return c.json({
+				success: true,
+				message: "Facility deleted successfully",
+				data: null,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
 					data: null,
-				});
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
+				},
+				httpError.status,
+			);
+		}
+	})
 
 	/**
 	 * POST /api/v2/facilities/:id/contact
 	 * Add contact info to facility
+	 * @PROTECTED route
 	 */
 	.post(
 		"/:id/contact",
+		requireActiveEmployer,
 		zValidator("param", z.object({ id: z.string() })),
 		zValidator("json", createContactInfoSchema.omit({ facilityId: true })),
 		async (c) => {
 			try {
 				const { id } = c.req.valid("param");
 				const data = c.req.valid("json");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Security: Verify facility ownership
+				if (id !== facilityProfile.facilityId) {
+					throw new HTTPException(403, {
+						message: "Forbidden - You don't have access to this facility",
+					});
+				}
+
 				const contact = await facilityService.addContactInfo({
 					...data,
 					facilityId: id,
@@ -320,9 +506,11 @@ const app = new Hono()
 	/**
 	 * POST /api/v2/facilities/:id/review
 	 * Add review to facility
+	 * @PROTECTED route
 	 */
 	.post(
 		"/:id/review",
+		// todo: requireactiveDoctor (doctor review the employer)
 		zValidator("param", z.object({ id: z.string() })),
 		zValidator("json", createReviewSchema.omit({ facilityId: true })),
 		async (c) => {

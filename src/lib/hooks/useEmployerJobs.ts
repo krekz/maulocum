@@ -46,5 +46,6 @@ export function useMyFacilityJobs() {
 
 			return res.json();
 		},
+		retry: 1,
 	});
 }

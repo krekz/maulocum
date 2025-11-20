@@ -1,6 +1,15 @@
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { SectionCards } from "@/components/section-cards";
+import { auth } from "@/lib/auth";
 
-function DashboardHome() {
+async function DashboardHome() {
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	if (!session) notFound();
+	if (!session.user.isEmployer) notFound();
 	return (
 		<>
 			<SectionCards />

@@ -85,9 +85,12 @@ export class JobService {
 			if (session?.user?.id) {
 				const user = await prisma.user.findUnique({
 					where: { id: session.user.id },
-					select: { role: true },
+					select: { roles: true },
 				});
-				hasFullAccess = user?.role === "DOCTOR" || user?.role === "ADMIN";
+				hasFullAccess =
+					user?.roles.includes("DOCTOR") ||
+					user?.roles.includes("ADMIN") ||
+					false;
 			}
 
 			if (hasFullAccess) {

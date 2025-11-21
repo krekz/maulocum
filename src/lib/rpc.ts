@@ -9,3 +9,6 @@ export const client = hc<APIType>("/", {
 export const backendApi = hc<APIType>(process.env.BETTER_AUTH_URL as string);
 
 export type JobResponse = InferResponseType<typeof backendApi.api.v2.jobs.$get>;
+const $getJob = backendApi.api.v2.facilities.jobs[":id"].$get;
+
+export type JobDetailProps = InferResponseType<typeof $getJob>;

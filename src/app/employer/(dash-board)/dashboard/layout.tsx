@@ -1,6 +1,6 @@
-import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import EmployerAppSidebar from "./_components/employer-appsidebar";
 
 export default function EmployerDashboardLayout({
 	children,
@@ -9,46 +9,7 @@ export default function EmployerDashboardLayout({
 }) {
 	return (
 		<SidebarProvider>
-			<AppSidebar
-				data={{
-					header: {
-						title: "MauLocum",
-						url: "/employer/dashboard",
-					},
-					basic: [
-						{
-							title: "Dashboard",
-							url: "/employer/dashboard",
-						},
-					],
-					collapsible: [
-						{
-							title: "Jobs",
-							url: "/employer/dashboard/jobs",
-							items: [
-								{
-									title: "Post Job",
-									url: "/employer/dashboard/jobs/post",
-								},
-								{
-									title: "All Jobs",
-									url: "/employer/dashboard/jobs",
-								},
-							],
-						},
-						{
-							title: "Staff",
-							url: "/employer/dashboard/staff",
-							items: [
-								{
-									title: "All Staff",
-									url: "/employer/dashboard/staff/all",
-								},
-							],
-						},
-					],
-				}}
-			/>
+			<EmployerAppSidebar />
 			<SidebarInset>
 				<SiteHeader />
 				<div className="flex flex-1 flex-col">

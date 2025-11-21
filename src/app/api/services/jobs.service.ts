@@ -4,12 +4,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import {
-	type CreateJobApplicationInput,
 	fullAccessSelect,
 	type GetJobsPromiseReturn,
 	type JobQuery,
 	limitedAccessSelect,
-	type UpdateJobApplicationInput,
 } from "../types/jobs.types";
 
 // This is for public endpoint in /jobs page. for creating/updating/deleting jobs, is on facility service
@@ -152,127 +150,5 @@ export class JobService {
 	}
 }
 
-// Job Application Service (Single Responsibility Principle)
-export class JobApplicationService {
-	// Create job application
-	async createApplication(data: CreateJobApplicationInput) {
-		// Check if already applied
-		const existing = await prisma.jobApplication.findUnique({
-			where: {
-				jobId: data.jobId,
-				doctorProfileId: data.applicantId,
-			},
-		});
-
-		if (existing) {
-			throw new Error("You have already applied to this job");
-		}
-
-		return prisma.jobApplication.create({
-			data,
-			include: {
-				job: {
-					select: {
-						id: true,
-						title: true,
-						facility: {
-							select: {
-								name: true,
-							},
-						},
-					},
-				},
-			},
-		});
-	}
-
-	// Get application by ID
-	async getApplicationById(id: string) {
-		return prisma.jobApplication.findUnique({
-			where: { id },
-			include: {
-				job: {
-					include: {
-						facility: true,
-					},
-				},
-				DoctorProfile: {
-					select: {
-						id: true,
-						fullName: true,
-						phoneNumber: true,
-						user: {
-							select: {
-								email: true,
-							},
-						},
-					},
-				},
-			},
-		});
-	}
-
-	// Get applications by job
-	async getApplicationsByJob(jobId: string) {
-		return prisma.jobApplication.findMany({
-			where: { jobId },
-			orderBy: { appliedAt: "desc" },
-			select: {
-				DoctorProfile: {
-					select: {
-						id: true,
-						fullName: true,
-						user: {
-							select: {
-								email: true,
-							},
-						},
-						phoneNumber: true,
-					},
-				},
-			},
-		});
-	}
-
-	// Get applications by user
-	async getApplicationsByUser(applicantId: string) {
-		return prisma.jobApplication.findMany({
-			where: { doctorProfileId: applicantId },
-			orderBy: { appliedAt: "desc" },
-			select: {
-				job: {
-					select: {
-						id: true,
-						title: true,
-						facility: {
-							select: {
-								id: true,
-								name: true,
-								address: true,
-							},
-						},
-					},
-				},
-			},
-		});
-	}
-
-	// Update application status
-	async updateApplication(id: string, data: UpdateJobApplicationInput) {
-		return prisma.jobApplication.update({
-			where: { id },
-			data,
-		});
-	}
-
-	// Delete application
-	async deleteApplication(id: string) {
-		return prisma.jobApplication.delete({
-			where: { id },
-		});
-	}
-}
-
 // Export singleton instances
 export const jobService = new JobService();
-export const jobApplicationService = new JobApplicationService();

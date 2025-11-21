@@ -2,11 +2,8 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { jobApplicationService, jobService } from "../services/jobs.service";
-import {
-	createJobApplicationSchema,
-	jobQuerySchema,
-} from "../types/jobs.types";
+import { jobService } from "../services/jobs.service";
+import { jobQuerySchema } from "../types/jobs.types";
 
 // Initialize jobs route
 const app = new Hono()
@@ -64,77 +61,6 @@ const app = new Hono()
 				httpError.status,
 			);
 		}
-	})
-
-	/**
-	 * POST /api/v2/jobs/:jobId/apply
-	 * Apply to a job
-	 */
-	.post(
-		"/:jobId/apply",
-		zValidator("param", z.object({ jobId: z.string() })),
-		zValidator("json", createJobApplicationSchema),
-		async (c) => {
-			try {
-				const { jobId } = c.req.valid("param");
-				const data = c.req.valid("json");
-				const application = await jobApplicationService.createApplication({
-					...data,
-					jobId,
-				});
-				return c.json(
-					{
-						success: true,
-						message: "Application submitted successfully",
-						data: application,
-					},
-					201,
-				);
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
-
-	/**
-	 * GET /api/v2/jobs/:jobId/applications
-	 * Get applications for a job
-	 */
-	.get(
-		"/:jobId/applications",
-		zValidator("param", z.object({ jobId: z.string() })),
-		async (c) => {
-			try {
-				const { jobId } = c.req.valid("param");
-				const applications =
-					await jobApplicationService.getApplicationsByJob(jobId);
-				return c.json({
-					success: true,
-					message: "Applications fetched successfully",
-					data: applications,
-				});
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	);
+	});
 
 export default app;

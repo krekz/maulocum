@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import adminRoute from "@/app/api/routes/admin.route";
+import doctorsRoute from "@/app/api/routes/doctors.route";
 import facilitiesRoute from "@/app/api/routes/facilities.route";
 import jobsRoute from "@/app/api/routes/jobs.route";
 import profileRoute from "@/app/api/routes/profile.route";
@@ -16,6 +17,7 @@ const routes = app
 	.route("/jobs", jobsRoute)
 	.route("/facilities", facilitiesRoute)
 	.route("/profile", profileRoute)
+	.route("/doctors", doctorsRoute)
 	.route("/admin", adminRoute);
 
 export const GET = app.fetch;

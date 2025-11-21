@@ -246,24 +246,17 @@ export const jobQuerySchema = z.object({
 
 // Job application schema
 export const createJobApplicationSchema = z.object({
-	jobId: z.cuid(),
-	applicantId: z.cuid(),
-	status: z.string().default("pending"),
-	coverLetter: z.string().optional(),
-});
-
-export const updateJobApplicationSchema = z.object({
-	status: z.string(),
-	coverLetter: z.string().optional(),
+	jobId: z.string().min(1, "Job ID is required"),
+	coverLetter: z
+		.string()
+		.max(1000, "Cover letter must be less than 1000 characters")
+		.optional(),
 });
 
 // Type exports
 export type JobQuery = z.infer<typeof jobQuerySchema>;
 export type CreateJobApplicationInput = z.infer<
 	typeof createJobApplicationSchema
->;
-export type UpdateJobApplicationInput = z.infer<
-	typeof updateJobApplicationSchema
 >;
 
 export type JobPostFormValues = z.infer<typeof jobPostSchema>;

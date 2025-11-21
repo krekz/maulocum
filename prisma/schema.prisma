@@ -209,8 +209,9 @@ model JobApplication {
   DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   doctorProfileId String?
 
-  @@unique([jobId])
+  @@unique([jobId, doctorProfileId])
   @@index([jobId])
+  @@index([doctorProfileId])
   @@map("job_application")
 }
 

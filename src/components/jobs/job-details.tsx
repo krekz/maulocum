@@ -415,6 +415,7 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 				<ApplyJobDialog
 					trigger={<Button>Apply Now</Button>}
 					jobTitle={selectedJob.title}
+					jobId={selectedJob.id}
 				/>
 			</div>
 		</div>

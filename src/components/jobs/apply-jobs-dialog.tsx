@@ -1,7 +1,9 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Upload } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -14,17 +16,46 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { client } from "@/lib/rpc";
 
 function ApplyJobDialog({
 	trigger,
 	jobTitle = "This Position",
+	jobId,
 }: {
 	trigger?: React.ReactNode;
 	jobTitle?: string;
+	jobId: string;
 }) {
 	const [open, setOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [coverLetter, setCoverLetter] = useState("");
 	const [file, setFile] = useState<File | null>(null);
+	const queryClient = useQueryClient();
+
+	const applyMutation = useMutation({
+		mutationFn: async (data: { jobId: string; coverLetter?: string }) => {
+			const response = await client.api.v2.doctors.applications.$post({
+				json: data,
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || "Failed to submit application");
+			}
+
+			return response.json();
+		},
+		onSuccess: () => {
+			toast.success("Application submitted successfully!");
+			queryClient.invalidateQueries({ queryKey: ["doctor-applications"] });
+			setOpen(false);
+			setCoverLetter("");
+			setFile(null);
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || "Failed to submit application");
+		},
+	});
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files?.[0]) {
@@ -34,14 +65,10 @@ function ApplyJobDialog({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsSubmitting(true);
-
-		// Simulate API call
-		setTimeout(() => {
-			setIsSubmitting(false);
-			setOpen(false);
-			// Reset form here if needed
-		}, 1000);
+		applyMutation.mutate({
+			jobId,
+			coverLetter: coverLetter.trim() || undefined,
+		});
 	};
 
 	return (
@@ -62,8 +89,11 @@ function ApplyJobDialog({
 						<Label htmlFor="cover-note">Additional Notes (Optional)</Label>
 						<Textarea
 							id="cover-note"
+							value={coverLetter}
+							onChange={(e) => setCoverLetter(e.target.value)}
 							placeholder="Share any relevant experience or availability information..."
 							className="min-h-[100px]"
+							maxLength={1000}
 						/>
 					</div>
 
@@ -114,8 +144,8 @@ function ApplyJobDialog({
 						>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Applying..." : "Apply Now"}
+						<Button type="submit" disabled={applyMutation.isPending}>
+							{applyMutation.isPending ? "Applying..." : "Apply Now"}
 						</Button>
 					</DialogFooter>
 				</form>

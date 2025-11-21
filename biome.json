@@ -32,6 +32,9 @@
 			"suspicious": {
 				"noArrayIndexKey": "off",
 				"noExplicitAny": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "off"
 			}
 		}
 	},

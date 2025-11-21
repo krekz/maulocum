@@ -94,3 +94,66 @@ export const requireAuth = async (c: Context, next: Next) => {
 
 	await next();
 };
+
+export const requireValidDoctorProfile = async (c: Context, next: Next) => {
+	const session = await auth.api.getSession({
+		headers: c.req.raw.headers,
+	});
+
+	if (!session?.user) {
+		console.error("[ERROR] Middleware - No user session found");
+		return c.json(
+			{
+				success: false,
+				data: null,
+				message: "Unauthorized - Please login",
+			},
+			401,
+		);
+	}
+
+	// Fetch doctor profile with verification status
+	const doctorProfile = await prisma.doctorProfile.findUnique({
+		where: { userId: session.user.id },
+		include: {
+			user: true,
+		},
+	});
+
+	// Security: Check doctor profile exists
+	if (!doctorProfile) {
+		console.error(
+			`[ERROR] Middleware - No doctor profile found for user ${session.user.id}`,
+		);
+		return c.json(
+			{
+				success: false,
+				data: null,
+				message:
+					"Forbidden - Doctor profile not found. Please complete your profile.",
+			},
+			403,
+		);
+	}
+
+	// Security: Verify doctor profile is approved
+	if (doctorProfile.verificationStatus !== "APPROVED") {
+		console.error(
+			`[ERROR] Middleware - Doctor profile ${doctorProfile.id} not approved (status: ${doctorProfile.verificationStatus})`,
+		);
+		return c.json(
+			{
+				success: false,
+				data: null,
+				message: `Forbidden - Your doctor profile is ${doctorProfile.verificationStatus.toLowerCase()}. Please wait for approval.`,
+			},
+			403,
+		);
+	}
+
+	// Store doctor profile in context for downstream use
+	c.set("doctorProfile", doctorProfile);
+	c.set("session", session);
+
+	await next();
+};

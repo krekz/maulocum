@@ -11,7 +11,7 @@ import {
 	facilityRegistrationApiSchema,
 } from "../types/facilities.types";
 import type { AppVariables } from "../types/hono.types";
-import { jobPostSchema } from "../types/jobs.types";
+import { jobPostInputSchema, jobPostSchema } from "../types/jobs.types";
 
 const app = new Hono<{ Variables: AppVariables }>()
 	/**
@@ -199,6 +199,55 @@ const app = new Hono<{ Variables: AppVariables }>()
 						success: false,
 						message: httpError.message,
 						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/jobs/:id
+	 * Update a job posting
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/jobs/:id",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		zValidator("json", jobPostInputSchema),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const body = c.req.valid("json");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Transform string dates to Date objects for Prisma
+				const transformedData = {
+					...body,
+					startDate: new Date(body.startDate),
+					endDate: new Date(body.endDate),
+				};
+
+				// Update job with ownership verification
+				const updatedJob = await facilityService.updateJob(
+					id,
+					facilityProfile.facilityId,
+					transformedData,
+				);
+
+				return c.json({
+					success: true,
+					message: "Job updated successfully",
+					data: updatedJob,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
 					},
 					httpError.status,
 				);

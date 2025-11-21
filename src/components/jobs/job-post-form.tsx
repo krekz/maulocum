@@ -38,26 +38,45 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SPECIALIST_OPTIONS } from "@/lib/constant";
 import { usePostJob } from "@/lib/hooks/useEmployerJobs";
+import type { JobDetailProps } from "@/lib/rpc";
 import { cn } from "@/lib/utils";
 
-export function JobPostForm() {
+interface JobPostFormProps {
+	mode?: "create" | "edit";
+	initialData?: JobDetailProps["data"];
+	onSubmitSuccess?: (data: JobPostFormValues) => void;
+}
+
+export function JobPostForm({
+	mode = "create",
+	initialData,
+	onSubmitSuccess,
+}: JobPostFormProps) {
 	const router = useRouter();
-	const [selectedSpecialists, setSelectedSpecialists] = useState<string[]>([]);
+	const [selectedSpecialists, setSelectedSpecialists] = useState<string[]>(
+		initialData?.requiredSpecialists || [],
+	);
 	const postJobMutation = usePostJob();
 
 	const form = useForm<JobPostFormValues>({
 		resolver: zodResolver(jobPostSchema),
 		defaultValues: {
-			title: "",
-			description: "",
-			location: "",
-			payRate: "",
-			payBasis: "HOURLY",
-			startTime: "",
-			endTime: "",
-			jobType: "LOCUM",
-			urgency: "MEDIUM",
-			requiredSpecialists: [],
+			title: initialData?.title || "",
+			description: initialData?.description || "",
+			location: initialData?.location || "",
+			payRate: initialData?.payRate || "",
+			payBasis: initialData?.payBasis || "HOURLY",
+			startTime: initialData?.startTime || "",
+			endTime: initialData?.endTime || "",
+			jobType: initialData?.jobType || "LOCUM",
+			urgency: initialData?.urgency || "MEDIUM",
+			requiredSpecialists: initialData?.requiredSpecialists || [],
+			startDate: initialData?.startDate
+				? new Date(initialData?.startDate)
+				: undefined,
+			endDate: initialData?.endDate
+				? new Date(initialData?.endDate)
+				: undefined,
 		},
 	});
 
@@ -74,9 +93,15 @@ export function JobPostForm() {
 
 	const onSubmit = async (data: JobPostFormValues) => {
 		try {
-			await postJobMutation.mutateAsync(data);
-			toast.success("Job posted successfully!");
-			router.push("/employer/dashboard/jobs");
+			if (mode === "edit" && initialData?.id) {
+				// Edit mode will be handled by parent component
+				onSubmitSuccess?.(data);
+			} else {
+				// Create mode
+				await postJobMutation.mutateAsync(data);
+				toast.success("Job posted successfully!");
+				router.push("/employer/dashboard/jobs");
+			}
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to post job",
@@ -438,8 +463,10 @@ export function JobPostForm() {
 						{postJobMutation.isPending ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Posting...
+								{mode === "edit" ? "Updating..." : "Posting..."}
 							</>
+						) : mode === "edit" ? (
+							"Update Job"
 						) : (
 							"Post Job"
 						)}

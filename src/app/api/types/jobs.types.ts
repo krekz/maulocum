@@ -162,12 +162,50 @@ export const JobType = {
 	CONTRACT: "CONTRACT",
 } as const;
 
-// Form validation schema
+// API input schema (accepts string dates from HTTP)
+export const jobPostInputSchema = z
+	.object({
+		title: z.string().optional(),
+		description: z.string().optional(),
+		location: z.string().optional(),
+		payRate: z.string().min(1, "Pay rate is required"),
+		payBasis: z.enum(PayBasis),
+		startTime: z
+			.string()
+			.regex(
+				/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+				"Invalid time format (HH:MM)",
+			),
+		endTime: z
+			.string()
+			.regex(
+				/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+				"Invalid time format (HH:MM)",
+			),
+		startDate: z.string(),
+		endDate: z.string(),
+		jobType: z.enum(JobType),
+		urgency: z.enum(JobUrgency),
+		requiredSpecialists: z.array(z.string()),
+	})
+	.refine(
+		(data) => {
+			const start = new Date(data.startDate);
+			const end = new Date(data.endDate);
+			return end >= start;
+		},
+		{
+			message: "End date must be after or equal to start date",
+			path: ["endDate"],
+		},
+	);
+
+// Form validation schema (uses Date objects for client-side forms)
 export const jobPostSchema = z
 	.object({
 		title: z.string().optional(),
 		description: z.string().optional(),
-		location: z.string(),
+		location: z.string().optional(),
 		payRate: z.string().min(1, "Pay rate is required"),
 		payBasis: z.enum(PayBasis),
 		startTime: z

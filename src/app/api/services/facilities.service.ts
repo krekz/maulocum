@@ -560,6 +560,44 @@ export class FacilityService {
 		}
 	}
 
+	// Update a job posting
+	async updateJob(jobId: string, facilityId: string, data: JobPostFormValues) {
+		try {
+			// First verify the job belongs to this facility
+			const job = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: { facilityId: true, status: true },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Security: Verify ownership
+			if (job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			// Update the job
+			const updatedJob = await prisma.job.update({
+				where: { id: jobId },
+				data,
+			});
+
+			return updatedJob;
+		} catch (error) {
+			console.error("Error in facility.service.updateJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to update job",
+			});
+		}
+	}
+
 	// Delete a job posting
 	async deleteJob(jobId: string, facilityId: string) {
 		try {

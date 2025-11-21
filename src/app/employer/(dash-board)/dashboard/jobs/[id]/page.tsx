@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CloseJobButton } from "@/components/employer/close-job-button";
 import { DeleteJobButton } from "@/components/employer/delete-job-button";
@@ -242,12 +243,12 @@ async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 
 						{/* Action Buttons */}
 						<div className="mt-6 space-y-3">
-							<button
-								type="button"
-								className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+							<Link
+								href={`/employer/dashboard/jobs/${job.id}/edit`}
+								className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-center"
 							>
 								Edit Job
-							</button>
+							</Link>
 							<button
 								type="button"
 								className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition-colors"

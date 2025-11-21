@@ -256,6 +256,45 @@ const app = new Hono<{ Variables: AppVariables }>()
 	)
 
 	/**
+	 * GET /api/v2/facilities/jobs/:id/applicants
+	 * Get all applicants for a specific job
+	 * @PROTECTED route
+	 */
+	.get(
+		"/jobs/:id/applicants",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const facilityProfile = c.get("facilityProfile");
+
+				// Get job applicants with ownership verification
+				const applicants = await facilityService.getJobApplicants(
+					id,
+					facilityProfile.facilityId,
+				);
+
+				return c.json({
+					success: true,
+					message: "Applicants fetched successfully",
+					data: applicants,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
 	 * PATCH /api/v2/facilities/jobs/:id/close
 	 * Close a job posting
 	 * @PROTECTED route

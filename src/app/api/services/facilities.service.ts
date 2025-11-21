@@ -560,6 +560,65 @@ export class FacilityService {
 		}
 	}
 
+	// Get all applicants for a job
+	async getJobApplicants(jobId: string, facilityId: string) {
+		try {
+			// First verify the job belongs to this facility
+			const job = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: { facilityId: true },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Security: Verify ownership
+			if (job.facilityId !== facilityId) {
+				throw new HTTPException(403, {
+					message: "Forbidden - You don't have access to this job",
+				});
+			}
+
+			// Get all applicants for this job
+			const applicants = await prisma.jobApplication.findMany({
+				where: { jobId },
+				include: {
+					DoctorProfile: {
+						select: {
+							id: true,
+							fullName: true,
+							phoneNumber: true,
+							location: true,
+							specialty: true,
+							yearsOfExperience: true,
+							verificationStatus: true,
+							user: {
+								select: {
+									email: true,
+									image: true,
+								},
+							},
+						},
+					},
+				},
+				orderBy: {
+					appliedAt: "desc",
+				},
+			});
+
+			return applicants;
+		} catch (error) {
+			console.error("Error in facility.service.getJobApplicants:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch job applicants",
+			});
+		}
+	}
+
 	// Update a job posting
 	async updateJob(jobId: string, facilityId: string, data: JobPostFormValues) {
 		try {

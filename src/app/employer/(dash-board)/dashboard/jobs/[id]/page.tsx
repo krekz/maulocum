@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CloseJobButton } from "@/components/employer/close-job-button";
 import { DeleteJobButton } from "@/components/employer/delete-job-button";
+import { JobApplicantsTable } from "@/components/employer/job-applicants-table";
 import { ReopenJobButton } from "@/components/employer/reopen-job-button";
 import { backendApi } from "@/lib/rpc";
 
@@ -276,6 +277,11 @@ async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 						</div>
 					</div>
 				</div>
+			</div>
+
+			{/* Applicants Section */}
+			<div className="mt-8">
+				<JobApplicantsTable jobId={job.id} />
 			</div>
 		</div>
 	);

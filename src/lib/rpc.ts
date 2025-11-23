@@ -10,5 +10,10 @@ export const backendApi = hc<APIType>(process.env.BETTER_AUTH_URL as string);
 
 export type JobResponse = InferResponseType<typeof backendApi.api.v2.jobs.$get>;
 const $getJob = backendApi.api.v2.facilities.jobs[":id"].$get;
-
 export type JobDetailProps = InferResponseType<typeof $getJob>;
+
+const $getVerifiedVerifications =
+	client.api.v2.admin.doctors.verifications.verified.$get;
+export type VerifiedVerificationsProps = InferResponseType<
+	typeof $getVerifiedVerifications
+>;

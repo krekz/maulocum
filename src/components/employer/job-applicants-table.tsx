@@ -113,7 +113,10 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 												src={application.DoctorProfile.user.image}
 												width={40}
 												height={40}
-												alt={application.DoctorProfile.fullName}
+												alt={
+													application.DoctorProfile.doctorVerification
+														?.fullName ?? "Doctor"
+												}
 												className="h-10 w-10 rounded-full object-cover"
 											/>
 										) : (
@@ -123,10 +126,12 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 										)}
 										<div>
 											<p className="font-medium text-gray-900">
-												{application.DoctorProfile?.fullName || "Unknown"}
+												{application.DoctorProfile?.doctorVerification
+													?.fullName ?? "Unknown"}
 											</p>
 											<p className="text-sm text-gray-500">
-												{application.DoctorProfile?.yearsOfExperience || 0}{" "}
+												{application.DoctorProfile?.doctorVerification
+													?.yearsOfExperience ?? 0}{" "}
 												years exp.
 											</p>
 										</div>
@@ -143,7 +148,8 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 										<div className="flex items-center gap-2 text-sm text-gray-600">
 											<Phone className="h-4 w-4" />
 											<span>
-												{application.DoctorProfile?.phoneNumber || "N/A"}
+												{application.DoctorProfile?.doctorVerification
+													?.phoneNumber ?? "N/A"}
 											</span>
 										</div>
 									</div>
@@ -151,27 +157,34 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 								<TableCell>
 									<div className="flex items-center gap-2 text-sm text-gray-600">
 										<MapPin className="h-4 w-4" />
-										<span>{application.DoctorProfile?.location || "N/A"}</span>
+										<span>
+											{application.DoctorProfile?.doctorVerification
+												?.location ?? "N/A"}
+										</span>
 									</div>
 								</TableCell>
 								<TableCell>
 									<span className="text-sm text-gray-900">
-										{application.DoctorProfile?.specialty || "General"}
+										{application.DoctorProfile?.doctorVerification?.specialty ??
+											"General"}
 									</span>
 								</TableCell>
 								<TableCell>
 									<span className="text-sm text-gray-900">
-										{application.DoctorProfile?.yearsOfExperience || 0} years
+										{application.DoctorProfile?.doctorVerification
+											?.yearsOfExperience ?? 0}{" "}
+										years
 									</span>
 								</TableCell>
 								<TableCell>
 									<Badge
 										className={getVerificationBadge(
-											application.DoctorProfile?.verificationStatus ||
-												"PENDING",
+											application.DoctorProfile?.doctorVerification
+												?.verificationStatus || "PENDING",
 										)}
 									>
-										{application.DoctorProfile?.verificationStatus || "PENDING"}
+										{application.DoctorProfile?.doctorVerification
+											?.verificationStatus || "PENDING"}
 									</Badge>
 								</TableCell>
 								<TableCell>

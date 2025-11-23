@@ -1,5 +1,5 @@
 import { hc } from "hono/client";
-import { AlertCircle, Check, Clock, XCircle } from "lucide-react";
+import { AlertCircle, Check, Clock } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { APIType } from "@/app/api/[...route]/route";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { DoctorVerificationWizard } from "./_components/doctor-verification-wizard";
+import { RejectionAlert } from "./_components/rejection-alert";
 import { VerificationDisplayWrapper } from "./_components/verification-display-wrapper";
 
 export default async function ProfilePage() {
@@ -53,10 +54,9 @@ export default async function ProfilePage() {
 	const needsVerification =
 		(user?.roles?.includes("USER") || user?.roles?.includes("EMPLOYER")) &&
 		!user?.doctorProfile;
-	const verificationPending =
-		user?.doctorProfile?.verificationStatus === "PENDING";
-	const verificationRejected =
-		user?.doctorProfile?.verificationStatus === "REJECTED";
+	const verification = user?.doctorProfile?.doctorVerification;
+	const verificationPending = verification?.verificationStatus === "PENDING";
+	const verificationRejected = verification?.verificationStatus === "REJECTED";
 	const isVerified = user?.roles?.includes("DOCTOR");
 
 	return (
@@ -102,21 +102,11 @@ export default async function ProfilePage() {
 			)}
 
 			{/* Show rejection status */}
-			{verificationRejected && (
-				<Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 p-6">
-					<div className="flex items-start gap-4">
-						<XCircle className="h-6 w-6 text-red-600 dark:text-red-400 mt-1" />
-						<div>
-							<h3 className="font-semibold text-red-900 dark:text-red-100 mb-1">
-								Verification Rejected
-							</h3>
-							<p className="text-sm text-red-700 dark:text-red-300 mb-2">
-								{user.doctorProfile?.rejectionReason ||
-									"Your verification was rejected. Please contact support."}
-							</p>
-						</div>
-					</div>
-				</Card>
+			{verificationRejected && verification && (
+				<RejectionAlert
+					rejectionReason={verification.rejectionReason}
+					allowAppeal={verification.allowAppeal}
+				/>
 			)}
 
 			{/* Show verification form for normal users */}
@@ -129,7 +119,7 @@ export default async function ProfilePage() {
 			)}
 
 			{/* Profile header card - Only show if verified or has verification */}
-			{(isVerified || user?.doctorProfile) && (
+			{(isVerified || verification) && (
 				<>
 					<Card className="overflow-hidden">
 						<div className="p-4 sm:p-6 pt-0 relative">
@@ -146,10 +136,10 @@ export default async function ProfilePage() {
 							<div className="ml-24 sm:ml-28 pt-1 sm:pt-2 flex flex-col justify-between gap-3 sm:gap-4">
 								<div>
 									<h2 className="text-xl sm:text-2xl font-semibold">
-										{user.doctorProfile?.fullName || user.name}
+										{verification?.fullName || user.name}
 									</h2>
 									<p className="text-sm sm:text-base text-muted-foreground">
-										{user.doctorProfile?.specialty || "Doctor"}
+										{verification?.specialty || "Doctor"}
 									</p>
 									<p className="text-sm italic sm:text-base text-muted-foreground">
 										{user.email}
@@ -172,9 +162,9 @@ export default async function ProfilePage() {
 					</Card>
 
 					{/* Professional Information with Edit Toggle */}
-					{user.doctorProfile && (
+					{verification && (
 						<VerificationDisplayWrapper
-							verification={user.doctorProfile}
+							verification={verification}
 							userEmail={user.email}
 						/>
 					)}

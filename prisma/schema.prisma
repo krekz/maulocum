@@ -75,9 +75,22 @@ model User {
 }
 
 model DoctorProfile {
+  id                   String               @id @default(cuid())
+  userId               String               @unique
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews              Review[]
+  jobApplications      JobApplication[]
+  doctorVerification   DoctorVerification?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@map("doctor_profile")
+}
+
+model DoctorVerification {
   id                 String             @id @default(cuid())
-  userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorProfileId    String             @unique
+  doctorProfile      DoctorProfile      @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   fullName           String
   phoneNumber        String
   location           String
@@ -87,16 +100,15 @@ model DoctorProfile {
   fullId             String?
   apcNumber          String
   apcDocumentUrl     String
-  reviews            Review[]
-  jobApplications    JobApplication[]
   verificationStatus VerificationStatus @default(PENDING)
   rejectionReason    String?
+  allowAppeal        Boolean            @default(true)
   submittedAt        DateTime           @default(now())
-  reviewAt           DateTime?
+  reviewedAt         DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  @@map("doctor_profile")
+  @@map("doctor_verification")
 }
 
 model Session {
@@ -264,6 +276,7 @@ model FacilityVerification {
   licenseDocumentUrl     String?
   verificationStatus     VerificationStatus @default(PENDING)
   rejectionReason        String?
+  allowAppeal            Boolean            @default(true)
   submittedAt            DateTime           @default(now())
   reviewedAt             DateTime?
   createdAt              DateTime           @default(now())

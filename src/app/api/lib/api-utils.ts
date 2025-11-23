@@ -117,6 +117,7 @@ export const requireValidDoctorProfile = async (c: Context, next: Next) => {
 		where: { userId: session.user.id },
 		include: {
 			user: true,
+			doctorVerification: true,
 		},
 	});
 
@@ -137,15 +138,15 @@ export const requireValidDoctorProfile = async (c: Context, next: Next) => {
 	}
 
 	// Security: Verify doctor profile is approved
-	if (doctorProfile.verificationStatus !== "APPROVED") {
+	if (doctorProfile.doctorVerification?.verificationStatus !== "APPROVED") {
 		console.error(
-			`[ERROR] Middleware - Doctor profile ${doctorProfile.id} not approved (status: ${doctorProfile.verificationStatus})`,
+			`[ERROR] Middleware - Doctor profile ${doctorProfile.id} not approved (status: ${doctorProfile.doctorVerification?.verificationStatus})`,
 		);
 		return c.json(
 			{
 				success: false,
 				data: null,
-				message: `Forbidden - Your doctor profile is ${doctorProfile.verificationStatus.toLowerCase()}. Please wait for approval.`,
+				message: `Forbidden - Your doctor profile is ${doctorProfile.doctorVerification?.verificationStatus?.toLowerCase() || "pending"}. Please wait for approval.`,
 			},
 			403,
 		);

@@ -79,16 +79,23 @@ class AdminService {
 
 	async getPendingDoctorsVerifications() {
 		try {
-			const verifications = await prisma.doctorProfile.findMany({
+			const verifications = await prisma.doctorVerification.findMany({
 				where: { verificationStatus: "PENDING" },
+				omit: {
+					allowAppeal: true,
+				},
 				include: {
-					user: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-							image: true,
-							createdAt: true,
+					doctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									image: true,
+									createdAt: true,
+								},
+							},
 						},
 					},
 				},
@@ -122,22 +129,26 @@ class AdminService {
 		offset: number;
 	}) {
 		try {
-			const where: Prisma.DoctorProfileWhereInput = status
+			const where: Prisma.DoctorVerificationWhereInput = status
 				? { verificationStatus: status }
 				: {};
 
 			const [verifications, total] = await Promise.all([
-				prisma.doctorProfile.findMany({
+				prisma.doctorVerification.findMany({
 					where,
 					include: {
-						user: {
-							select: {
-								id: true,
-								name: true,
-								email: true,
-								image: true,
-								roles: true,
-								createdAt: true,
+						doctorProfile: {
+							include: {
+								user: {
+									select: {
+										id: true,
+										name: true,
+										email: true,
+										image: true,
+										roles: true,
+										createdAt: true,
+									},
+								},
 							},
 						},
 					},
@@ -145,7 +156,7 @@ class AdminService {
 					take: limit,
 					skip: offset,
 				}),
-				prisma.doctorProfile.count({ where }),
+				prisma.doctorVerification.count({ where }),
 			]);
 
 			if (!verifications.length || !total) {
@@ -173,19 +184,23 @@ class AdminService {
 
 	async getDoctorsVerificationById(id: string) {
 		try {
-			const verification = await prisma.doctorProfile.findUnique({
+			const verification = await prisma.doctorVerification.findUnique({
 				where: { id },
 				include: {
-					user: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
-							image: true,
-							roles: true,
-							phoneNumber: true,
-							location: true,
-							createdAt: true,
+					doctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									image: true,
+									roles: true,
+									phoneNumber: true,
+									location: true,
+									createdAt: true,
+								},
+							},
 						},
 					},
 				},
@@ -221,7 +236,9 @@ class AdminService {
 			const where: Prisma.UserWhereInput = {
 				roles: { has: "DOCTOR" },
 				doctorProfile: {
-					verificationStatus: "APPROVED",
+					doctorVerification: {
+						verificationStatus: "APPROVED",
+					},
 				},
 			};
 
@@ -231,7 +248,9 @@ class AdminService {
 					{ email: { contains: search, mode: "insensitive" } },
 					{
 						doctorProfile: {
-							apcNumber: { contains: search, mode: "insensitive" },
+							doctorVerification: {
+								apcNumber: { contains: search, mode: "insensitive" },
+							},
 						},
 					},
 				];
@@ -241,7 +260,11 @@ class AdminService {
 				prisma.user.findMany({
 					where,
 					include: {
-						doctorProfile: true,
+						doctorProfile: {
+							include: {
+								doctorVerification: true,
+							},
+						},
 					},
 					orderBy: { createdAt: "desc" },
 					take: limit,
@@ -292,17 +315,18 @@ class AdminService {
 
 			if (action === "APPROVE") {
 				// Update verification status to APPROVED
-				await prisma.doctorProfile.update({
+				await prisma.doctorVerification.update({
 					where: { id: doctorProfile.id },
 					data: {
 						verificationStatus: "APPROVED",
-						reviewAt: new Date(),
+						reviewedAt: new Date(),
 					},
 				});
 
-				const hasEmployer = doctorProfile.user.roles.includes("EMPLOYER");
+				const hasEmployer =
+					doctorProfile.doctorProfile.user.roles.includes("EMPLOYER");
 				await prisma.user.update({
-					where: { id: doctorProfile.userId },
+					where: { id: doctorProfile.doctorProfile.userId },
 					data: {
 						roles: hasEmployer ? { push: "DOCTOR" } : { set: ["DOCTOR"] },
 					},
@@ -316,12 +340,12 @@ class AdminService {
 				}
 
 				// Update verification status to REJECTED
-				await prisma.doctorProfile.update({
+				await prisma.doctorVerification.update({
 					where: { id: doctorProfile.id },
 					data: {
 						verificationStatus: "REJECTED",
 						rejectionReason,
-						reviewAt: new Date(),
+						reviewedAt: new Date(),
 					},
 				});
 

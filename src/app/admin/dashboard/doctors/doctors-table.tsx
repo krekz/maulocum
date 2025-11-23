@@ -17,27 +17,14 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { VerifiedVerificationsProps } from "@/lib/rpc";
 
-interface DoctorVerification {
-	apcNumber: string | null;
-	specialty: string | null;
-	yearsOfExperience: number | null;
-	location: string | null;
-}
-
-interface Doctor {
-	id: string;
-	name: string | null;
-	email: string;
-	location: string | null;
-	doctorProfile: DoctorVerification | null;
-}
-
-interface DoctorsTableProps {
-	doctors: Doctor[];
-}
-
-export function DoctorsTable({ doctors }: DoctorsTableProps) {
+export function DoctorsTable({
+	doctors,
+}: {
+	doctors: VerifiedVerificationsProps["data"];
+}) {
+	const docs = doctors?.doctors;
 	return (
 		<div className="rounded-md border">
 			<Table>
@@ -54,21 +41,28 @@ export function DoctorsTable({ doctors }: DoctorsTableProps) {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{doctors.map((doctor) => (
+					{docs?.map((doctor) => (
 						<TableRow key={doctor.id}>
 							<TableCell className="font-medium">{doctor.name}</TableCell>
 							<TableCell className="text-sm text-muted-foreground">
 								{doctor.email}
 							</TableCell>
-							<TableCell>{doctor.doctorProfile?.apcNumber || "N/A"}</TableCell>
 							<TableCell>
-								{doctor.doctorProfile?.specialty || "Not specified"}
+								{doctor.doctorProfile?.doctorVerification?.apcNumber || "N/A"}
 							</TableCell>
 							<TableCell>
-								{doctor.doctorProfile?.yearsOfExperience || 0} years
+								{doctor.doctorProfile?.doctorVerification?.specialty ||
+									"Not specified"}
 							</TableCell>
 							<TableCell>
-								{doctor.doctorProfile?.location || doctor.location || "N/A"}
+								{doctor.doctorProfile?.doctorVerification?.yearsOfExperience ||
+									0}{" "}
+								years
+							</TableCell>
+							<TableCell>
+								{doctor.doctorProfile?.doctorVerification?.location ||
+									doctor.location ||
+									"N/A"}
 							</TableCell>
 							<TableCell>
 								<Badge variant="default">Verified</Badge>

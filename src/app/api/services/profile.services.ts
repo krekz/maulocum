@@ -19,7 +19,11 @@ class ProfileServices {
 			const user = await prisma.user.findUnique({
 				where: { id: userId },
 				include: {
-					doctorProfile: true,
+					doctorProfile: {
+						include: {
+							doctorVerification: true,
+						},
+					},
 				},
 			});
 
@@ -60,7 +64,7 @@ class ProfileServices {
 	) {
 		try {
 			// Check if verification exists and is PENDING or REJECTED
-			const verification = await prisma.doctorProfile.findUnique({
+			const verification = await prisma.doctorVerification.findUnique({
 				where: { id: verificationId },
 			});
 
@@ -78,7 +82,7 @@ class ProfileServices {
 			}
 
 			// Update verification
-			await prisma.doctorProfile.update({
+			await prisma.doctorVerification.update({
 				where: { id: verificationId },
 				data: {
 					fullName: data.fullName,
@@ -88,6 +92,7 @@ class ProfileServices {
 					provisionalId: data.provisionalId || null,
 					fullId: data.fullId || null,
 					apcNumber: data.apcNumber,
+					verificationStatus: "PENDING",
 				},
 			});
 		} catch (error) {
@@ -106,8 +111,13 @@ class ProfileServices {
 			}
 
 			// Get existing verification
-			const verification = await prisma.doctorProfile.findUnique({
+			const verification = await prisma.doctorVerification.findUnique({
 				where: { id: verificationId },
+				include: {
+					doctorProfile: {
+						select: { userId: true },
+					},
+				},
 			});
 
 			if (!verification) {
@@ -145,17 +155,21 @@ class ProfileServices {
 			const buffer = Buffer.from(arrayBuffer);
 
 			// Upload new file
-			const fileKey = generateFileKey(verification.userId, file.name);
+			const fileKey = generateFileKey(
+				verification.doctorProfile.userId,
+				file.name,
+			);
 			const result = await uploadToR2(buffer, fileKey, file.type);
 
 			const oldKey = extractKeyFromUrl(verification.apcDocumentUrl);
 			await deleteFromR2(oldKey);
 
-			// Update verification with new URL
-			await prisma.doctorProfile.update({
+			// Update verification with new URL and reset to PENDING
+			await prisma.doctorVerification.update({
 				where: { id: verificationId },
 				data: {
 					apcDocumentUrl: result.url,
+					verificationStatus: "PENDING",
 				},
 			});
 			return result;
@@ -204,32 +218,40 @@ class ProfileServices {
 				});
 			}
 
-			// Update user and create verification in a single nested write
+			// Update user and create doctor profile with verification in a single nested write
 			const updatedUser = await prisma.user.update({
 				where: { id: data.userId },
 				data: {
 					location: data.location,
 					doctorProfile: {
 						create: {
-							fullName: data.fullName,
-							phoneNumber: userPhone,
-							location: data.location,
-							specialty: data.specialty,
-							yearsOfExperience: data.yearsOfExperience,
-							provisionalId: data.provisionalId,
-							fullId: data.fullId,
-							apcNumber: data.apcNumber,
-							apcDocumentUrl: data.apcDocumentUrl,
-							verificationStatus: "PENDING",
+							doctorVerification: {
+								create: {
+									fullName: data.fullName,
+									phoneNumber: userPhone,
+									location: data.location,
+									specialty: data.specialty,
+									yearsOfExperience: data.yearsOfExperience,
+									provisionalId: data.provisionalId,
+									fullId: data.fullId,
+									apcNumber: data.apcNumber,
+									apcDocumentUrl: data.apcDocumentUrl,
+									verificationStatus: "PENDING",
+								},
+							},
 						},
 					},
 				},
 				include: {
-					doctorProfile: true,
+					doctorProfile: {
+						include: {
+							doctorVerification: true,
+						},
+					},
 				},
 			});
 
-			return updatedUser.doctorProfile;
+			return updatedUser.doctorProfile?.doctorVerification;
 		} catch (error) {
 			console.error("Error submitting verification:", error);
 			if (error instanceof HTTPException) throw error;

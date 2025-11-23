@@ -160,7 +160,7 @@ function DoctorVerificationsPage() {
 											<div>
 												<CardTitle>{verification.fullName}</CardTitle>
 												<CardDescription>
-													{verification.user.email}
+													{verification.doctorProfile.user.email}
 												</CardDescription>
 											</div>
 										</div>

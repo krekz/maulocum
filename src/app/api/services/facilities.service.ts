@@ -464,25 +464,21 @@ export class FacilityService {
 		}
 	}
 
-	// Close a job posting
+	/**
+	 * Close a job posting
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
 	async closeJob(jobId: string, facilityId: string) {
 		try {
-			// First verify the job belongs to this facility
-			const job = await prisma.job.findUnique({
-				where: { id: jobId },
-				select: { facilityId: true, status: true },
+			// Get job status with ownership filter
+			const job = await prisma.job.findFirst({
+				where: { id: jobId, facilityId },
+				select: { status: true },
 			});
 
 			if (!job) {
 				throw new HTTPException(404, {
 					message: "Job not found",
-				});
-			}
-
-			// Security: Verify ownership
-			if (job.facilityId !== facilityId) {
-				throw new HTTPException(403, {
-					message: "Forbidden - You don't have access to this job",
 				});
 			}
 
@@ -512,25 +508,21 @@ export class FacilityService {
 		}
 	}
 
-	// Reopen a closed job posting
+	/**
+	 * Reopen a closed job posting
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
 	async reopenJob(jobId: string, facilityId: string) {
 		try {
-			// First verify the job belongs to this facility
-			const job = await prisma.job.findUnique({
-				where: { id: jobId },
-				select: { facilityId: true, status: true },
+			// Get job status with ownership filter
+			const job = await prisma.job.findFirst({
+				where: { id: jobId, facilityId },
+				select: { status: true },
 			});
 
 			if (!job) {
 				throw new HTTPException(404, {
 					message: "Job not found",
-				});
-			}
-
-			// Security: Verify ownership
-			if (job.facilityId !== facilityId) {
-				throw new HTTPException(403, {
-					message: "Forbidden - You don't have access to this job",
 				});
 			}
 
@@ -560,41 +552,32 @@ export class FacilityService {
 		}
 	}
 
-	// Get all applicants for a job
+	/**
+	 * Get all applicants for a job
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
 	async getJobApplicants(jobId: string, facilityId: string) {
 		try {
-			// First verify the job belongs to this facility
-			const job = await prisma.job.findUnique({
-				where: { id: jobId },
-				select: { facilityId: true },
-			});
-
-			if (!job) {
-				throw new HTTPException(404, {
-					message: "Job not found",
-				});
-			}
-
-			// Security: Verify ownership
-			if (job.facilityId !== facilityId) {
-				throw new HTTPException(403, {
-					message: "Forbidden - You don't have access to this job",
-				});
-			}
-
-			// Get all applicants for this job
+			// Get applicants only for jobs belonging to this facility
 			const applicants = await prisma.jobApplication.findMany({
-				where: { jobId },
+				where: {
+					jobId,
+					job: { facilityId },
+				},
 				include: {
 					DoctorProfile: {
 						select: {
 							id: true,
-							fullName: true,
-							phoneNumber: true,
-							location: true,
-							specialty: true,
-							yearsOfExperience: true,
-							verificationStatus: true,
+							doctorVerification: {
+								select: {
+									fullName: true,
+									phoneNumber: true,
+									location: true,
+									specialty: true,
+									yearsOfExperience: true,
+									verificationStatus: true,
+								},
+							},
 							user: {
 								select: {
 									email: true,
@@ -619,25 +602,21 @@ export class FacilityService {
 		}
 	}
 
-	// Update a job posting
+	/**
+	 * Update a job posting
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
 	async updateJob(jobId: string, facilityId: string, data: JobPostFormValues) {
 		try {
-			// First verify the job belongs to this facility
-			const job = await prisma.job.findUnique({
-				where: { id: jobId },
-				select: { facilityId: true, status: true },
+			// Verify job exists and belongs to facility
+			const job = await prisma.job.findFirst({
+				where: { id: jobId, facilityId },
+				select: { id: true },
 			});
 
 			if (!job) {
 				throw new HTTPException(404, {
 					message: "Job not found",
-				});
-			}
-
-			// Security: Verify ownership
-			if (job.facilityId !== facilityId) {
-				throw new HTTPException(403, {
-					message: "Forbidden - You don't have access to this job",
 				});
 			}
 
@@ -657,14 +636,16 @@ export class FacilityService {
 		}
 	}
 
-	// Delete a job posting
+	/**
+	 * Delete a job posting
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
 	async deleteJob(jobId: string, facilityId: string) {
 		try {
-			// First verify the job belongs to this facility
-			const job = await prisma.job.findUnique({
-				where: { id: jobId },
+			// Verify job exists and belongs to facility
+			const job = await prisma.job.findFirst({
+				where: { id: jobId, facilityId },
 				select: {
-					facilityId: true,
 					status: true,
 					_count: {
 						select: {
@@ -677,13 +658,6 @@ export class FacilityService {
 			if (!job) {
 				throw new HTTPException(404, {
 					message: "Job not found",
-				});
-			}
-
-			// Security: Verify ownership
-			if (job.facilityId !== facilityId) {
-				throw new HTTPException(403, {
-					message: "Forbidden - You don't have access to this job",
 				});
 			}
 

@@ -180,7 +180,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const { id } = c.req.valid("param");
 				const facilityProfile = c.get("facilityProfile");
 
-				// Fetch job with ownership verification
+				// Fetch job (ownership verified by middleware)
 				const job = await facilityService.getJobById(
 					id,
 					facilityProfile.facilityId,
@@ -229,7 +229,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 					endDate: new Date(body.endDate),
 				};
 
-				// Update job with ownership verification
+				// Update job (ownership verified by middleware)
 				const updatedJob = await facilityService.updateJob(
 					id,
 					facilityProfile.facilityId,
@@ -269,7 +269,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const { id } = c.req.valid("param");
 				const facilityProfile = c.get("facilityProfile");
 
-				// Get job applicants with ownership verification
+				// Get job applicants (ownership verified by middleware)
 				const applicants = await facilityService.getJobApplicants(
 					id,
 					facilityProfile.facilityId,
@@ -308,7 +308,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const { id } = c.req.valid("param");
 				const facilityProfile = c.get("facilityProfile");
 
-				// Close job with ownership verification
+				// Close job (ownership verified by middleware)
 				await facilityService.closeJob(id, facilityProfile.facilityId);
 
 				return c.json({
@@ -343,7 +343,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const { id } = c.req.valid("param");
 				const facilityProfile = c.get("facilityProfile");
 
-				// Reopen job with ownership verification
+				// Reopen job (ownership verified by middleware)
 				await facilityService.reopenJob(id, facilityProfile.facilityId);
 
 				return c.json({
@@ -378,7 +378,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const { id } = c.req.valid("param");
 				const facilityProfile = c.get("facilityProfile");
 
-				// Delete job with ownership verification
+				// Delete job (ownership verified by middleware)
 				await facilityService.deleteJob(id, facilityProfile.facilityId);
 
 				return c.json({

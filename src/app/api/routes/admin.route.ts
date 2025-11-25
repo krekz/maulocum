@@ -131,55 +131,6 @@ const app = new Hono()
 		},
 	)
 
-	// Get verified doctors only
-	// @route GET /api/v2/admin/doctors/verifications/verified
-	.get(
-		"/doctors/verifications/verified",
-		zValidator(
-			"query",
-			z.object({
-				search: z.string().optional(),
-				limit: z.coerce.number().int().min(1).max(100).default(10),
-				offset: z.coerce.number().int().min(0).default(0),
-			}),
-		),
-		async (c) => {
-			const { search, limit, offset } = c.req.valid("query");
-
-			try {
-				const { doctors, total, totalPages } =
-					await adminService.getVerifiedDoctors({
-						search,
-						limit,
-						offset,
-					});
-
-				return c.json({
-					success: true,
-					message: "Verified doctors fetched successfully",
-					data: {
-						doctors,
-						total,
-						limit,
-						offset,
-						totalPages,
-					},
-				});
-			} catch (error) {
-				console.error("Error fetching verified doctors:", error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
-
 	// ============================================
 	// FACILITIES MANAGEMENT ROUTES
 	// ============================================

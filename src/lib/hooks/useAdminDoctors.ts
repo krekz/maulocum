@@ -1,20 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
 
-interface UseVerifiedDoctorsParams {
-	search?: string;
+interface UseDoctorVerificationsParams {
+	status?: "PENDING" | "APPROVED" | "REJECTED";
 	limit?: number;
 	offset?: number;
 }
 
-export function useVerifiedDoctors(params?: UseVerifiedDoctorsParams) {
+export function useDoctorVerifications(params?: UseDoctorVerificationsParams) {
 	return useQuery({
-		queryKey: ["admin", "doctors", "verified", params],
+		queryKey: ["admin", "doctors", "verifications", params],
 		queryFn: async () => {
 			const searchParams: Record<string, string> = {};
 
-			if (params?.search) {
-				searchParams.search = params.search;
+			if (params?.status) {
+				searchParams.status = params.status;
 			}
 			if (params?.limit) {
 				searchParams.limit = params.limit.toString();
@@ -23,11 +23,9 @@ export function useVerifiedDoctors(params?: UseVerifiedDoctorsParams) {
 				searchParams.offset = params.offset.toString();
 			}
 
-			const res = await client.api.v2.admin.doctors.verifications.verified.$get(
-				{
-					query: searchParams,
-				},
-			);
+			const res = await client.api.v2.admin.doctors.verifications.$get({
+				query: searchParams,
+			});
 
 			if (!res.ok) {
 				const { message } = await res.json();
@@ -86,13 +84,9 @@ export function useVerificationAction() {
 			return res.json();
 		},
 		onSuccess: () => {
-			// Invalidate pending verifications to refetch
+			// Invalidate all verifications queries to refetch
 			queryClient.invalidateQueries({
-				queryKey: ["admin", "doctors", "verifications", "pending"],
-			});
-			// Also invalidate verified doctors list
-			queryClient.invalidateQueries({
-				queryKey: ["admin", "doctors", "verified"],
+				queryKey: ["admin", "doctors", "verifications"],
 			});
 		},
 	});

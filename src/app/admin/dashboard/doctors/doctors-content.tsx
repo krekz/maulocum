@@ -10,7 +10,6 @@ export function DoctorsContent() {
 	const search = searchParams.get("search") || undefined;
 
 	const { data, isLoading, error } = useVerifiedDoctors({ search });
-	if (!data) return <div>No Data</div>;
 
 	const doctors = data?.data?.doctors || [];
 	const total = data?.data?.total || 0;

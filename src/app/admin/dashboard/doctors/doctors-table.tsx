@@ -22,7 +22,7 @@ import type { VerifiedVerificationsProps } from "@/lib/rpc";
 export function DoctorsTable({
 	doctors,
 }: {
-	doctors: VerifiedVerificationsProps["data"];
+	doctors?: VerifiedVerificationsProps["data"];
 }) {
 	const docs = doctors?.doctors;
 	return (

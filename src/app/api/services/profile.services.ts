@@ -1,5 +1,4 @@
 import { HTTPException } from "hono/http-exception";
-import type z from "zod";
 import { prisma } from "@/lib/prisma";
 import {
 	deleteFromR2,
@@ -9,7 +8,7 @@ import {
 } from "@/lib/r2";
 import type {
 	DoctorVerificationApiData,
-	doctorVerificationUpdateSchema,
+	DoctorVerificationEditData,
 } from "@/lib/schemas/doctor-verification.schema";
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
 
@@ -60,7 +59,7 @@ class ProfileServices {
 
 	async updateDoctorVerificationDetails(
 		verificationId: string,
-		data: z.infer<typeof doctorVerificationUpdateSchema>,
+		data: DoctorVerificationEditData,
 	) {
 		try {
 			// Check if verification exists and is PENDING or REJECTED
@@ -74,10 +73,13 @@ class ProfileServices {
 
 			if (
 				verification.verificationStatus !== "PENDING" &&
-				verification.verificationStatus !== "REJECTED"
+				!(
+					verification.verificationStatus === "REJECTED" &&
+					verification.allowAppeal
+				)
 			) {
 				throw new HTTPException(400, {
-					message: "Can only edit verification while it's pending or rejected",
+					message: "You are not allowed to edit this verification",
 				});
 			}
 
@@ -123,14 +125,16 @@ class ProfileServices {
 			if (!verification) {
 				throw new HTTPException(404, { message: "Verification not found" });
 			}
-
 			if (
 				verification.verificationStatus !== "PENDING" &&
-				verification.verificationStatus !== "REJECTED"
+				!(
+					verification.verificationStatus === "REJECTED" &&
+					verification.allowAppeal
+				)
 			) {
 				throw new HTTPException(400, {
 					message:
-						"Can only replace document while verification is pending or rejected",
+						"You are not allowed to replace document for this verification",
 				});
 			}
 

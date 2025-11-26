@@ -25,13 +25,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { client } from "@/lib/rpc";
 import {
-	type DoctorVerificationFormData,
-	doctorVerificationFormSchema,
+	type DoctorVerificationEditData,
+	doctorVerificationEditSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 import { useEditVerificationStore } from "@/lib/store/useEditVerificationStore";
-
-type FormData = DoctorVerificationFormData;
 
 interface EditVerificationFormProps {
 	verification: {
@@ -55,8 +54,8 @@ export function EditVerificationForm({
 	const { setIsEditing } = useEditVerificationStore();
 	const router = useRouter();
 
-	const form = useForm<FormData>({
-		resolver: zodResolver(doctorVerificationFormSchema),
+	const form = useForm<DoctorVerificationEditData>({
+		resolver: zodResolver(doctorVerificationEditSchema),
 		defaultValues: {
 			fullName: verification.fullName,
 			location: verification.location,
@@ -68,45 +67,55 @@ export function EditVerificationForm({
 		},
 	});
 
-	async function onSubmit(data: FormData) {
+	async function onSubmit(data: DoctorVerificationEditData) {
 		setIsSubmitting(true);
 
 		try {
 			// Step 1: Upload new file if selected (replaces old file)
 			if (selectedFile) {
 				toast.loading("Uploading document...");
-				const formData = new FormData();
-				formData.append("file", selectedFile);
 
-				const uploadResponse = await fetch(
-					`/api/v2/profile/verification/${verification.id}/replace-document`,
-					{
-						method: "POST",
-						body: formData,
+				const uploadResponse = await client.api.v2.profile.verification[
+					":verificationId"
+				]["replace-document"].$post({
+					param: {
+						verificationId: verification.id,
 					},
-				);
+					form: {
+						file: new File([selectedFile], selectedFile.name, {
+							type: selectedFile.type,
+						}),
+					},
+				});
 
 				if (!uploadResponse.ok) {
-					throw new Error("Failed to upload document");
+					const error = await uploadResponse.json();
+					throw new Error(error.message, {
+						cause: uploadResponse.status,
+					});
 				}
 				toast.dismiss();
 			}
 
 			// Step 2: Update verification details
 			toast.loading("Saving changes...");
-			const response = await fetch(
-				`/api/v2/profile/verification/${verification.id}`,
-				{
-					method: "PATCH",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(data),
-				},
-			);
 
-			if (!response.ok) {
-				throw new Error("Failed to update verification");
+			const submitFormResponse = await client.api.v2.profile.verification[
+				":verificationId"
+			].$patch({
+				param: {
+					verificationId: verification.id,
+				},
+				json: {
+					...data,
+				},
+			});
+
+			if (!submitFormResponse.ok) {
+				const error = await submitFormResponse.json();
+				throw new Error(error.message, {
+					cause: submitFormResponse.status,
+				});
 			}
 
 			toast.dismiss();

@@ -19,6 +19,7 @@ interface VerificationDisplayWrapperProps {
 		apcNumber: string;
 		apcDocumentUrl: string;
 		verificationStatus: string;
+		allowAppeal: boolean;
 	};
 	userEmail: string;
 }
@@ -33,9 +34,9 @@ export function VerificationDisplayWrapper({
 		return <EditVerificationForm verification={verification} />;
 	}
 
-	// Only allow editing if status is REJECTED or not yet submitted
 	const canEdit =
-		verification.verificationStatus === "REJECTED" ||
+		(verification.verificationStatus === "REJECTED" &&
+			verification.allowAppeal) ||
 		verification.verificationStatus === "PENDING";
 
 	return (

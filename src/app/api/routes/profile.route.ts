@@ -4,7 +4,7 @@ import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import {
 	doctorVerificationApiSchema,
-	doctorVerificationUpdateSchema,
+	doctorVerificationEditSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 import { UserRole } from "../../../../prisma/generated/prisma/enums";
 import { profileServices } from "../services/profile.services";
@@ -120,11 +120,11 @@ const app = new Hono()
 			}
 		},
 	)
-	// Update verification details (only for PENDING status)
+	// Update verification details (only for PENDING and REJECTED with AllowAppeal status)
 	.patch(
 		"/verification/:verificationId",
 		zValidator("param", z.object({ verificationId: z.string() })),
-		zValidator("json", doctorVerificationUpdateSchema),
+		zValidator("json", doctorVerificationEditSchema),
 		async (c) => {
 			const { verificationId } = c.req.valid("param");
 			const data = c.req.valid("json");

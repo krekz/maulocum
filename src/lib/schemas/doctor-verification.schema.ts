@@ -18,10 +18,13 @@ const idRefinement = {
 };
 
 // Base schema for doctor verification form (client-side)
-export const doctorVerificationFormSchema = baseVerificationSchema.refine(
-	(data) => data.provisionalId || data.fullId,
-	idRefinement,
-);
+export const doctorVerificationEditSchema = baseVerificationSchema
+	.refine((data) => data.provisionalId || data.fullId, idRefinement)
+	.transform((data) => ({
+		...data,
+		fullName: data.fullName.toUpperCase(),
+		location: data.location.toUpperCase(),
+	}));
 
 // Schema for creating verification with file upload
 export const doctorVerificationCreateSchema = baseVerificationSchema
@@ -41,41 +44,14 @@ export const doctorVerificationApiSchema = baseVerificationSchema
 		...data,
 		fullName: data.fullName.toUpperCase(),
 		location: data.location.toUpperCase(),
-		specialty: data.specialty?.toUpperCase(),
 	}));
 
-// Schema for updating verification (PATCH endpoint)
-export const doctorVerificationUpdateSchema = baseVerificationSchema
-	.partial()
-	.refine(
-		(data) => {
-			// If either ID is provided, ensure at least one exists
-			if (data.provisionalId !== undefined || data.fullId !== undefined) {
-				return data.provisionalId || data.fullId;
-			}
-			return true;
-		},
-		{
-			message: "Either Provisional ID or Full ID must be provided",
-			path: ["provisionalId"],
-		},
-	)
-	.transform((data) => ({
-		...data,
-		fullName: data.fullName?.toUpperCase(),
-		location: data.location?.toUpperCase(),
-		specialty: data.specialty?.toUpperCase(),
-	}));
-
-export type DoctorVerificationFormData = z.infer<
-	typeof doctorVerificationFormSchema
+export type DoctorVerificationEditData = z.infer<
+	typeof doctorVerificationEditSchema
 >;
 export type DoctorVerificationCreateData = z.infer<
 	typeof doctorVerificationCreateSchema
 >;
 export type DoctorVerificationApiData = z.infer<
 	typeof doctorVerificationApiSchema
->;
-export type DoctorVerificationUpdateData = z.infer<
-	typeof doctorVerificationUpdateSchema
 >;

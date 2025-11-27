@@ -394,7 +394,7 @@ export function FacilityVerificationStatus({
 											Updating...
 										</>
 									) : (
-										"Update & Resubmit"
+										"Update"
 									)}
 								</Button>
 							</CardFooter>
@@ -463,6 +463,36 @@ export function FacilityVerificationStatus({
 							<span className="font-medium">
 								{verification.facility.contactPhone}
 							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-muted-foreground">SSM Document</span>
+							<Link
+								href={verification.businessDocumentUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-primary underline underline-offset-4 break-all"
+							>
+								View SSM Document
+							</Link>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-muted-foreground">
+								Company License Document
+							</span>
+							{verification.licenseDocumentUrl ? (
+								<Link
+									href={verification.licenseDocumentUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="font-medium text-primary underline underline-offset-4 break-all"
+								>
+									View License Document
+								</Link>
+							) : (
+								<span className="font-medium text-muted-foreground">
+									Not uploaded
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

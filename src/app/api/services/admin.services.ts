@@ -436,15 +436,15 @@ class AdminService {
 							updatedAt: new Date(),
 						},
 					},
-					staffs: {
-						create: {
-							role: "OWNER",
-							userId: verification.facility.ownerId,
-							isActive: true,
-							updatedAt: new Date(),
-							createdAt: new Date(),
+					...(action === "APPROVE" && {
+						staffs: {
+							create: {
+								role: "OWNER",
+								userId: verification.facility.ownerId,
+								isActive: true,
+							},
 						},
-					},
+					}),
 				},
 			});
 

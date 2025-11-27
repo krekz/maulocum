@@ -40,7 +40,7 @@ class AdminService {
 						contactInfo: true,
 						reviews: true,
 						jobs: true,
-						userFacilityProfiles: true,
+						staffs: true,
 						_count: {
 							select: {
 								jobs: true,
@@ -433,7 +433,7 @@ class AdminService {
 							updatedAt: new Date(),
 						},
 					},
-					userFacilityProfiles: {
+					staffs: {
 						create: {
 							role: "OWNER",
 							userId: verification.facility.ownerId,

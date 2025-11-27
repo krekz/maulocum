@@ -15,7 +15,7 @@ export async function getFacilityName() {
 		}
 
 		// Get user's facility profile
-		const userFacilityProfile = await prisma.userFacilityProfile.findUnique({
+		const userFacilityProfile = await prisma.staffProfile.findUnique({
 			where: {
 				userId: session.user.id,
 			},

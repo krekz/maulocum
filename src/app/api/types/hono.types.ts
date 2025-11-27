@@ -1,8 +1,9 @@
 import type { Session } from "better-auth";
+import type { UserType } from "@/lib/auth";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 
 // Define the facility profile type from middleware
-type FacilityProfileContext = Prisma.UserFacilityProfileGetPayload<{
+type StaffProfileContext = Prisma.StaffProfileGetPayload<{
 	include: {
 		user: true;
 		facility: {
@@ -24,7 +25,8 @@ type DoctorProfileContext = Prisma.DoctorProfileGetPayload<{
 
 // Extend Hono context with custom variables
 export type AppVariables = {
-	facilityProfile: FacilityProfileContext;
+	staffProfile: StaffProfileContext;
 	doctorProfile: DoctorProfileContext;
 	session: Session;
+	user: UserType;
 };

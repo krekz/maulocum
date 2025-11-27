@@ -21,7 +21,7 @@ export const requireActiveEmployer = async (c: Context, next: Next) => {
 	}
 
 	// Fetch full facility profile with verification status
-	const facilityProfile = await prisma.userFacilityProfile.findUnique({
+	const staffProfile = await prisma.staffProfile.findUnique({
 		where: { userId: session.user.id },
 		include: {
 			user: true,
@@ -36,7 +36,7 @@ export const requireActiveEmployer = async (c: Context, next: Next) => {
 	});
 
 	// Security: Check facility profile exists and is active
-	if (!facilityProfile || !facilityProfile.isActive) {
+	if (!staffProfile || !staffProfile.isActive) {
 		console.error(
 			`[ERROR] Middleware - No active facility profile for user ${session.user.id}`,
 		);
@@ -52,11 +52,11 @@ export const requireActiveEmployer = async (c: Context, next: Next) => {
 
 	// Security: Verify facility verification exists and is approved
 	const verificationStatus =
-		facilityProfile.facility.facilityVerification?.verificationStatus;
+		staffProfile.facility.facilityVerification?.verificationStatus;
 
 	if (!verificationStatus || verificationStatus !== "APPROVED") {
 		console.error(
-			`[ERROR] Middleware - Facility ${facilityProfile.facilityId} not approved (status: ${verificationStatus || "NONE"})`,
+			`[ERROR] Middleware - Facility ${staffProfile.facilityId} not approved (status: ${verificationStatus || "NONE"})`,
 		);
 		return c.json(
 			{
@@ -69,8 +69,9 @@ export const requireActiveEmployer = async (c: Context, next: Next) => {
 	}
 
 	// Store facility profile in context for downstream use
-	c.set("facilityProfile", facilityProfile);
+	c.set("staffProfile", staffProfile);
 	c.set("session", session);
+	c.set("user", session.user);
 
 	await next();
 };
@@ -91,6 +92,9 @@ export const requireAuth = async (c: Context, next: Next) => {
 			401,
 		);
 	}
+
+	c.set("session", session.session);
+	c.set("user", session.user);
 
 	await next();
 };
@@ -154,7 +158,8 @@ export const requireValidDoctorProfile = async (c: Context, next: Next) => {
 
 	// Store doctor profile in context for downstream use
 	c.set("doctorProfile", doctorProfile);
-	c.set("session", session);
+	c.set("session", session.session);
+	c.set("user", session.user);
 
 	await next();
 };

@@ -31,7 +31,7 @@ export const auth = betterAuth({
 					id: user.id,
 				},
 				select: {
-					facilityProfile: {
+					staffProfile: {
 						select: {
 							isActive: true,
 						},
@@ -44,7 +44,7 @@ export const auth = betterAuth({
 			return {
 				user: {
 					...user,
-					isEmployer: isEmployer?.facilityProfile?.isActive ?? false,
+					isEmployer: isEmployer?.staffProfile?.isActive ?? false,
 					phoneNumber: isEmployer?.phoneNumber,
 					phoneNumberVerified: isEmployer?.phoneNumberVerified,
 				},
@@ -102,3 +102,5 @@ export const auth = betterAuth({
 		}),
 	],
 });
+
+export type UserType = typeof auth.$Infer.Session.user;

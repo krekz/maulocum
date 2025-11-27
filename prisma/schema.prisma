@@ -53,36 +53,36 @@ enum PayBasis {
 }
 
 model User {
-  id                  String               @id
+  id                  String         @id
   name                String
   email               String
-  emailVerified       Boolean              @default(false)
+  emailVerified       Boolean        @default(false)
   image               String?
-  roles               UserRole[]           @default([USER])
-  phoneNumber         String?              @unique
-  phoneNumberVerified Boolean              @default(false)
+  roles               UserRole[]     @default([USER])
+  phoneNumber         String?        @unique
+  phoneNumberVerified Boolean        @default(false)
   location            String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @default(now()) @updatedAt
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @default(now()) @updatedAt
   sessions            Session[]
   accounts            Account[]
   doctorProfile       DoctorProfile?
-  facilityProfile     UserFacilityProfile?
-  ownedFacilities     Facility[]           @relation("FacilityOwner")
+  staffProfile        StaffProfile?
+  ownedFacilities     Facility[]     @relation("FacilityOwner")
 
   @@unique([email])
   @@map("user")
 }
 
 model DoctorProfile {
-  id                   String               @id @default(cuid())
-  userId               String               @unique
-  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviews              Review[]
-  jobApplications      JobApplication[]
-  doctorVerification   DoctorVerification?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                 String              @id @default(cuid())
+  userId             String              @unique
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews            Review[]
+  jobApplications    JobApplication[]
+  doctorVerification DoctorVerification?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@map("doctor_profile")
 }
@@ -164,12 +164,12 @@ model Facility {
   contactPhone         String
   profileImage         String?
   description          String?
-  ownerId              String
+  ownerId              String                @unique
   owner                User                  @relation("FacilityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   jobs                 Job[]
   reviews              Review[]
   contactInfo          ContactInfo[]
-  userFacilityProfiles UserFacilityProfile[]
+  staffs               StaffProfile[]
   facilityVerification FacilityVerification?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -179,27 +179,27 @@ model Facility {
 }
 
 model Job {
-  id                    String               @id @default(cuid())
-  title                 String?
-  description           String?
-  location              String?
-  payRate               String
-  payBasis              PayBasis
-  startTime             String
-  endTime               String
-  startDate             DateTime
-  endDate               DateTime
-  jobType               JobType
-  urgency               JobUrgency           @default(LOW)
-  status                JobStatus            @default(OPEN)
-  requiredSpecialists   String[]
-  facilityId            String
-  facility              Facility             @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  applicants            JobApplication[]
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  UserFacilityProfile   UserFacilityProfile? @relation(fields: [userFacilityProfileId], references: [id])
-  userFacilityProfileId String?
+  id                  String           @id @default(cuid())
+  title               String?
+  description         String?
+  location            String?
+  payRate             String
+  payBasis            PayBasis
+  startTime           String
+  endTime             String
+  startDate           DateTime
+  endDate             DateTime
+  jobType             JobType
+  urgency             JobUrgency       @default(LOW)
+  status              JobStatus        @default(OPEN)
+  requiredSpecialists String[]
+  facilityId          String
+  facility            Facility         @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  applicants          JobApplication[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  staff               StaffProfile?    @relation(fields: [staffId], references: [id])
+  staffId             String?
 
   @@index([facilityId])
   @@index([status])
@@ -250,7 +250,7 @@ model ContactInfo {
   @@map("contact_info")
 }
 
-model UserFacilityProfile {
+model StaffProfile {
   id          String   @id @default(cuid())
   facilityId  String
   createdJobs Job[]
@@ -263,7 +263,6 @@ model UserFacilityProfile {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([facilityId])
-  @@map("facility_profile")
 }
 
 model FacilityVerification {

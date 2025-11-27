@@ -57,7 +57,7 @@ async function main() {
 	}
 
 	// Create or get UserFacilityProfile for the owner
-	const facilityProfile = await prisma.userFacilityProfile.upsert({
+	const staffProfile = await prisma.staffProfile.upsert({
 		where: { userId: clinicOwner.id },
 		update: {
 			facilityId: clinic.id,
@@ -217,7 +217,7 @@ async function main() {
 			data: {
 				...jobData,
 				facilityId: clinic.id,
-				userFacilityProfileId: facilityProfile.id,
+				staffId: staffProfile.id,
 			},
 		});
 		console.log(`✅ Created job: ${job.title}`);
@@ -393,7 +393,9 @@ async function main() {
 		});
 		verificationCount++;
 
-		console.log(`✅ Created doctor: ${doctor.name} (${doctorData.verification.verificationStatus})`);
+		console.log(
+			`✅ Created doctor: ${doctor.name} (${doctorData.verification.verificationStatus})`,
+		);
 	}
 
 	console.log("\n🎉 Database seeding completed successfully!");
@@ -406,9 +408,15 @@ async function main() {
 	console.log(`   - 5 Jobs created`);
 	console.log(`   - ${doctorCount} Doctors created`);
 	console.log(`   - ${verificationCount} Doctor Verifications created`);
-	console.log(`     • ${doctors.filter(d => d.verification.verificationStatus === VerificationStatus.APPROVED).length} Approved`);
-	console.log(`     • ${doctors.filter(d => d.verification.verificationStatus === VerificationStatus.PENDING).length} Pending`);
-	console.log(`     • ${doctors.filter(d => d.verification.verificationStatus === VerificationStatus.REJECTED).length} Rejected`);
+	console.log(
+		`     • ${doctors.filter((d) => d.verification.verificationStatus === VerificationStatus.APPROVED).length} Approved`,
+	);
+	console.log(
+		`     • ${doctors.filter((d) => d.verification.verificationStatus === VerificationStatus.PENDING).length} Pending`,
+	);
+	console.log(
+		`     • ${doctors.filter((d) => d.verification.verificationStatus === VerificationStatus.REJECTED).length} Rejected`,
+	);
 }
 
 main()

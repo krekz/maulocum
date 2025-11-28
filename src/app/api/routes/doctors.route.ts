@@ -9,7 +9,10 @@ import { createJobApplicationSchema } from "../types/jobs.types";
 
 const app = new Hono<{ Variables: AppVariables }>()
 
-	// Apply for a job
+	/*
+	 * Apply for a job
+	 * POST /api/v2/doctors/applications
+	 */
 	.post(
 		"/applications",
 		requireValidDoctorProfile,
@@ -47,12 +50,15 @@ const app = new Hono<{ Variables: AppVariables }>()
 		},
 	)
 
-	// Get all applications for the logged-in doctor
+	/*
+	 * Get all applications for the logged-in doctor
+	 * GET /api/v2/doctors/applications
+	 */
 	.get("/applications", requireValidDoctorProfile, async (c) => {
 		try {
 			const doctorProfile = c.get("doctorProfile");
 
-			const applications = await doctorsService.getDoctorApplications(
+			const applications = await doctorsService.getDoctorJobApplications(
 				doctorProfile.id,
 			);
 
@@ -78,7 +84,10 @@ const app = new Hono<{ Variables: AppVariables }>()
 		}
 	})
 
-	// Get a specific application
+	/*
+	 * Get a specific application
+	 * GET /api/v2/doctors/applications/:applicationId
+	 */
 	.get(
 		"/applications/:applicationId",
 		requireValidDoctorProfile,
@@ -88,7 +97,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const doctorProfile = c.get("doctorProfile");
 				const { applicationId } = c.req.valid("param");
 
-				const application = await doctorsService.getApplication(
+				const application = await doctorsService.getDoctorJobApplicationById(
 					applicationId,
 					doctorProfile.id,
 				);
@@ -116,7 +125,10 @@ const app = new Hono<{ Variables: AppVariables }>()
 		},
 	)
 
-	// Withdraw an application
+	/*
+	 * Withdraw an application
+	 * DELETE /api/v2/doctors/applications/:applicationId
+	 */
 	.delete(
 		"/applications/:applicationId",
 		requireValidDoctorProfile,
@@ -126,7 +138,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const doctorProfile = c.get("doctorProfile");
 				const { applicationId } = c.req.valid("param");
 
-				await doctorsService.withdrawApplication(
+				await doctorsService.withdrawDoctorJobApplication(
 					applicationId,
 					doctorProfile.id,
 				);

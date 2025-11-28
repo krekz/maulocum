@@ -20,6 +20,14 @@ enum UserRole {
   ADMIN
 }
 
+enum JobApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
 enum VerificationStatus {
   PENDING
   APPROVED
@@ -208,14 +216,14 @@ model Job {
 }
 
 model JobApplication {
-  id              String         @id @default(cuid())
+  id              String               @id @default(cuid())
   jobId           String
-  job             Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  status          String         @default("pending")
+  job             Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status          JobApplicationStatus @default(PENDING)
   coverLetter     String?
-  appliedAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  appliedAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  DoctorProfile   DoctorProfile?       @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   doctorProfileId String?
 
   @@unique([jobId, doctorProfileId])

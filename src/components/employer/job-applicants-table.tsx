@@ -73,6 +73,8 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 			APPROVED: "bg-green-100 text-green-800",
 			PENDING: "bg-yellow-100 text-yellow-800",
 			REJECTED: "bg-red-100 text-red-800",
+			COMPLETED: "bg-green-100 text-green-800",
+			CANCELLED: "bg-red-100 text-red-800",
 		};
 		return variants[status as keyof typeof variants] || variants.PENDING;
 	};
@@ -214,7 +216,7 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 										>
 											View
 										</button>
-										{application.status === "pending" && (
+										{application.status === "PENDING" && (
 											<>
 												<button
 													type="button"

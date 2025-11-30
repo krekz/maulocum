@@ -674,6 +674,7 @@ export class FacilityService {
 			});
 		}
 	}
+
 	async getJobById(id: string, facilityId?: string) {
 		try {
 			const job = await prisma.job.findUnique({
@@ -699,6 +700,77 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to fetch job",
+			});
+		}
+	}
+
+	async getJobApplicants(facilityId: string) {
+		try {
+			const applications = await prisma.jobApplication.findMany({
+				where: {
+					job: {
+						facilityId,
+					},
+				},
+				select: {
+					id: true,
+					appliedAt: true,
+					coverLetter: true,
+					status: true,
+					updatedAt: true,
+					job: {
+						select: {
+							id: true,
+							title: true,
+							startDate: true,
+							endDate: true,
+							startTime: true,
+							endTime: true,
+							location: true,
+							payRate: true,
+							payBasis: true,
+							jobType: true,
+							urgency: true,
+							status: true,
+						},
+					},
+					DoctorProfile: {
+						select: {
+							id: true,
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									image: true,
+									phoneNumber: true,
+								},
+							},
+							doctorVerification: {
+								select: {
+									fullName: true,
+									phoneNumber: true,
+									location: true,
+									specialty: true,
+									yearsOfExperience: true,
+									apcNumber: true,
+									verificationStatus: true,
+								},
+							},
+						},
+					},
+				},
+				orderBy: {
+					appliedAt: "desc",
+				},
+			});
+
+			return applications;
+		} catch (error) {
+			console.error("Error in facility.service.getJobApplicants:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch job applicants",
 			});
 		}
 	}
@@ -795,7 +867,7 @@ export class FacilityService {
 	 * Get all applicants for a job
 	 * @security Ownership verified by requireActiveEmployer middleware
 	 */
-	async getJobApplicants(jobId: string, facilityId: string) {
+	async getJobApplicantsById(jobId: string, facilityId: string) {
 		try {
 			// Get applicants only for jobs belonging to this facility
 			const applicants = await prisma.jobApplication.findMany({

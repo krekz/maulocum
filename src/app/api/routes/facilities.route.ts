@@ -250,6 +250,36 @@ const app = new Hono<{ Variables: AppVariables }>()
 		}
 	})
 
+	/**
+	 * GET /api/v2/facilities/jobs/applicants
+	 * Get all jobs posted by employer's facility
+	 * @PROTECTED route
+	 */
+	.get("/jobs/applicants", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			const jobs = await facilityService.getJobApplicants(
+				staffProfile.facilityId,
+			);
+			return c.json({
+				success: true,
+				message: "Jobs fetched successfully",
+				data: jobs,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
 	.get(
 		"/jobs/:id",
 		requireActiveEmployer,
@@ -349,7 +379,7 @@ const app = new Hono<{ Variables: AppVariables }>()
 				const staffProfile = c.get("staffProfile");
 
 				// Get job applicants (ownership verified by middleware)
-				const applicants = await facilityService.getJobApplicants(
+				const applicants = await facilityService.getJobApplicantsById(
 					id,
 					staffProfile.facilityId,
 				);

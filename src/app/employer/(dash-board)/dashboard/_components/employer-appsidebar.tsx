@@ -32,6 +32,10 @@ function EmployerAppSidebar() {
 								title: "All Jobs",
 								url: "/employer/dashboard/jobs",
 							},
+							{
+								title: "Applicants",
+								url: "/employer/dashboard/jobs/applicants",
+							},
 						],
 					},
 					{

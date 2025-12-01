@@ -1,78 +1,8 @@
 import { z } from "zod";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 
-export type GetJobsPromiseReturn = Promise<
-	| {
-			jobs: Array<{
-				id: string;
-				title: string;
-				description: string | null;
-				location: string;
-				payRate: string;
-				payBasis: string;
-				startTime: string;
-				endTime: string;
-				startDate: Date;
-				endDate: Date;
-				jobType: string;
-				urgency: string;
-				status: string;
-				requiredSpecialists: string[];
-				facilityId: string;
-				createdAt: Date;
-				updatedAt: Date;
-				facility: {
-					id: string;
-					name: string;
-					address: string;
-					contactEmail: string;
-					contactPhone: string;
-					profileImage: string | null;
-					description: string | null;
-					createdAt: Date;
-					updatedAt: Date;
-					ownerId: string;
-					reviews: Array<{
-						id: string;
-						rating: number;
-						comment: string | null;
-						createdAt: Date;
-					}>;
-					contactInfo: Array<{
-						id: string;
-						name: string;
-						position: string;
-						contact: string;
-					}>;
-				};
-				_count: {
-					applicants: number;
-				};
-			}>;
-			pagination: {
-				total: number;
-				page: number;
-				limit: number;
-				totalPages: number;
-			};
-	  }
-	| {
-			jobs: Array<{
-				id: string;
-				payBasis: string;
-				startDate: Date;
-				endDate: Date;
-			}>;
-			pagination: {
-				total: number;
-				page: number;
-				limit: number;
-				totalPages: number;
-			};
-	  }
->;
-// @/api/services/jobs.service.ts
-export const fullAccessSelect: Prisma.JobSelect = {
+// Select objects defined first
+export const fullAccessSelect = {
 	id: true,
 	title: true,
 	description: true,
@@ -99,9 +29,6 @@ export const fullAccessSelect: Prisma.JobSelect = {
 			contactPhone: true,
 			profileImage: true,
 			description: true,
-			createdAt: true,
-			updatedAt: true,
-			ownerId: true,
 			reviews: {
 				select: {
 					id: true,
@@ -125,15 +52,41 @@ export const fullAccessSelect: Prisma.JobSelect = {
 			applicants: true,
 		},
 	},
-} as const;
+} satisfies Prisma.JobSelect;
 
-// @/api/services/jobs.service.ts
-export const limitedAccessSelect: Prisma.JobSelect = {
+export const limitedAccessSelect = {
 	id: true,
 	payBasis: true,
 	startDate: true,
 	endDate: true,
-} as const;
+	location: true,
+	facility: {
+		select: {
+			address: true,
+		},
+	},
+} satisfies Prisma.JobSelect;
+
+// Dynamic types derived from select objects
+export type FullAccessJob = Prisma.JobGetPayload<{
+	select: typeof fullAccessSelect;
+}>;
+
+export type LimitedAccessJob = Prisma.JobGetPayload<{
+	select: typeof limitedAccessSelect;
+}>;
+
+type Pagination = {
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+};
+
+export type GetJobsPromiseReturn = Promise<
+	| { jobs: FullAccessJob[]; pagination: Pagination }
+	| { jobs: LimitedAccessJob[]; pagination: Pagination }
+>;
 
 // Enums
 export const JobUrgency = {

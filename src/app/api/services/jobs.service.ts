@@ -92,7 +92,7 @@ export class JobService {
 			}
 
 			if (hasFullAccess) {
-				const [jobs, total] = await Promise.all([
+				const [fullAccessJobs, total] = await Promise.all([
 					prisma.job.findMany({
 						where,
 						skip,
@@ -103,12 +103,12 @@ export class JobService {
 					prisma.job.count({ where }),
 				]);
 
-				if (!jobs.length) {
+				if (!fullAccessJobs.length) {
 					throw new HTTPException(404, { message: "Jobs not found" });
 				}
 
 				return {
-					jobs,
+					jobs: fullAccessJobs,
 					pagination: {
 						total,
 						page,
@@ -117,7 +117,7 @@ export class JobService {
 					},
 				};
 			} else {
-				const [jobs, total] = await Promise.all([
+				const [limitedAccessJobs, total] = await Promise.all([
 					prisma.job.findMany({
 						where,
 						skip,
@@ -128,12 +128,12 @@ export class JobService {
 					prisma.job.count({ where }),
 				]);
 
-				if (!jobs.length) {
+				if (!limitedAccessJobs.length) {
 					throw new HTTPException(404, { message: "Jobs not found" });
 				}
 
 				return {
-					jobs,
+					jobs: limitedAccessJobs,
 					pagination: {
 						total,
 						page,

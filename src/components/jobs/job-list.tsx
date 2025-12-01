@@ -1,168 +1,134 @@
 "use client";
 
+import { Calendar, Lock, MapPin } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import type { FullAccessJob } from "@/app/api/types/jobs.types";
 import { authClient } from "@/lib/auth-client";
 import type { JobResponse } from "@/lib/rpc";
+
+// Type guard to check if job is full access
+function isFullAccessJob(job: unknown): job is FullAccessJob {
+	return typeof job === "object" && job !== null && "createdAt" in job;
+}
 
 function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 	const jobListings = data.data;
 
 	const { isPending } = authClient.useSession();
 	const handleJobClick = (jobId: string) => {
-		// Update URL with the selected job ID in the query parameters
 		const url = new URL(window.location.href);
 		url.searchParams.set("id", jobId);
 		window.history.pushState({}, "", url.toString());
 	};
 
-	// Get the currently selected job ID from URL search params
 	const searchParams = useSearchParams();
 	const selectedJobId = searchParams.get("id");
 
 	if (!jobListings) {
 		return (
-			<div className="w-full md:w-2/3 space-y-2">No job listings found</div>
+			<div className="w-full md:w-[340px] shrink-0">
+				<div className="bg-white rounded-xl p-6 border border-slate-100 text-center">
+					<p className="text-slate-500 text-sm">No job listings found</p>
+				</div>
+			</div>
 		);
 	}
 
 	if (isPending) {
 		return (
-			<div className="w-full md:w-2/3 space-y-2">
-				{Array.from({ length: 5 }).map((_, index) => (
+			<div className="w-full md:w-[340px] shrink-0 space-y-3">
+				{Array.from({ length: 4 }).map((_, index) => (
 					<div
 						key={index}
-						className="bg-card p-6 min-h-[200px] animate-pulse rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer"
-					/>
+						className="bg-white rounded-xl p-4 border border-slate-100 animate-pulse"
+					>
+						<div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
+						<div className="h-6 bg-slate-200 rounded w-1/2 mb-2" />
+						<div className="h-3 bg-slate-100 rounded w-2/3" />
+					</div>
 				))}
 			</div>
 		);
 	}
-
-	const hasFullAccess =
-		jobListings.jobs.length > 0 && "title" in jobListings.jobs[0];
-
 	return (
-		<div className="w-full md:w-2/3 space-y-2">
-			{jobListings.jobs.map((job) => (
-				<button
-					onClick={() => handleJobClick(job.id)}
-					key={job.id}
-					className={`bg-card p-6 w-full rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer relative ${
-						selectedJobId === job.id
-							? "border border-primary"
-							: "border border-border hover:border-primary"
-					}`}
-				>
-					{!hasFullAccess && (
-						<div className="absolute top-2 right-2 bg-muted/80 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 text-xs">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-								<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-							</svg>
-							<span className="text-muted-foreground">Limited</span>
-						</div>
-					)}
+		<div className="w-full md:w-[340px] shrink-0 space-y-3">
+			{jobListings.jobs.map((job, index) => {
+				const isSelected = selectedJobId === job.id;
+				const isNew = index === 0;
+				const fullAccess = isFullAccessJob(job);
 
-					<div className="flex flex-col space-y-4">
-						{hasFullAccess ? (
-							<>
-								<div className="flex justify-between items-start">
-									<div>
-										<h3 className="text-xl font-semibold">
-											{"facility" in job && job.facility?.name}
-										</h3>
-										<p className="text-muted-foreground flex items-center gap-1 text-sm">
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												width="16"
-												height="16"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											>
-												<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-												<circle cx="12" cy="10" r="3" />
-											</svg>
-											{"facility" in job && job.facility?.address}
-										</p>
-									</div>
-								</div>
-								<p className="text-sm line-clamp-2">
-									{"description" in job && job.description}
-								</p>
-								<div className="grid grid-cols-2 gap-3">
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">Specialist</p>
-										<p className="font-medium text-sm">
-											{"requiredSpecialists" in job && job.requiredSpecialists}
-										</p>
-									</div>
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">Pay Rate</p>
-										<p className="font-medium text-green-600 text-sm">
-											{"payRate" in job && job.payRate}
-										</p>
-									</div>
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">Start</p>
-										<p className="font-medium text-sm">
-											{new Date(job.startDate).toLocaleDateString()}
-										</p>
-									</div>
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">End</p>
-										<p className="font-medium text-sm">
-											{new Date(job.endDate).toLocaleDateString()}
-										</p>
-									</div>
-								</div>
-							</>
-						) : (
-							<>
-								<div className="space-y-2">
-									<div className="h-6 bg-muted/50 rounded w-3/4 animate-pulse" />
-									<div className="h-4 bg-muted/30 rounded w-1/2 animate-pulse" />
-								</div>
-								<div className="h-4 bg-muted/30 rounded w-full animate-pulse" />
-								<div className="grid grid-cols-2 gap-3">
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">Pay Basis</p>
-										<p className="font-medium text-sm">{job.payBasis}</p>
-									</div>
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">Start</p>
-										<p className="font-medium text-sm">
-											{new Date(job.startDate).toLocaleDateString()}
-										</p>
-									</div>
-									<div className="bg-accent/50 p-2 rounded">
-										<p className="text-xs text-muted-foreground">End</p>
-										<p className="font-medium text-sm">
-											{new Date(job.endDate).toLocaleDateString()}
-										</p>
-									</div>
-									<div className="bg-muted/30 p-2 rounded flex items-center justify-center">
-										<span className="text-xs text-muted-foreground">
-											🔒 Sign in
-										</span>
-									</div>
-								</div>
-							</>
-						)}
-					</div>
-				</button>
-			))}
+				return (
+					<button
+						type="button"
+						onClick={() => handleJobClick(job.id)}
+						key={job.id}
+						className={`w-full text-left bg-white rounded-xl p-4 transition-all cursor-pointer ${
+							isSelected
+								? "border-2 border-blue-500 shadow-md"
+								: "border border-slate-100 hover:border-slate-200 hover:shadow-sm"
+						}`}
+					>
+						{/* Header */}
+						<div className="flex items-start justify-between mb-2">
+							<h4 className="font-semibold text-slate-900 text-sm leading-tight pr-2">
+								{fullAccess ? job.facility.name : "Healthcare Facility"}
+							</h4>
+							<div className="flex items-center gap-1.5 shrink-0">
+								{!fullAccess && (
+									<span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-medium rounded flex items-center gap-0.5">
+										<Lock className="w-2.5 h-2.5" />
+										Limited
+									</span>
+								)}
+								{isNew && fullAccess && (
+									<span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-medium rounded">
+										New
+									</span>
+								)}
+								{fullAccess && job.urgency === "HIGH" && (
+									<span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-medium rounded">
+										Urgent
+									</span>
+								)}
+							</div>
+						</div>
+
+						{/* Pay Rate */}
+						<div
+							className={`text-lg font-bold mb-2 ${isSelected ? "text-blue-600" : "text-slate-700"}`}
+						>
+							RM {fullAccess ? job.payRate : "---"}
+							<span className="text-xs font-normal text-slate-400 ml-0.5">
+								/{job.payBasis?.toLowerCase() || "day"}
+							</span>
+						</div>
+
+						{/* Location */}
+						<div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2">
+							<MapPin className="w-3 h-3" />
+							<span className="truncate">
+								{job.location || job.facility.address || "Location hidden"}
+							</span>
+						</div>
+
+						{/* Date Range */}
+						<div className="flex items-center gap-1 text-[11px] text-slate-500">
+							<Calendar className="w-3 h-3" />
+							<span>
+								{new Date(job.startDate).toLocaleDateString("en-MY", {
+									month: "short",
+									day: "numeric",
+								})}{" "}
+								-{" "}
+								{new Date(job.endDate).toLocaleDateString("en-MY", {
+									month: "short",
+									day: "numeric",
+								})}
+							</span>
+						</div>
+					</button>
+				);
+			})}
 		</div>
 	);
 }

@@ -1,11 +1,16 @@
 import { hc } from "hono/client";
-import { AlertCircle, Check, Clock } from "lucide-react";
+import {
+	AlertCircle,
+	Clock,
+	Mail,
+	MapPin,
+	ShieldCheck,
+	Stethoscope,
+} from "lucide-react";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { APIType } from "@/app/api/[...route]/route";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { DoctorVerificationWizard } from "./_components/doctor-verification-wizard";
 import { RejectionAlert } from "./_components/rejection-alert";
@@ -14,7 +19,6 @@ import { VerificationDisplayWrapper } from "./_components/verification-display-w
 export default async function ProfilePage() {
 	const client = hc<APIType>(process.env.BETTER_AUTH_URL as string);
 
-	// Get session using Better Auth
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
@@ -37,16 +41,18 @@ export default async function ProfilePage() {
 				return notFound();
 			default:
 				return (
-					<div className="min-h-screen flex items-center justify-center">
-						<p>Something went wrong. Please try again later.</p>
+					<div className="min-h-[50vh] flex flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/40 px-6 py-10 text-center">
+						<p className="text-sm text-muted-foreground">
+							Something went wrong. Please try again later.
+						</p>
 					</div>
 				);
 		}
 	}
 
 	const data = await res.json();
-
 	const user = data.data;
+
 	if (!user) {
 		throw new Error("User not found");
 	}
@@ -60,48 +66,45 @@ export default async function ProfilePage() {
 	const isVerified = user?.roles?.includes("DOCTOR");
 
 	return (
-		<>
-			<div className="hidden md:flex items-center justify-between">
-				<h1 className="text-3xl font-bold">My Profile</h1>
-			</div>
-
-			{/* Show verification prompt for normal users */}
+		<div className="space-y-4">
+			{/* Status Alerts */}
 			{needsVerification && (
-				<Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 p-6">
-					<div className="flex items-start gap-4">
-						<AlertCircle className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1" />
+				<div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+					<div className="flex items-start gap-3">
+						<div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+							<AlertCircle className="w-4 h-4 text-blue-600" />
+						</div>
 						<div>
-							<h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-								Complete Your Profile to Access Jobs
+							<h3 className="font-medium text-blue-900 text-sm">
+								Complete Your Profile
 							</h3>
-							<p className="text-sm text-blue-700 dark:text-blue-300">
-								As a doctor, you need to verify your credentials to browse and
-								apply for locum jobs. Please complete the form below.
+							<p className="text-xs text-blue-700 mt-0.5">
+								Verify your credentials to browse and apply for locum jobs.
 							</p>
 						</div>
 					</div>
-				</Card>
+				</div>
 			)}
 
-			{/* Show pending status */}
 			{verificationPending && (
-				<Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800 p-6">
-					<div className="flex items-start gap-4">
-						<Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mt-1" />
+				<div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+					<div className="flex items-start gap-3">
+						<div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+							<Clock className="w-4 h-4 text-amber-600" />
+						</div>
 						<div>
-							<h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+							<h3 className="font-medium text-amber-900 text-sm">
 								Verification Pending
 							</h3>
-							<p className="text-sm text-yellow-700 dark:text-yellow-300">
-								Your doctor verification is being reviewed. You'll be notified
-								once it's approved.
+							<p className="text-xs text-amber-700 mt-0.5">
+								Your verification is being reviewed. You&apos;ll be notified
+								once approved.
 							</p>
 						</div>
 					</div>
-				</Card>
+				</div>
 			)}
 
-			{/* Show rejection status */}
 			{verificationRejected && verification && (
 				<RejectionAlert
 					rejectionReason={verification.rejectionReason}
@@ -109,7 +112,7 @@ export default async function ProfilePage() {
 				/>
 			)}
 
-			{/* Show verification form for normal users */}
+			{/* Verification Wizard for new users */}
 			{needsVerification && (
 				<DoctorVerificationWizard
 					userId={user.id}
@@ -118,58 +121,74 @@ export default async function ProfilePage() {
 				/>
 			)}
 
-			{/* Profile header card - Only show if verified or has verification */}
+			{/* Profile Card - Only show if verified or has verification */}
 			{(isVerified || verification) && (
-				<>
-					<Card className="overflow-hidden">
-						<div className="p-4 sm:p-6 pt-0 relative">
-							<Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background absolute ">
+				<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+					{/* Header */}
+					<div className="px-4 py-3 border-b border-slate-100">
+						<h3 className="font-semibold text-slate-900 text-sm">My Profile</h3>
+					</div>
+
+					{/* Profile Info */}
+					<div className="p-4">
+						<div className="flex items-start gap-4">
+							{/* Avatar */}
+							<Avatar className="h-16 w-16 border-2 border-slate-100 shadow-sm shrink-0">
 								<AvatarImage
 									src={user?.image || "/placeholder-avatar.jpg"}
 									alt={user.name}
 								/>
-								<AvatarFallback>
+								<AvatarFallback className="bg-slate-100 text-slate-600 text-lg font-medium">
 									{user.name?.charAt(0).toUpperCase() || "U"}
 								</AvatarFallback>
 							</Avatar>
 
-							<div className="ml-24 sm:ml-28 pt-1 sm:pt-2 flex flex-col justify-between gap-3 sm:gap-4">
-								<div>
-									<h2 className="text-xl sm:text-2xl font-semibold">
+							{/* Info */}
+							<div className="flex-1 min-w-0">
+								<div className="flex items-center gap-2 mb-1">
+									<h2 className="font-semibold text-slate-900 text-base truncate">
 										{verification?.fullName || user.name}
 									</h2>
-									<p className="text-sm sm:text-base text-muted-foreground">
-										{verification?.specialty || "Doctor"}
-									</p>
-									<p className="text-sm italic sm:text-base text-muted-foreground">
-										{user.email}
-									</p>
+									{isVerified && (
+										<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1">
+											<ShieldCheck className="w-3 h-3" />
+											Verified
+										</span>
+									)}
 								</div>
 
-								<div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-0">
-									{isVerified && (
-										<Badge
-											variant="outline"
-											className="flex items-center gap-1 px-2 py-1 text-xs sm:text-sm border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
-										>
-											<Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-											<span>Verified Doctor</span>
-										</Badge>
+								{/* Meta Info */}
+								<div className="space-y-1">
+									{verification?.specialty && (
+										<div className="flex items-center gap-1.5 text-xs text-slate-500">
+											<Stethoscope className="w-3 h-3" />
+											<span>{verification.specialty}</span>
+										</div>
+									)}
+									<div className="flex items-center gap-1.5 text-xs text-slate-500">
+										<Mail className="w-3 h-3" />
+										<span className="truncate">{user.email}</span>
+									</div>
+									{verification?.location && (
+										<div className="flex items-center gap-1.5 text-xs text-slate-500">
+											<MapPin className="w-3 h-3" />
+											<span>{verification.location}</span>
+										</div>
 									)}
 								</div>
 							</div>
 						</div>
-					</Card>
-
-					{/* Professional Information with Edit Toggle */}
-					{verification && (
-						<VerificationDisplayWrapper
-							verification={verification}
-							userEmail={user.email}
-						/>
-					)}
-				</>
+					</div>
+				</div>
 			)}
-		</>
+
+			{/* Professional Information */}
+			{verification && (
+				<VerificationDisplayWrapper
+					verification={verification}
+					userEmail={user.email}
+				/>
+			)}
+		</div>
 	);
 }

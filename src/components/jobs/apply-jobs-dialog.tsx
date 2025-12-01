@@ -24,7 +24,7 @@ function ApplyJobDialog({
 	jobId,
 }: {
 	trigger?: React.ReactNode;
-	jobTitle?: string;
+	jobTitle?: string | null;
 	jobId: string;
 }) {
 	const [open, setOpen] = useState(false);

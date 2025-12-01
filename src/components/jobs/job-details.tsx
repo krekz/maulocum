@@ -2,12 +2,21 @@
 
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
+	ArrowRight,
 	Bookmark,
+	Briefcase,
+	Clock,
 	Copy,
+	ExternalLink,
 	Facebook,
+	Lock,
+	MapPin,
 	MessageSquare,
 	MoreHorizontal,
-	SquareArrowOutUpRight,
+	Phone,
+	ShieldCheck,
+	Star,
+	User,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -40,45 +49,38 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (isPending) {
 		return (
-			<div className="w-full md:sticky md:top-20 h-auto md:h-full flex items-center justify-center p-4 rounded-lg shadow-sm bg-card border">
-				<p className="text-muted-foreground">Loading Jobs...</p>
+			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+				<div className="p-6 flex items-center justify-center min-h-[400px]">
+					<div className="text-center">
+						<div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 animate-pulse">
+							<Briefcase className="w-5 h-5 text-slate-400" />
+						</div>
+						<p className="text-sm text-slate-500">Loading job details...</p>
+					</div>
+				</div>
 			</div>
 		);
 	}
 
 	if (!session) {
 		return (
-			<div className="w-full md:sticky md:top-20 h-auto md:h-full overflow-y-auto border p-4 rounded-lg shadow-sm bg-card/80 backdrop-blur-sm">
-				<h4 className="font-semibold text-lg mb-4 bg-card/90 backdrop-blur-md py-2 border-b flex items-center gap-2">
-					<span className="text-primary">🔒</span> Locum Details
-				</h4>
-				<div className="flex flex-col items-center justify-center text-center p-4 bg-muted/30 rounded-lg border border-dashed">
-					<div className="mb-4 p-3 bg-background/80 rounded-full">
-						<svg
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							className="text-muted-foreground"
-						>
-							<rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-						</svg>
+			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+				<div className="p-6">
+					<div className="flex flex-col items-center justify-center text-center py-10">
+						<div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+							<Lock className="w-7 h-7 text-slate-400" />
+						</div>
+						<h3 className="font-semibold text-slate-900 mb-2">
+							Sign In Required
+						</h3>
+						<p className="text-sm text-slate-500 mb-6 max-w-sm">
+							You need to be logged in and verified to view full job details and
+							apply.
+						</p>
+						<Button onClick={() => router.push("/login")}>
+							Sign In to Continue
+						</Button>
 					</div>
-					<p className="mb-4 text-muted-foreground">
-						You need to be logged in and verified to view job details.
-					</p>
-					<Button
-						className="mt-2 w-full sm:w-auto"
-						variant="default"
-						onClick={() => router.push("/login")}
-					>
-						Sign In
-					</Button>
 				</div>
 			</div>
 		);
@@ -86,14 +88,19 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (!selectedJob) {
 		return (
-			<div className="w-full h-full overflow-y-auto border p-4 rounded-lg shadow-sm bg-card">
-				<h4 className="font-semibold text-lg mb-4 sticky top-0 bg-card py-2 border-b">
-					Locum Details
-				</h4>
-				<p className="mb-4 text-muted-foreground">
-					Select a job from the list on the left to see more details here. This
-					panel will stick to the top as you scroll through jobs.
-				</p>
+			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+				<div className="p-6">
+					<div className="flex flex-col items-center justify-center text-center py-10">
+						<div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+							<Briefcase className="w-7 h-7 text-blue-500" />
+						</div>
+						<h3 className="font-semibold text-slate-900 mb-2">Select a Job</h3>
+						<p className="text-sm text-slate-500 max-w-sm">
+							Choose a job from the list to view details, requirements, and
+							apply.
+						</p>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -102,298 +109,304 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (!hasFullAccess) {
 		return (
-			<div className="w-full md:sticky md:top-20 h-auto md:max-h-[calc(97vh-4rem)] overflow-y-auto p-4 rounded-lg border bg-card">
-				<div className="flex items-center justify-between mb-4 border-b pb-2">
-					<div className="flex items-center gap-2">
-						<div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<path d="M12 2a7 7 0 0 0-7 7v2.5a4.5 4.5 0 0 1-.8 2.6L3 16h18l-1.2-1.9a4.5 4.5 0 0 1-.8-2.6V9a7 7 0 0 0-7-7z" />
-								<path d="M10 22h4" />
-								<path d="M12 18v4" />
-							</svg>
+			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+				<div className="p-6">
+					<div className="flex flex-col items-center justify-center text-center py-8">
+						<div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+							<ShieldCheck className="w-7 h-7 text-amber-500" />
 						</div>
-						<div className="flex flex-col">
-							<span className="text-xs font-medium uppercase tracking-wide text-primary">
-								Verification Required
-							</span>
-							<h4 className="text-base font-semibold">
-								Verify as Doctor to View Full Locum Details
-							</h4>
-						</div>
-					</div>
-				</div>
+						<h3 className="font-semibold text-slate-900 mb-2">
+							Verification Required
+						</h3>
+						<p className="text-sm text-slate-500 mb-6 max-w-sm">
+							Complete your doctor verification to view full job details,
+							contact information, and apply.
+						</p>
 
-				<div className="space-y-6">
-					<div className="bg-muted/40 rounded-lg p-5 border border-dashed">
-						<div className="flex flex-col gap-3">
-							<p className="text-sm text-muted-foreground">
-								You&apos;re signed in, but we need to verify your doctor profile
-								before showing full job details like clinic information, contact
-								details, and sensitive rate structures.
+						<div className="bg-slate-50 rounded-lg p-4 mb-6 text-left w-full max-w-sm">
+							<p className="text-xs font-medium text-slate-700 mb-2">
+								What you&apos;ll unlock:
 							</p>
-							<ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-								<li>Upload your APC / MMC details</li>
-								<li>Complete your professional profile</li>
-								<li>Get verified once and apply to all locums seamlessly</li>
+							<ul className="space-y-1.5 text-xs text-slate-500">
+								<li className="flex items-center gap-2">
+									<div className="w-1 h-1 rounded-full bg-emerald-500" />
+									Full clinic information & contact
+								</li>
+								<li className="flex items-center gap-2">
+									<div className="w-1 h-1 rounded-full bg-emerald-500" />
+									Detailed pay rates & benefits
+								</li>
+								<li className="flex items-center gap-2">
+									<div className="w-1 h-1 rounded-full bg-emerald-500" />
+									Apply to unlimited jobs
+								</li>
 							</ul>
-							<div className="pt-2">
-								<Button
-									className="w-full sm:w-auto"
-									onClick={() => router.push("/profile")}
-								>
-									Complete Doctor Verification
-								</Button>
-							</div>
 						</div>
+
+						<Button onClick={() => router.push("/profile")}>
+							Complete Verification
+							<ArrowRight className="w-4 h-4 ml-1" />
+						</Button>
 					</div>
 				</div>
 			</div>
 		);
 	}
 
+	// Calculate average rating
+	const avgRating =
+		selectedJob.facility.reviews && selectedJob.facility.reviews.length > 0
+			? selectedJob.facility.reviews.reduce((a, b) => a + b.rating, 0) /
+				selectedJob.facility.reviews.length
+			: 0;
+
 	return (
-		<div className="w-full md:sticky md:top-20 h-auto md:max-h-[calc(97vh-4rem)] overflow-y-auto p-4 rounded-lg">
-			<div className="flex items-center justify-between font-semibold text-lg mb-4 py-2 border-b">
-				<h4>Locum Details</h4>
-				<div className="flex items-center gap-2">
+		<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden md:sticky md:top-20 md:max-h-[calc(100vh-6rem)]">
+			{/* Header */}
+			<div className="p-4 border-b border-slate-100">
+				<div className="flex items-start justify-between mb-3">
+					<div className="flex-1 min-w-0">
+						<h3 className="font-bold text-slate-900 text-lg mb-1">
+							{selectedJob.title || "Locum Position"}
+						</h3>
+						<p className="text-sm text-slate-500">
+							{selectedJob.facility.name}
+						</p>
+					</div>
+					<div className="text-right shrink-0 ml-4">
+						<div className="text-xl font-bold text-emerald-600">
+							RM {selectedJob.payRate}
+						</div>
+						<div className="text-[10px] text-slate-400 uppercase">
+							per {selectedJob.payBasis?.toLowerCase() || "day"}
+						</div>
+					</div>
+				</div>
+
+				{/* Meta info */}
+				<div className="flex flex-wrap items-center gap-3 text-xs">
+					<span className="flex items-center gap-1 text-slate-500">
+						<MapPin className="w-3.5 h-3.5" />
+						{selectedJob.facility.address?.split(",")[0] || "Location"}
+					</span>
+					<span className="flex items-center gap-1 text-slate-500">
+						<Clock className="w-3.5 h-3.5" />
+						{selectedJob.startTime} - {selectedJob.endTime}
+					</span>
+					{avgRating > 0 && (
+						<span className="flex items-center gap-1 text-amber-500">
+							<Star className="w-3.5 h-3.5 fill-current" />
+							{avgRating.toFixed(1)}
+						</span>
+					)}
+					{selectedJob.requiredSpecialists && (
+						<span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded-full">
+							{selectedJob.requiredSpecialists}
+						</span>
+					)}
+				</div>
+
+				{/* Action buttons */}
+				<div className="flex items-center gap-2 mt-3">
 					<Tooltip>
-						<TooltipTrigger
-							className="h-8 w-8 cursor-pointer"
-							onClick={() => window.open(`/jobs/${selectedJob.id}`, "_blank")}
-						>
-							<SquareArrowOutUpRight className="h-4 w-4" />
-							<span className="sr-only">Open in new tab</span>
+						<TooltipTrigger asChild>
+							<button
+								type="button"
+								onClick={() => window.open(`/jobs/${selectedJob.id}`, "_blank")}
+								className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+							>
+								<ExternalLink className="w-4 h-4 text-slate-500" />
+							</button>
 						</TooltipTrigger>
-						<TooltipContent>
-							<p>Open in new tab</p>
-						</TooltipContent>
+						<TooltipContent>Open in new tab</TooltipContent>
 					</Tooltip>
 
-					<Button
-						variant="ghost"
-						size="icon"
-						className="h-8 w-8 cursor-pointer"
+					<button
+						type="button"
+						className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
 					>
-						<Bookmark className="h-4 w-4" />
-						<span className="sr-only">Bookmark</span>
-					</Button>
+						<Bookmark className="w-4 h-4 text-slate-500" />
+					</button>
+
 					<Popover>
 						<PopoverTrigger asChild>
-							<Button variant="ghost" size="icon" className="h-8 w-8">
-								<MoreHorizontal className="h-4 w-4" />
-								<span className="sr-only">More options</span>
-							</Button>
+							<button
+								type="button"
+								className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+							>
+								<MoreHorizontal className="w-4 h-4 text-slate-500" />
+							</button>
 						</PopoverTrigger>
-						<PopoverContent className="w-48 p-2">
-							<div className="flex flex-col gap-1">
-								<Button
-									variant="ghost"
-									size="sm"
-									className="flex justify-start"
-								>
-									<Facebook className="mr-2 h-4 w-4" />
-									<span>Share to Facebook</span>
-								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									className="flex justify-start"
-								>
-									<MessageSquare className="mr-2 h-4 w-4" />
-									<span>Share via WhatsApp</span>
-								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									className="flex justify-start"
-								>
-									<Copy className="mr-2 h-4 w-4" />
-									<span>Copy Link</span>
-								</Button>
-							</div>
+						<PopoverContent className="w-44 p-1.5">
+							<button
+								type="button"
+								className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-md transition-colors"
+							>
+								<Facebook className="w-4 h-4" />
+								Share to Facebook
+							</button>
+							<button
+								type="button"
+								className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-md transition-colors"
+							>
+								<MessageSquare className="w-4 h-4" />
+								Share via WhatsApp
+							</button>
+							<button
+								type="button"
+								className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-md transition-colors"
+							>
+								<Copy className="w-4 h-4" />
+								Copy Link
+							</button>
 						</PopoverContent>
 					</Popover>
 				</div>
 			</div>
 
-			<div className="space-y-6 bg-white rounded-lg">
-				{/* Clinic Information at the top */}
-				<div className="mb-4">
-					<h5 className="text-xl font-semibold mb-2">
-						{selectedJob.facility.name}
-					</h5>
-					<div className="flex items-center mb-2">
-						<div className="flex items-center">
-							{selectedJob.facility.reviews &&
-								selectedJob.facility.reviews.length > 0 && (
-									<span className="text-amber-500">
-										{"★".repeat(
-											Math.floor(
-												selectedJob.facility.reviews
-													.map((review) => review.rating)
-													.reduce((a, b) => a + b, 0) /
-													selectedJob.facility.reviews.length,
-											),
-										)}
-									</span>
-								)}
-							{/* <span className="text-muted-foreground">
-								{"★".repeat(5 - Math.floor(selectedJob.rating))}
-							</span> */}
-							{/* <span className="text-sm ml-1 font-medium">
-								{selectedJob.rating}
-							</span> */}
+			{/* Content - Scrollable */}
+			<div className="p-4 space-y-5 overflow-y-auto max-h-[calc(100vh-20rem)]">
+				{/* Date & Duration Cards */}
+				<div className="grid grid-cols-3 gap-2">
+					<div className="bg-slate-50 rounded-lg p-3">
+						<div className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">
+							Start Date
 						</div>
-						{/* <span className="text-xs text-muted-foreground ml-2">
-							({selectedJob.reviewCount} reviews by locums)
-						</span> */}
+						<div className="text-sm font-semibold text-slate-900">
+							{new Date(selectedJob.startDate).toLocaleDateString("en-MY", {
+								month: "short",
+								day: "numeric",
+								year: "numeric",
+							})}
+						</div>
 					</div>
-					<p className="text-sm text-muted-foreground">
-						{selectedJob.facility.address}
-					</p>
-					{/* <a
-						href={selectedJob.gmapLink}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-xs text-primary hover:underline mt-1 inline-block"
-					>
-						View on Google Maps
-					</a> */}
-				</div>
-
-				{/* Key Information */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-					<div className="flex flex-col">
-						<span className="text-xs uppercase text-muted-foreground">
-							Location
-						</span>
-						{/* <span className="font-medium">
-							{selectedJob.address.split(",")[2]?.trim() || "Location"}
-						</span> */}
-					</div>
-					<div className="flex flex-col">
-						<span className="text-xs uppercase text-muted-foreground">
-							Payment
-						</span>
-						<span className="font-medium">{selectedJob.payBasis}</span>
-					</div>
-					<div className="flex flex-col">
-						<span className="text-xs uppercase text-muted-foreground">
-							Specialist
-						</span>
-						<span className="font-medium">General Practitioner</span>
-					</div>
-				</div>
-
-				{/* Highlighted Dates, Urgency & Hours */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-					<div className="bg-blue-50 rounded-lg p-3 flex-1">
-						<h6 className="text-xs uppercase text-blue-700 font-semibold mb-1">
-							Dates Needed
-						</h6>
-						<p className="text-blue-900 font-medium">
-							{selectedJob.startDate} - {selectedJob.endDate}
-						</p>
-					</div>
-					<div className="bg-purple-50 rounded-lg p-3 flex-1">
-						<h6 className="text-xs uppercase text-purple-700 font-semibold mb-1">
-							Working Hours
-						</h6>
-						<p className="text-purple-900 font-medium">
-							{selectedJob.startTime} - {selectedJob.endTime}
-						</p>
+					<div className="bg-slate-50 rounded-lg p-3">
+						<div className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">
+							End Date
+						</div>
+						<div className="text-sm font-semibold text-slate-900">
+							{new Date(selectedJob.endDate).toLocaleDateString("en-MY", {
+								month: "short",
+								day: "numeric",
+								year: "numeric",
+							})}
+						</div>
 					</div>
 					<div
-						className={`rounded-lg p-3 flex-1 ${
+						className={`rounded-lg p-3 ${
 							selectedJob.urgency === "HIGH"
-								? "bg-red-50 text-red-900"
+								? "bg-red-50"
 								: selectedJob.urgency === "MEDIUM"
-									? "bg-orange-50 text-orange-900"
-									: selectedJob.urgency === "LOW"
-										? "bg-green-50 text-green-900"
-										: "bg-green-50 text-green-900"
+									? "bg-amber-50"
+									: "bg-emerald-50"
 						}`}
 					>
-						<h6
-							className={`text-xs uppercase font-semibold mb-1 ${
+						<div
+							className={`text-[10px] uppercase tracking-wide mb-1 ${
+								selectedJob.urgency === "HIGH"
+									? "text-red-500"
+									: selectedJob.urgency === "MEDIUM"
+										? "text-amber-500"
+										: "text-emerald-500"
+							}`}
+						>
+							Urgency
+						</div>
+						<div
+							className={`text-sm font-semibold ${
 								selectedJob.urgency === "HIGH"
 									? "text-red-700"
 									: selectedJob.urgency === "MEDIUM"
-										? "text-orange-700"
-										: selectedJob.urgency === "LOW"
-											? "text-yellow-700"
-											: "text-green-700"
+										? "text-amber-700"
+										: "text-emerald-700"
 							}`}
 						>
-							Urgency Level
-						</h6>
-						<p className="font-medium">{selectedJob.urgency}</p>
+							{selectedJob.urgency || "Normal"}
+						</div>
 					</div>
 				</div>
 
 				{/* Description */}
-				<div className="mb-4">
-					<h5 className="font-medium mb-2">Description</h5>
-					<p className="text-sm text-muted-foreground">
-						{selectedJob.description}
-					</p>
-					<p className="text-xs text-muted-foreground mt-2">
-						Posted {selectedJob.createdAt}
-					</p>
-				</div>
+				{selectedJob.description && (
+					<div>
+						<h4 className="text-xs font-semibold text-slate-700 mb-2">
+							Job Description
+						</h4>
+						<p className="text-sm text-slate-500 leading-relaxed">
+							{selectedJob.description}
+						</p>
+					</div>
+				)}
 
-				{/* Rest of the details */}
-				{/* <div className="mb-4">
-					<h5 className="font-medium mb-2">Job Responsibilities</h5>
-					<ul className="text-sm space-y-1.5">
-						{selectedJob.responsibilities.map((responsibility, index) => (
-							<li key={index} className="flex gap-2">
-								<span className="text-primary">•</span>
-								<span>{responsibility}</span>
-							</li>
-						))}
-					</ul>
-				</div> */}
-
-				{/* <div className="mb-4">
-					<h5 className="font-medium mb-2">Facilities & Support</h5>
-					<p className="text-sm text-muted-foreground">
-						{selectedJob.facilities}
-					</p>
-				</div> */}
-
-				{/* <div className="mb-4">
-					<h5 className="font-medium mb-2">Payment Details</h5>
-					<p className="text-sm text-muted-foreground">{selectedJob.payment}</p>
-				</div> */}
-
+				{/* Facility Address */}
 				<div>
-					<h5 className="font-medium mb-2">Contact Person</h5>
-					{selectedJob.facility.contactInfo?.map((contact, index) => (
-						<div key={index} className="mb-2">
-							<p className="text-sm font-medium">
-								{contact.name}{" "}
-								<span className="font-normal text-muted-foreground">
-									({contact.position})
-								</span>
-							</p>
-							<p className="text-sm text-muted-foreground">{contact.contact}</p>
-						</div>
-					))}
+					<h4 className="text-xs font-semibold text-slate-700 mb-2">
+						Location
+					</h4>
+					<div className="flex items-start gap-2 text-sm text-slate-500">
+						<MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+						<span>{selectedJob.facility.address}</span>
+					</div>
 				</div>
+
+				{/* Contact Person */}
+				{selectedJob.facility.contactInfo &&
+					selectedJob.facility.contactInfo.length > 0 && (
+						<div>
+							<h4 className="text-xs font-semibold text-slate-700 mb-2">
+								Contact Person
+							</h4>
+							<div className="space-y-2">
+								{selectedJob.facility.contactInfo.map((contact, index) => (
+									<div
+										key={index}
+										className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg"
+									>
+										<div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+											<User className="w-4 h-4 text-slate-500" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium text-slate-900">
+												{contact.name}
+											</p>
+											<p className="text-xs text-slate-500">
+												{contact.position}
+											</p>
+										</div>
+										{contact.contact && (
+											<a
+												href={`tel:${contact.contact}`}
+												className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+											>
+												<Phone className="w-4 h-4 text-slate-500" />
+											</a>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+				{/* Posted date */}
+				<p className="text-[10px] text-slate-400">
+					Posted{" "}
+					{new Date(selectedJob.createdAt).toLocaleDateString("en-MY", {
+						month: "long",
+						day: "numeric",
+						year: "numeric",
+					})}
+				</p>
 			</div>
 
-			<div className="sticky bottom-0 bg-card pt-4 pb-2 border-t mt-6">
+			{/* Sticky Apply Button */}
+			<div className="p-4 border-t border-slate-100 bg-white">
 				<ApplyJobDialog
-					trigger={<Button>Apply Now</Button>}
+					trigger={
+						<Button className="w-full" size="lg">
+							Apply Now
+							<ArrowRight className="w-4 h-4 ml-2" />
+						</Button>
+					}
 					jobTitle={selectedJob.title}
 					jobId={selectedJob.id}
 				/>

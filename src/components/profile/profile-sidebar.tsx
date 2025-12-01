@@ -111,11 +111,6 @@ export function ProfileSidebar() {
 			icon: <User className="h-4 w-4" />,
 			label: "Personal Information",
 		},
-		{
-			href: "#documents",
-			icon: <FileText className="h-4 w-4" />,
-			label: "Documents",
-		},
 	];
 
 	const jobLinks = [

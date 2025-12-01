@@ -1,104 +1,150 @@
 "use client";
-import { Bookmark, CalendarIcon, GlobeIcon } from "lucide-react";
+
+import { Bookmark, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 function BookmarkPage() {
 	const [bookmarkedJobs, setBookmarkedJobs] = React.useState([
 		{
-			id: 1,
-			clinicName: "KL Medical Center",
+			id: "job-1",
+			title: "GP Locum - Weekend Shift",
+			facilityName: "KL Medical Center",
 			date: "12 May 2024",
 			location: "Kuala Lumpur",
 			specialist: "Emergency Medicine",
-			fee: "RM 800/day",
+			payRate: "800",
+			payBasis: "DAILY",
 		},
 		{
-			id: 2,
-			clinicName: "Selangor Family Clinic",
+			id: "job-2",
+			title: "Family Medicine - Morning",
+			facilityName: "Selangor Family Clinic",
 			date: "18 May 2024",
 			location: "Petaling Jaya, Selangor",
 			specialist: "General Practice",
-			fee: "RM 650/day",
+			payRate: "650",
+			payBasis: "DAILY",
 		},
 		{
-			id: 3,
-			clinicName: "Penang Health Center",
+			id: "job-3",
+			title: "Paediatrics Clinic Cover",
+			facilityName: "Penang Health Center",
 			date: "25 May 2024",
 			location: "Georgetown, Penang",
 			specialist: "Paediatrics",
-			fee: "RM 750/day",
+			payRate: "750",
+			payBasis: "DAILY",
 		},
 	]);
 
-	const removeBookmark = (id: number) => {
+	const removeBookmark = (id: string) => {
 		setBookmarkedJobs(bookmarkedJobs.filter((job) => job.id !== id));
 	};
 
+	const formatPayRate = (payRate: string, payBasis: string) => {
+		const basis = payBasis === "HOURLY" ? "/hr" : "/day";
+		return `RM ${payRate}${basis}`;
+	};
+
+	// Empty state
+	if (bookmarkedJobs.length === 0) {
+		return (
+			<div className="min-h-[50vh] flex flex-col items-center justify-center rounded-xl px-6 py-10 text-center shadow-sm">
+				<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+					<Bookmark className="w-5 h-5 text-muted-foreground" />
+				</div>
+				<h2 className="text-xl font-semibold tracking-tight">
+					No Bookmarks Yet
+				</h2>
+				<p className="mt-2 max-w-md text-sm text-muted-foreground">
+					Save jobs you&apos;re interested in to quickly access them later.
+				</p>
+				<div className="mt-6">
+					<Link
+						href="/jobs"
+						className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+					>
+						Browse Locum Jobs
+					</Link>
+				</div>
+			</div>
+		);
+	}
+
 	return (
-		<>
-			{/* Page Title (Desktop only) */}
-			<div className="hidden md:flex items-center justify-between">
-				<h1 className="text-3xl font-bold">Your Bookmarked Jobs</h1>
+		<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+			{/* Header */}
+			<div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+				<h3 className="font-semibold text-slate-900 text-sm">Saved Jobs</h3>
+				<div className="text-xs text-muted-foreground">
+					{bookmarkedJobs.length} bookmark
+					{bookmarkedJobs.length !== 1 ? "s" : ""}
+				</div>
 			</div>
 
-			{/* No Bookmarks Message */}
-			{bookmarkedJobs.length === 0 ? (
-				<div className="text-center py-12">
-					<p className="text-muted-foreground">
-						You haven't bookmarked any jobs yet.
-					</p>
-					<Button className="mt-4" variant="outline" asChild>
-						<Link href="/jobs">Browse Jobs</Link>
-					</Button>
-				</div>
-			) : (
-				<div className="grid gap-4">
-					{bookmarkedJobs.map((job) => (
-						<div
-							key={job.id}
-							className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-shadow"
-						>
-							<div className="flex justify-between items-start">
-								<div>
-									<h3 className="font-semibold text-lg">{job.clinicName}</h3>
-									<div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-										<CalendarIcon className="h-4 w-4" />
-										<span>{job.date}</span>
-									</div>
-									<div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-										<GlobeIcon className="h-4 w-4" />
-										<span>{job.location}</span>
-									</div>
-									<div className="mt-2 flex gap-2">
-										<Badge variant="outline">{job.specialist}</Badge>
-										<Badge variant="secondary">{job.fee}</Badge>
-									</div>
+			{/* Bookmarks List */}
+			<div className="divide-y divide-slate-50">
+				{bookmarkedJobs.map((job) => (
+					<div
+						key={job.id}
+						className="p-4 hover:bg-slate-50/50 transition-colors"
+					>
+						<div className="flex items-start justify-between gap-4">
+							<div className="flex-1 min-w-0">
+								{/* Title & Specialist Badge */}
+								<div className="flex items-center gap-2 mb-1">
+									<h4 className="font-medium text-slate-900 text-sm truncate">
+										{job.title}
+									</h4>
+									<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700">
+										{job.specialist}
+									</span>
 								</div>
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={() => removeBookmark(job.id)}
-									className="text-muted-foreground hover:text-destructive"
-								>
-									<Bookmark className="h-5 w-5 fill-current" />
-								</Button>
+
+								{/* Facility Name */}
+								<p className="text-xs text-slate-500 mb-2">
+									{job.facilityName}
+								</p>
+
+								{/* Meta Info */}
+								<div className="flex items-center gap-3 text-xs text-slate-400">
+									<span className="flex items-center gap-1">
+										<Calendar className="w-3 h-3" />
+										{job.date}
+									</span>
+									<span className="flex items-center gap-1">
+										<MapPin className="w-3 h-3" />
+										{job.location}
+									</span>
+									<span className="font-medium text-emerald-600">
+										{formatPayRate(job.payRate, job.payBasis)}
+									</span>
+								</div>
 							</div>
-							<div className="mt-4 flex justify-end">
+
+							{/* Actions */}
+							<div className="flex items-center gap-2 shrink-0">
+								<button
+									type="button"
+									onClick={() => removeBookmark(job.id)}
+									className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 transition-colors"
+									title="Remove bookmark"
+								>
+									<Bookmark className="w-4 h-4 fill-current" />
+								</button>
 								<Link
-									href="/jobs/job1"
-									className="px-4 py-2 bg-accent rounded-md hover:bg-accent/80 transition-colors"
+									href={`/jobs/${job.id}`}
+									className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
 								>
 									View Details
 								</Link>
 							</div>
 						</div>
-					))}
-				</div>
-			)}
-		</>
+					</div>
+				))}
+			</div>
+		</div>
 	);
 }
 

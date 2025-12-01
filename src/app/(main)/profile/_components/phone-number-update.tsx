@@ -1,15 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Phone, ShieldCheck } from "lucide-react";
+import { CheckCircle, Loader2, Phone, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
 const phoneSchema = z.object({
@@ -107,7 +105,6 @@ export function PhoneNumberUpdate({
 			}
 
 			toast.success("Email verified! Now verify your new phone number.");
-			// Send OTP to new phone number
 			await sendPhoneOTP(newPhoneNumber);
 		} catch (error) {
 			const errorMessage =
@@ -143,13 +140,11 @@ export function PhoneNumberUpdate({
 	};
 
 	const onPhoneSubmit = async (data: z.infer<typeof phoneSchema>) => {
-		// Check if the new number is the same as current
 		if (data.phoneNumber === currentPhoneNumber) {
 			toast.error("This is already your current phone number");
 			return;
 		}
 		setNewPhoneNumber(data.phoneNumber);
-		// First verify email
 		await sendEmailOTP();
 	};
 
@@ -159,7 +154,7 @@ export function PhoneNumberUpdate({
 			const result = await authClient.phoneNumber.verify({
 				phoneNumber: newPhoneNumber,
 				code: data.code,
-				updatePhoneNumber: true, // This updates the phone number in the session
+				updatePhoneNumber: true,
 			});
 
 			if (result.error) {
@@ -167,7 +162,6 @@ export function PhoneNumberUpdate({
 			}
 
 			toast.success("Phone number updated successfully!");
-			// Refresh the page to show updated phone number
 			window.location.reload();
 		} catch (error) {
 			const errorMessage =
@@ -187,107 +181,125 @@ export function PhoneNumberUpdate({
 	};
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h3 className="text-lg font-semibold mb-2">Phone Number</h3>
-					<p className="text-sm text-muted-foreground">
-						Update your phone number for account security
-					</p>
+		<div className="space-y-4">
+			{/* Current Phone Number Display */}
+			<div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+				<div className="flex items-center gap-3">
+					<div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center">
+						<Phone className="w-4 h-4 text-slate-600" />
+					</div>
+					<div>
+						<p className="text-xs text-slate-500">Phone Number</p>
+						<p className="text-sm font-medium text-slate-900">
+							{currentPhoneNumber || "Not set"}
+						</p>
+					</div>
 				</div>
 				{currentPhoneNumber && (
-					<Badge
-						variant={phoneNumberVerified ? "default" : "secondary"}
-						className="flex items-center gap-1"
+					<span
+						className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full flex items-center gap-1 ${
+							phoneNumberVerified
+								? "bg-emerald-50 text-emerald-700"
+								: "bg-amber-50 text-amber-700"
+						}`}
 					>
 						{phoneNumberVerified ? (
 							<>
-								<ShieldCheck className="h-3 w-3" />
+								<ShieldCheck className="w-3 h-3" />
 								Verified
 							</>
 						) : (
 							"Not Verified"
 						)}
-					</Badge>
+					</span>
 				)}
 			</div>
 
-			{currentPhoneNumber && (
-				<div className="flex items-center gap-2 text-sm">
-					<Phone className="h-4 w-4 text-muted-foreground" />
-					<span className="font-medium">Current: {currentPhoneNumber}</span>
-				</div>
-			)}
-
+			{/* Step: Input Phone Number */}
 			{step === "input" && (
 				<form
 					onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
-					className="space-y-4"
+					className="space-y-3"
 				>
-					<div className="space-y-2">
-						<Label htmlFor="phone-number">
+					<div>
+						<label
+							htmlFor="phone-number"
+							className="text-xs font-medium text-slate-700 mb-1.5 block"
+						>
 							{currentPhoneNumber ? "New Phone Number" : "Phone Number"}
-						</Label>
+						</label>
 						<Controller
 							control={phoneForm.control}
 							name="phoneNumber"
 							render={({ field, fieldState }) => (
-								<div className="space-y-2">
+								<div className="space-y-1">
 									<Input
 										id="phone-number"
 										placeholder="0123456789"
 										type="tel"
 										disabled={isLoading}
+										className="h-9 text-sm"
 										{...field}
 									/>
 									{fieldState.error && (
-										<p className="text-sm text-destructive">
+										<p className="text-xs text-destructive">
 											{fieldState.error.message}
 										</p>
 									)}
 								</div>
 							)}
 						/>
-						<p className="text-xs text-muted-foreground">
-							Enter your Malaysian phone number (must start with 01)
+						<p className="text-[10px] text-slate-400 mt-1">
+							Malaysian phone number starting with 01
 						</p>
 					</div>
 
 					<div className="flex justify-end">
-						<Button type="submit" disabled={isLoading}>
+						<Button
+							type="submit"
+							disabled={isLoading}
+							size="sm"
+							className="h-8 text-xs"
+						>
 							{isLoading ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Verifying Email...
+									<Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+									Sending...
 								</>
 							) : (
-								"Continue"
+								"Update Phone"
 							)}
 						</Button>
 					</div>
 				</form>
 			)}
 
+			{/* Step: Verify Email */}
 			{step === "verify-email" && (
-				<div className="space-y-4">
-					<div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-						<p className="text-sm text-blue-900 dark:text-blue-100">
-							For security, we've sent a 6-digit code to{" "}
-							<strong>{userEmail}</strong>
+				<div className="space-y-3">
+					<div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+						<p className="text-xs text-blue-800">
+							For security, we&apos;ve sent a 6-digit code to{" "}
+							<span className="font-medium">{userEmail}</span>
 						</p>
 					</div>
 
 					<form
 						onSubmit={emailOtpForm.handleSubmit(verifyEmailOTP)}
-						className="space-y-4"
+						className="space-y-3"
 					>
-						<div className="space-y-2">
-							<Label htmlFor="email-otp-code">Email Verification Code</Label>
+						<div>
+							<label
+								htmlFor="email-otp-code"
+								className="text-xs font-medium text-slate-700 mb-1.5 block"
+							>
+								Email Verification Code
+							</label>
 							<Controller
 								control={emailOtpForm.control}
 								name="code"
 								render={({ field, fieldState }) => (
-									<div className="space-y-2">
+									<div className="space-y-1">
 										<Input
 											id="email-otp-code"
 											placeholder="123456"
@@ -295,23 +307,20 @@ export function PhoneNumberUpdate({
 											type="text"
 											inputMode="numeric"
 											autoComplete="one-time-code"
-											className="text-center text-2xl font-semibold tracking-widest"
+											className="h-10 text-center text-lg font-semibold tracking-[0.3em]"
 											value={field.value}
 											onChange={field.onChange}
 											onBlur={field.onBlur}
 											name={field.name}
 										/>
 										{fieldState.error && (
-											<p className="text-sm text-destructive">
+											<p className="text-xs text-destructive text-center">
 												{fieldState.error.message}
 											</p>
 										)}
 									</div>
 								)}
 							/>
-							<p className="text-xs text-muted-foreground text-center">
-								Enter the 6-digit code sent to your email
-							</p>
 						</div>
 
 						<div className="flex gap-2 justify-end">
@@ -320,14 +329,21 @@ export function PhoneNumberUpdate({
 								variant="outline"
 								onClick={handleCancel}
 								disabled={isLoading}
+								size="sm"
+								className="h-8 text-xs"
 							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isLoading}>
+							<Button
+								type="submit"
+								disabled={isLoading}
+								size="sm"
+								className="h-8 text-xs"
+							>
 								{isLoading ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Verifying Email...
+										<Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+										Verifying...
 									</>
 								) : (
 									"Verify Email"
@@ -338,31 +354,39 @@ export function PhoneNumberUpdate({
 				</div>
 			)}
 
+			{/* Step: Verify Phone */}
 			{step === "verify-phone" && (
-				<div className="space-y-4">
-					<div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-						<p className="text-sm text-green-900 dark:text-green-100">
-							✓ Email verified! Now verify your new phone number.
+				<div className="space-y-3">
+					<div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 flex items-center gap-2">
+						<CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+						<p className="text-xs text-emerald-800">
+							Email verified! Now verify your new phone number.
 						</p>
 					</div>
 
-					<div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-						<p className="text-sm text-blue-900 dark:text-blue-100">
-							We've sent a 6-digit code to <strong>{newPhoneNumber}</strong>
+					<div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+						<p className="text-xs text-blue-800">
+							We&apos;ve sent a 6-digit code to{" "}
+							<span className="font-medium">{newPhoneNumber}</span>
 						</p>
 					</div>
 
 					<form
 						onSubmit={phoneOtpForm.handleSubmit(onPhoneOTPSubmit)}
-						className="space-y-4"
+						className="space-y-3"
 					>
-						<div className="space-y-2">
-							<Label htmlFor="phone-otp-code">Phone Verification Code</Label>
+						<div>
+							<label
+								htmlFor="phone-otp-code"
+								className="text-xs font-medium text-slate-700 mb-1.5 block"
+							>
+								Phone Verification Code
+							</label>
 							<Controller
 								control={phoneOtpForm.control}
 								name="code"
 								render={({ field, fieldState }) => (
-									<div className="space-y-2">
+									<div className="space-y-1">
 										<Input
 											id="phone-otp-code"
 											placeholder="123456"
@@ -370,23 +394,20 @@ export function PhoneNumberUpdate({
 											type="text"
 											inputMode="numeric"
 											autoComplete="one-time-code"
-											className="text-center text-2xl font-semibold tracking-widest"
+											className="h-10 text-center text-lg font-semibold tracking-[0.3em]"
 											value={field.value}
 											onChange={field.onChange}
 											onBlur={field.onBlur}
 											name={field.name}
 										/>
 										{fieldState.error && (
-											<p className="text-sm text-destructive">
+											<p className="text-xs text-destructive text-center">
 												{fieldState.error.message}
 											</p>
 										)}
 									</div>
 								)}
 							/>
-							<p className="text-xs text-muted-foreground text-center">
-								Enter the 6-digit code sent to your phone
-							</p>
 						</div>
 
 						<div className="flex gap-2 justify-end">
@@ -395,17 +416,24 @@ export function PhoneNumberUpdate({
 								variant="outline"
 								onClick={handleCancel}
 								disabled={isLoading}
+								size="sm"
+								className="h-8 text-xs"
 							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isLoading}>
+							<Button
+								type="submit"
+								disabled={isLoading}
+								size="sm"
+								className="h-8 text-xs"
+							>
 								{isLoading ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
 										Updating...
 									</>
 								) : (
-									"Update Phone Number"
+									"Update Phone"
 								)}
 							</Button>
 						</div>

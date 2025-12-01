@@ -114,9 +114,6 @@ function ReviewsDialog({
 	const onSubmit = async (data: ReviewFormValues) => {
 		setIsSubmitting(true);
 		try {
-			// Here you would typically send the data to your API
-			console.log("Submitting review:", { facilityId, ...data });
-
 			// Call the onSubmitReview callback if provided
 			if (onSubmitReview) {
 				onSubmitReview(data);
@@ -156,7 +153,7 @@ function ReviewsDialog({
 									<FormLabel>Rating</FormLabel>
 									<FormControl>
 										<StarRating
-											rating={field.value}
+											rating={field.value || 0}
 											onRatingChange={handleRatingChange}
 										/>
 									</FormControl>

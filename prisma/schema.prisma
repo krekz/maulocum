@@ -22,7 +22,9 @@ enum UserRole {
 
 enum JobApplicationStatus {
   PENDING
-  ACCEPTED
+  EMPLOYER_APPROVED // Employer approved, waiting for doctor confirmation
+  DOCTOR_CONFIRMED // Doctor confirmed, booking finalized
+  ACCEPTED // Legacy - kept for backward compatibility
   REJECTED
   CANCELLED
   COMPLETED
@@ -216,19 +218,26 @@ model Job {
 }
 
 model JobApplication {
-  id              String               @id @default(cuid())
-  jobId           String
-  job             Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  status          JobApplicationStatus @default(PENDING)
-  coverLetter     String?
-  appliedAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  DoctorProfile   DoctorProfile?       @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
-  doctorProfileId String?
+  id                String               @id @default(cuid())
+  jobId             String
+  job               Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status            JobApplicationStatus @default(PENDING)
+  coverLetter       String?
+  appliedAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  DoctorProfile     DoctorProfile?       @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  doctorProfileId   String?
+  // Double opt-in fields
+  confirmationToken String?              @unique
+  employerApprovedAt DateTime?
+  doctorConfirmedAt  DateTime?
+  rejectedAt         DateTime?
+  rejectionReason    String?
 
   @@unique([jobId, doctorProfileId])
   @@index([jobId])
   @@index([doctorProfileId])
+  @@index([confirmationToken])
   @@map("job_application")
 }
 

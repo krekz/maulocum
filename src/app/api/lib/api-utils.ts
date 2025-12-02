@@ -1,7 +1,75 @@
 import type { Context, Next } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import "server-only";
+
+// Token expiry constants
+const TOKEN_EXPIRY_HOURS = 24;
+
+interface TokenExpiryResult {
+	isExpired: boolean;
+	expiresAt: Date;
+	remainingTime: { hours: number; minutes: number };
+}
+
+/**
+ * Check if a confirmation token has expired based on employerApprovedAt timestamp
+ * @param employerApprovedAt - The timestamp when employer approved the application
+ * @returns Token expiry status and remaining time
+ */
+export function checkTokenExpiry(
+	employerApprovedAt: Date | null,
+): TokenExpiryResult {
+	if (!employerApprovedAt) {
+		throw new HTTPException(400, { message: "Invalid application state" });
+	}
+
+	const expiresAt = new Date(
+		employerApprovedAt.getTime() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+	);
+	const now = Date.now();
+	const isExpired = now > expiresAt.getTime();
+
+	const remainingMs = Math.max(0, expiresAt.getTime() - now);
+	const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+	const remainingMinutes = Math.floor(
+		(remainingMs % (1000 * 60 * 60)) / (1000 * 60),
+	);
+
+	return {
+		isExpired,
+		expiresAt,
+		remainingTime: { hours: remainingHours, minutes: remainingMinutes },
+	};
+}
+
+/**
+ * Handle expired token - clears token and rejects application if not already done
+ * @param applicationId - The application ID
+ * @param hasToken - Whether the application still has a token
+ */
+export async function handleExpiredToken(
+	applicationId: string,
+	hasToken: boolean,
+): Promise<void> {
+	if (hasToken) {
+		await prisma.jobApplication.update({
+			where: { id: applicationId },
+			data: {
+				confirmationToken: null,
+				status: "REJECTED",
+				rejectedAt: new Date(),
+				rejectionReason: "Confirmation link expired (24 hours)",
+			},
+		});
+	}
+
+	throw new HTTPException(410, {
+		message:
+			"This confirmation link has expired. Please contact the facility for a new invitation.",
+	});
+}
 
 export const requireActiveEmployer = async (c: Context, next: Next) => {
 	const session = await auth.api.getSession({

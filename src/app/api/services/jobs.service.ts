@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
+import { checkTokenExpiry, handleExpiredToken } from "../lib/api-utils";
 import {
 	fullAccessSelect,
 	type GetJobsPromiseReturn,
@@ -146,6 +147,197 @@ export class JobService {
 			console.error(error);
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, { message: "Failed to fetch jobs" });
+		}
+	}
+
+	/**
+	 * Get application details by confirmation token (without confirming)
+	 * Used to display job details before doctor confirms
+	 */
+	async getApplicationByToken(confirmationToken: string) {
+		try {
+			const application = await prisma.jobApplication.findUnique({
+				where: { confirmationToken },
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							startDate: true,
+							endDate: true,
+							startTime: true,
+							endTime: true,
+							location: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+									address: true,
+								},
+							},
+						},
+					},
+					DoctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!application) {
+				throw new HTTPException(404, {
+					message: "Invalid or expired confirmation link",
+				});
+			}
+
+			if (application.status !== "EMPLOYER_APPROVED") {
+				throw new HTTPException(400, {
+					message:
+						application.status === "DOCTOR_CONFIRMED"
+							? "This job has already been confirmed"
+							: `Cannot view application with status: ${application.status}`,
+				});
+			}
+
+			// Check token expiry
+			const { isExpired, expiresAt, remainingTime } = checkTokenExpiry(
+				application.employerApprovedAt,
+			);
+
+			if (isExpired) {
+				await handleExpiredToken(
+					application.id,
+					!!application.confirmationToken,
+				);
+			}
+
+			return {
+				application,
+				expiresAt: expiresAt.toISOString(),
+				remainingTime,
+			};
+		} catch (error) {
+			console.error("Error fetching application by token:", error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to fetch application details",
+			});
+		}
+	}
+
+	/**
+	 * Doctor confirms the job via confirmation token
+	 * - Validates token
+	 * - Updates status to DOCTOR_CONFIRMED
+	 * - Finalizes the booking
+	 */
+	async confirmApplication(confirmationToken: string) {
+		try {
+			const application = await prisma.jobApplication.findUnique({
+				where: { confirmationToken },
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+					DoctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!application) {
+				throw new HTTPException(404, {
+					message: "Invalid or expired confirmation link",
+				});
+			}
+
+			if (application.status !== "EMPLOYER_APPROVED") {
+				throw new HTTPException(400, {
+					message: `Cannot confirm application with status: ${application.status}`,
+				});
+			}
+
+			// Check token expiry
+			const { isExpired } = checkTokenExpiry(application.employerApprovedAt);
+
+			if (isExpired) {
+				await handleExpiredToken(
+					application.id,
+					!!application.confirmationToken,
+				);
+			}
+
+			// Update application status to confirmed and job status to FILLED
+			const [updatedApplication] = await prisma.$transaction([
+				prisma.jobApplication.update({
+					where: { id: application.id },
+					data: {
+						status: "DOCTOR_CONFIRMED",
+						doctorConfirmedAt: new Date(),
+						confirmationToken: null, // Clear token after use
+					},
+					include: {
+						job: {
+							select: {
+								id: true,
+								title: true,
+								facility: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
+					},
+				}),
+				prisma.job.update({
+					where: { id: application.job.id },
+					data: { status: "FILLED" },
+				}),
+			]);
+
+			// TODO: Send confirmation WhatsApp to employer
+			console.log("=== EMPLOYER NOTIFICATION (TODO) ===");
+			console.log(`Job: ${application.job.title}`);
+			console.log(
+				`Doctor ${application.DoctorProfile?.user.name} has confirmed the booking!`,
+			);
+			console.log("=====================================");
+
+			return {
+				application: updatedApplication,
+			};
+		} catch (error) {
+			console.error("Error confirming application:", error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to confirm application",
+			});
 		}
 	}
 }

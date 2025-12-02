@@ -61,6 +61,76 @@ const app = new Hono()
 				httpError.status,
 			);
 		}
-	});
+	})
+
+	/**
+	 * GET /api/v2/jobs/applications/confirm/:token
+	 * Get application details by confirmation token (without confirming)
+	 */
+	.get(
+		"/applications/confirm/:token",
+		zValidator("param", z.object({ token: z.string() })),
+		async (c) => {
+			const { token } = c.req.valid("param");
+
+			try {
+				const result = await jobService.getApplicationByToken(token);
+
+				return c.json({
+					success: true,
+					message: "Application details fetched successfully",
+					data: {
+						...result.application,
+						expiresAt: result.expiresAt,
+						remainingTime: result.remainingTime,
+					},
+				});
+			} catch (error) {
+				console.error("Error fetching application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * POST /api/v2/jobs/applications/confirm/:token
+	 * Doctor confirms the job via confirmation link
+	 */
+	.post(
+		"/applications/confirm/:token",
+		zValidator("param", z.object({ token: z.string() })),
+		async (c) => {
+			const { token } = c.req.valid("param");
+
+			try {
+				const result = await jobService.confirmApplication(token);
+
+				return c.json({
+					success: true,
+					message: "Job confirmed! Booking finalized.",
+					data: result.application,
+				});
+			} catch (error) {
+				console.error("Error confirming application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	);
 
 export default app;

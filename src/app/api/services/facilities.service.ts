@@ -837,8 +837,8 @@ export class FacilityService {
 				});
 			}
 
-			// Check if job is not closed
-			if (job.status !== "CLOSED") {
+			// Check if job is not closed or filled
+			if (job.status !== "CLOSED" && job.status !== "FILLED") {
 				throw new HTTPException(400, {
 					message: "Only closed jobs can be reopened",
 				});

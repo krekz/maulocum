@@ -262,7 +262,7 @@ async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 									jobTitle={job.title || "Untitled Position"}
 								/>
 							)}
-							{job.status === "CLOSED" && (
+							{(job.status === "CLOSED" || job.status === "FILLED") && (
 								<ReopenJobButton
 									jobId={job.id}
 									jobTitle={job.title || "Untitled Position"}

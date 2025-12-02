@@ -2,6 +2,7 @@ import { Calendar, MapPin } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { backendApi } from "@/lib/rpc";
+import type { $Enums } from "../../../../../prisma/generated/prisma/client";
 import ReviewsDialog from "./reviews-dialog";
 
 async function HistoryPage() {
@@ -96,8 +97,8 @@ async function HistoryPage() {
 		);
 	}
 
-	const getStatusBadge = (status: string) => {
-		switch (status.toUpperCase()) {
+	const getStatusBadge = (status: $Enums.JobApplicationStatus) => {
+		switch (status) {
 			case "COMPLETED":
 				return {
 					label: "Completed",
@@ -122,6 +123,18 @@ async function HistoryPage() {
 				return {
 					label: "Cancelled",
 					className: "bg-slate-100 text-slate-600",
+				};
+			case "DOCTOR_CONFIRMED":
+				return {
+					label: "Confirmed",
+					className: "bg-emerald-50 text-emerald-700",
+					desc: "You confirmed the job application",
+				};
+			case "EMPLOYER_APPROVED":
+				return {
+					label: "Waiting for your confirmation",
+					className: "bg-blue-50 text-blue-700",
+					desc: "Employer approved the job application",
 				};
 			default:
 				return {
@@ -170,17 +183,10 @@ async function HistoryPage() {
 						>
 							<div className="flex items-start justify-between gap-4">
 								<div className="flex-1 min-w-0">
-									{/* Title & Status */}
-									<div className="flex items-center gap-2 mb-1">
-										<h4 className="font-medium text-slate-900 text-sm truncate">
-											{application.job.title || "Untitled Job"}
-										</h4>
-										<span
-											className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.className}`}
-										>
-											{statusBadge.label}
-										</span>
-									</div>
+									{/* Title */}
+									<h4 className="font-medium text-slate-900 text-sm truncate">
+										{application.job.title || "Untitled Job"}
+									</h4>
 
 									{/* Facility Name */}
 									<p className="text-xs text-slate-500 mb-2">
@@ -210,6 +216,11 @@ async function HistoryPage() {
 
 								{/* Actions */}
 								<div className="flex items-center gap-2 shrink-0">
+									<span
+										className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.className}`}
+									>
+										{statusBadge.label}
+									</span>
 									<Link
 										href={`/jobs/${application.job.id}`}
 										className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"

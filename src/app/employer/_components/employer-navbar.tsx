@@ -132,7 +132,7 @@ const NavbarEmployer = ({
 						{/* Not logged in */}
 						{!session && (
 							<Button asChild variant="outline" size="sm">
-								<Link href="/login">Login</Link>
+								<a href="/login">Login</a>
 							</Button>
 						)}
 
@@ -272,7 +272,7 @@ const NavbarEmployer = ({
 										{/* Not logged in */}
 										{!session && (
 											<Button asChild variant="outline">
-												<Link href="/login">Login</Link>
+												<a href="/login">Login</a>
 											</Button>
 										)}
 

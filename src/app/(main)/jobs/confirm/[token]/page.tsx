@@ -15,6 +15,17 @@ import {
 } from "lucide-react";
 import * as motion from "motion/react-client";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -24,12 +35,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/rpc";
 
 export default function ConfirmJobPage() {
 	const params = useParams();
 	const router = useRouter();
 	const token = params.token as string;
+	const [showRejectDialog, setShowRejectDialog] = useState(false);
+	const [rejectReason, setRejectReason] = useState("");
 
 	// Fetch application details using the token (GET request)
 	const {
@@ -71,8 +85,27 @@ export default function ConfirmJobPage() {
 
 			return response.json();
 		},
+	});
+
+	// Reject mutation
+	const rejectMutation = useMutation({
+		mutationFn: async () => {
+			const response = await client.api.v2.jobs.applications.reject[
+				":token"
+			].$post({
+				param: { token },
+				json: { reason: rejectReason || undefined },
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.message || "Failed to decline job");
+			}
+
+			return response.json();
+		},
 		onSuccess: () => {
-			// Redirect to success or jobs page after confirmation
+			setShowRejectDialog(false);
 		},
 	});
 
@@ -206,6 +239,71 @@ export default function ConfirmJobPage() {
 		);
 	}
 
+	// Success state - rejected
+	if (rejectMutation.isSuccess) {
+		return (
+			<div className="min-h-screen bg-linear-to-b from-slate-50 to-white flex items-center justify-center">
+				<motion.div
+					initial={{ opacity: 0, scale: 0.9 }}
+					animate={{ opacity: 1, scale: 1 }}
+					transition={{ duration: 0.5, type: "spring" }}
+					className="w-full max-w-lg px-4"
+				>
+					<Card className="w-full max-w-md mx-auto border-slate-200 shadow-lg">
+						<CardHeader className="text-center">
+							<motion.div
+								initial={{ scale: 0 }}
+								animate={{ scale: 1 }}
+								transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+								className="mx-auto w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4"
+							>
+								<CheckCircle2 className="size-10 text-slate-600" />
+							</motion.div>
+							<motion.div
+								initial={{ opacity: 0, y: 10 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: 0.3 }}
+							>
+								<CardTitle className="text-2xl text-slate-700">
+									Offer Declined
+								</CardTitle>
+								<CardDescription className="text-base mt-2">
+									You have declined this job offer. The facility has been
+									notified.
+								</CardDescription>
+							</motion.div>
+						</CardHeader>
+						<CardContent>
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.4 }}
+								className="bg-slate-50 rounded-lg p-4 text-center"
+							>
+								<p className="text-sm text-slate-600">
+									Don't worry, there are plenty of other opportunities waiting
+									for you!
+								</p>
+							</motion.div>
+						</CardContent>
+						<CardFooter className="flex flex-col gap-3">
+							<Button className="w-full" onClick={() => router.push("/jobs")}>
+								Browse More Jobs
+							</Button>
+							<Button
+								variant="outline"
+								className="w-full"
+								onClick={() => router.push("/profile/history")}
+							>
+								View My Applications
+							</Button>
+						</CardFooter>
+					</Card>
+				</motion.div>
+			</div>
+		);
+	}
+
 	// Main confirmation UI
 	const application = applicationData?.data;
 	const remainingTime = application?.remainingTime;
@@ -329,7 +427,7 @@ export default function ConfirmJobPage() {
 							initial={{ opacity: 0, y: 10 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.5 }}
-							className="w-full"
+							className="w-full space-y-3"
 						>
 							<Button
 								className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-base shadow-md shadow-emerald-200"
@@ -347,6 +445,16 @@ export default function ConfirmJobPage() {
 										Confirm Booking
 									</>
 								)}
+							</Button>
+
+							<Button
+								variant="outline"
+								className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+								onClick={() => setShowRejectDialog(true)}
+								disabled={confirmMutation.isPending || rejectMutation.isPending}
+							>
+								<XCircle className="mr-2 size-4" />
+								Decline Offer
 							</Button>
 						</motion.div>
 
@@ -372,6 +480,60 @@ export default function ConfirmJobPage() {
 					</CardFooter>
 				</Card>
 			</motion.div>
+
+			{/* Reject Confirmation Dialog */}
+			<AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Decline Job Offer</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to decline this job offer? This action
+							cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div className="py-4">
+						<label
+							htmlFor="reject-reason"
+							className="text-sm font-medium text-slate-700"
+						>
+							Reason (optional)
+						</label>
+						<Textarea
+							id="reject-reason"
+							placeholder="Let us know why you're declining..."
+							value={rejectReason}
+							onChange={(e) => setRejectReason(e.target.value)}
+							className="mt-2 resize-none"
+							rows={3}
+						/>
+						<p className="text-xs text-slate-500 mt-2">
+							This helps facilities understand your preferences better.
+						</p>
+					</div>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={rejectMutation.isPending}>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={(e) => {
+								e.preventDefault();
+								rejectMutation.mutate();
+							}}
+							disabled={rejectMutation.isPending}
+							className="bg-red-600 hover:bg-red-700"
+						>
+							{rejectMutation.isPending ? (
+								<>
+									<Loader2 className="mr-2 size-4 animate-spin" />
+									Declining...
+								</>
+							) : (
+								"Decline Offer"
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

@@ -131,6 +131,41 @@ const app = new Hono()
 				);
 			}
 		},
+	)
+
+	/**
+	 * POST /api/v2/jobs/applications/reject/:token
+	 * Doctor rejects the job offer via confirmation link
+	 */
+	.post(
+		"/applications/reject/:token",
+		zValidator("param", z.object({ token: z.string() })),
+		zValidator("json", z.object({ reason: z.string().optional() })),
+		async (c) => {
+			const { token } = c.req.valid("param");
+			const { reason } = c.req.valid("json");
+
+			try {
+				const result = await jobService.rejectApplication(token, reason);
+
+				return c.json({
+					success: true,
+					message: "Job offer declined.",
+					data: result.application,
+				});
+			} catch (error) {
+				console.error("Error rejecting application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
 	);
 
 export default app;

@@ -340,6 +340,108 @@ export class JobService {
 			});
 		}
 	}
+
+	/**
+	 * Doctor rejects the job offer via confirmation token
+	 * - Validates token
+	 * - Updates status to REJECTED
+	 * - Clears the confirmation token
+	 */
+	async rejectApplication(confirmationToken: string, reason?: string) {
+		try {
+			const application = await prisma.jobApplication.findUnique({
+				where: { confirmationToken },
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+					DoctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!application || !application.confirmationToken) {
+				throw new HTTPException(404, {
+					message: "Invalid or expired confirmation link",
+				});
+			}
+
+			if (application.status !== "EMPLOYER_APPROVED") {
+				throw new HTTPException(400, {
+					message:
+						application.status === "DOCTOR_CONFIRMED"
+							? "This job has already been confirmed"
+							: application.status === "DOCTOR_REJECTED" ||
+									application.status === "EMPLOYER_REJECTED"
+								? "This application has already been rejected"
+								: `Cannot reject application with status: ${application.status}`,
+				});
+			}
+
+			// Update application status to rejected
+			const updatedApplication = await prisma.jobApplication.update({
+				where: { id: application.id },
+				data: {
+					status: "DOCTOR_REJECTED",
+					rejectionReason: reason || "Doctor declined the offer",
+					confirmationToken: null, // Clear token after use
+					updatedAt: new Date(),
+					rejectedAt: new Date(),
+				},
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			// TODO: Send rejection notification to employer via WhatsApp
+			console.log("=== EMPLOYER REJECTION NOTIFICATION (TODO) ===");
+			console.log(`Job: ${application.job.title}`);
+			console.log(
+				`Doctor ${application.DoctorProfile?.user.name} has declined the booking.`,
+			);
+			if (reason) console.log(`Reason: ${reason}`);
+			console.log("==============================================");
+
+			return {
+				application: updatedApplication,
+			};
+		} catch (error) {
+			console.error("Error rejecting application:", error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to reject application",
+			});
+		}
+	}
 }
 
 // Export singleton instances

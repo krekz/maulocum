@@ -41,15 +41,15 @@ const statusConfig = {
 		variant: "default" as const,
 		className: "bg-emerald-500 text-white",
 	},
-	ACCEPTED: {
-		label: "Accepted",
+	DOCTOR_REJECTED: {
+		label: "Doctor Rejected",
 		variant: "default" as const,
-		className: "bg-green-500 text-white",
+		className: "bg-red-500 text-white",
 	},
-	REJECTED: {
-		label: "Rejected",
+	EMPLOYER_REJECTED: {
+		label: "Employer Rejected",
 		variant: "destructive" as const,
-		className: "",
+		className: "bg-red-500 text-white",
 	},
 	CANCELLED: {
 		label: "Cancelled",

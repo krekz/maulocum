@@ -104,19 +104,19 @@ async function HistoryPage() {
 					label: "Completed",
 					className: "bg-emerald-50 text-emerald-700",
 				};
-			case "ACCEPTED":
+			case "DOCTOR_REJECTED":
 				return {
-					label: "Accepted",
-					className: "bg-emerald-50 text-emerald-700",
+					label: "Rejected by doctor",
+					className: "bg-red-50 text-red-700",
 				};
 			case "PENDING":
 				return {
 					label: "Pending",
 					className: "bg-amber-50 text-amber-700",
 				};
-			case "REJECTED":
+			case "EMPLOYER_REJECTED":
 				return {
-					label: "Rejected",
+					label: "Rejected by employer",
 					className: "bg-red-50 text-red-700",
 				};
 			case "CANCELLED":

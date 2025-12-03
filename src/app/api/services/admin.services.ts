@@ -690,6 +690,15 @@ class AdminService {
 				});
 			}
 
+			if (
+				application.status === "EMPLOYER_REJECTED" ||
+				application.status === "DOCTOR_REJECTED"
+			) {
+				throw new HTTPException(400, {
+					message: "Application has already been rejected",
+				});
+			}
+
 			if (application.status !== "PENDING") {
 				throw new HTTPException(400, {
 					message: `Cannot reject application with status: ${application.status}`,
@@ -699,9 +708,11 @@ class AdminService {
 			const updatedApplication = await prisma.jobApplication.update({
 				where: { id: applicationId },
 				data: {
-					status: "REJECTED",
+					status: "EMPLOYER_REJECTED",
 					rejectedAt: new Date(),
 					rejectionReason: reason,
+					confirmationToken: null,
+					updatedAt: new Date(),
 				},
 			});
 

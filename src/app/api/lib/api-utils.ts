@@ -58,7 +58,7 @@ export async function handleExpiredToken(
 			where: { id: applicationId },
 			data: {
 				confirmationToken: null,
-				status: "REJECTED",
+				status: "DOCTOR_REJECTED",
 				rejectedAt: new Date(),
 				rejectionReason: "Confirmation link expired (24 hours)",
 			},

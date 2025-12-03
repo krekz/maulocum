@@ -66,12 +66,12 @@ export function JobApplicantsTable({ jobId }: JobApplicantsTableProps) {
 				title: "Pending",
 				className: "bg-yellow-100 text-yellow-800 border-yellow-200",
 			},
-			ACCEPTED: {
-				title: "Accepted",
-				className: "bg-green-100 text-green-800 border-green-200",
+			DOCTOR_REJECTED: {
+				title: "Doctor Rejected",
+				className: "bg-red-100 text-red-800 border-red-200",
 			},
-			REJECTED: {
-				title: "Rejected",
+			EMPLOYER_REJECTED: {
+				title: "Employer Rejected",
 				className: "bg-red-100 text-red-800 border-red-200",
 			},
 			CANCELLED: {

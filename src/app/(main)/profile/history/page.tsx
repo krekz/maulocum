@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { backendApi } from "@/lib/rpc";
 import type { $Enums } from "../../../../../prisma/generated/prisma/client";
+import { CancelApplicationDialog } from "./cancel-application-dialog";
 import ReviewsDialog from "./reviews-dialog";
 
 async function HistoryPage() {
@@ -175,6 +176,9 @@ async function HistoryPage() {
 				{applications.data.map((application) => {
 					const statusBadge = getStatusBadge(application.status);
 					const isCompleted = application.status.toUpperCase() === "COMPLETED";
+					const canCancel =
+						application.status === "PENDING" ||
+						application.status === "DOCTOR_CONFIRMED";
 
 					return (
 						<div
@@ -227,6 +231,13 @@ async function HistoryPage() {
 									>
 										View Details
 									</Link>
+									{canCancel && (
+										<CancelApplicationDialog
+											applicationId={application.id}
+											jobTitle={application.job.title || "Untitled Job"}
+											status={application.status}
+										/>
+									)}
 									{isCompleted && (
 										<ReviewsDialog
 											facilityId={application.job.facility.id}

@@ -233,6 +233,9 @@ model JobApplication {
   doctorConfirmedAt  DateTime?
   rejectedAt         DateTime?
   rejectionReason    String?
+  // Cancellation fields
+  cancelledAt        DateTime?
+  cancellationReason String?
 
   @@unique([jobId, doctorProfileId])
   @@index([jobId])

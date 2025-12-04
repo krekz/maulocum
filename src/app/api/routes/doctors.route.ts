@@ -164,6 +164,61 @@ const app = new Hono<{ Variables: AppVariables }>()
 				);
 			}
 		},
+	)
+
+	/*
+	 * Cancel an application (PENDING or EMPLOYER_APPROVED)
+	 * POST /api/v2/doctors/applications/:applicationId/cancel
+	 */
+	.post(
+		"/applications/:applicationId/cancel",
+		requireValidDoctorProfile,
+		zValidator("param", z.object({ applicationId: z.string() })),
+		zValidator(
+			"json",
+			z.object({
+				cancellationReason: z
+					.string()
+					.min(10, "Please provide at least 10 characters")
+					.max(500, "Reason must be less than 500 characters")
+					.optional(),
+			}),
+		),
+		async (c) => {
+			try {
+				const doctorProfile = c.get("doctorProfile");
+				const { applicationId } = c.req.valid("param");
+				const { cancellationReason } = c.req.valid("json");
+
+				const result = await doctorsService.cancelDoctorJobApplication(
+					applicationId,
+					doctorProfile.id,
+					cancellationReason,
+				);
+
+				return c.json(
+					{
+						success: true,
+						data: result.data,
+						message: result.notifiedEmployer
+							? "Application cancelled. The employer has been notified."
+							: "Application cancelled successfully",
+					},
+					200,
+				);
+			} catch (error) {
+				console.error("Error cancelling application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status || 500,
+				);
+			}
+		},
 	);
 
 export default app;

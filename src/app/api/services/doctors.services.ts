@@ -77,9 +77,27 @@ class DoctorsService {
 
 	/**
 	 * Get doctor's job applications
+	 * Auto-marks DOCTOR_CONFIRMED applications as COMPLETED if job timeframe has passed
 	 */
 	async getDoctorJobApplications(doctorProfileId: string) {
 		try {
+			const now = new Date();
+
+			// Batch update: mark expired DOCTOR_CONFIRMED applications as COMPLETED
+			// Uses a single efficient query with proper indexing
+			await prisma.jobApplication.updateMany({
+				where: {
+					doctorProfileId,
+					status: "DOCTOR_CONFIRMED",
+					job: {
+						endDate: { lt: now },
+					},
+				},
+				data: {
+					status: "COMPLETED",
+				},
+			});
+
 			const applications = await prisma.jobApplication.findMany({
 				where: {
 					doctorProfileId,

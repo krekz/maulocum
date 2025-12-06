@@ -241,6 +241,7 @@ model JobApplication {
   @@index([jobId])
   @@index([doctorProfileId])
   @@index([confirmationToken])
+  @@index([doctorProfileId, status]) // Composite index for efficient status-based queries per doctor
   @@map("job_application")
 }
 

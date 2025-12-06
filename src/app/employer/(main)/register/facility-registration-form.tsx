@@ -80,7 +80,7 @@ export function FacilityRegistrationForm() {
 	}
 
 	return (
-		<Card className="bg-white">
+		<Card className="bg-white g-10">
 			<CardHeader>
 				<CardTitle>Facility Information</CardTitle>
 				<CardDescription>

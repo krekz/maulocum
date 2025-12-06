@@ -10,9 +10,6 @@ export default function ProfileLayout({
 			{/* Mobile navigation */}
 			<div className="md:hidden mb-6 flex items-center justify-between">
 				<h1 className="text-2xl sm:text-3xl font-bold">My Profile</h1>
-				<div className="md:hidden">
-					<ProfileSidebar />
-				</div>
 			</div>
 
 			<div className="flex flex-col md:flex-row gap-6 lg:gap-8">

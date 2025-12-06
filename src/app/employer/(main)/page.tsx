@@ -218,9 +218,9 @@ export default function EmployerPage() {
 								<Button
 									variant="outline"
 									size="lg"
-									className="h-12 px-6 text-base bg-transparent border-slate-700 text-white hover:bg-slate-800 rounded-full"
+									className="h-12 px-6 text-base bg-transparent border-slate-700 text-black hover:bg-slate-800 rounded-full"
 								>
-									<Play className="mr-2 h-4 w-4" />
+									<Play className="mr-2 h-4 w-4 " />
 									Watch Demo
 								</Button>
 							</div>
@@ -231,7 +231,7 @@ export default function EmployerPage() {
 							initial={{ opacity: 0, y: 40 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.8, delay: 0.2 }}
-							className="relative"
+							className="relative hidden md:block"
 						>
 							{/* Glow effect */}
 							<div className="absolute -inset-4 bg-linear-to-r from-orange-500/20 via-amber-500/20 to-teal-500/20 rounded-3xl blur-2xl" />

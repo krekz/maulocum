@@ -39,7 +39,7 @@ export default function EmployerRegistrationPage() {
 
 	if (isLoading) {
 		return (
-			<div className="container max-w-3xl py-8">
+			<div className="container w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
 				<div className="flex items-center justify-center h-64">
 					<div className="animate-pulse text-muted-foreground">Loading...</div>
 				</div>
@@ -51,7 +51,7 @@ export default function EmployerRegistrationPage() {
 	const verification = verificationData?.data;
 
 	return (
-		<div className="container max-w-3xl py-8">
+		<div className="container w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
 			<div className="mb-8 space-y-2">
 				<h1 className="text-3xl font-bold">Facility Verification</h1>
 				<p className="text-muted-foreground">

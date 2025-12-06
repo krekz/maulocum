@@ -13,9 +13,9 @@ async function DashboardHome() {
 	return (
 		<>
 			<SectionCards />
-			<div className="mt-8 lg:px-6">
-				<h2 className="text-2xl font-bold mb-4">Recent Applicants</h2>
-				<div className="grid gap-2">
+			<div className="mt-8 lg:px-6 ">
+				<h2 className="text-2xl font-bold mb-4 pl-4 sm:pl-0">Recent Applicants</h2>
+				<div className="grid gap-2 m-4 sm:mx-0">
 					{[
 						{
 							name: "Dr. Sarah Johnson",

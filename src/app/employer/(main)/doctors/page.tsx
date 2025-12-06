@@ -21,7 +21,7 @@ function DoctorsPage() {
 	);
 
 	return (
-		<div className="md:container mx-auto py-8">
+		<div className="md:container mx-auto px-4 py-8">
 			<h1 className="text-3xl font-bold mb-6">Available Doctors</h1>
 
 			<div className="relative mb-8">

@@ -65,7 +65,7 @@ async function JobApplicantsPage() {
 	];
 
 	return (
-		<div className="flex flex-col gap-6">
+		<div className="flex flex-col gap-6 mx-4 sm:mx-0">
 			{/* Page Header */}
 			<div className="flex flex-col gap-1">
 				<h1 className="text-2xl font-bold tracking-tight">Job Applicants</h1>
@@ -75,7 +75,7 @@ async function JobApplicantsPage() {
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 ">
 				{stats.map((stat) => (
 					<Card key={stat.title}>
 						<CardHeader className="flex flex-row items-center justify-between pb-2">

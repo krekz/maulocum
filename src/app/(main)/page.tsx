@@ -170,7 +170,7 @@ export default function Home() {
 	return (
 		<div className="flex flex-col min-h-screen bg-white">
 			{/* Hero Section */}
-			<section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden">
+			<section className="relative pt-10 pb-24 lg:pt-24 lg:pb-32 overflow-hidden">
 				{/* Background gradient */}
 				<div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-blue-100/60 via-white to-white" />
 				<div className="absolute top-0 right-0 -z-10 w-1/2 h-1/2 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-emerald-100/40 to-transparent blur-3xl" />
@@ -246,7 +246,7 @@ export default function Home() {
 							initial={{ opacity: 0, y: 40 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.8, delay: 0.3 }}
-							className="mt-16 lg:mt-20"
+							className="mt-16 lg:mt-20 hidden md:block"
 						>
 							<div className="relative mx-auto max-w-5xl">
 								{/* Glow effects */}

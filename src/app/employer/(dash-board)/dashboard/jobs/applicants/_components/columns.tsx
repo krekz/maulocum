@@ -9,7 +9,6 @@ import {
 	Clock,
 	Mail,
 	MapPin,
-	MoreHorizontal,
 	Phone,
 	User,
 } from "lucide-react";
@@ -17,20 +16,14 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { TJobApplicant } from "@/lib/rpc";
+import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
+import { ApplicationActions } from "./application-actions";
 
 const statusConfig = {
 	PENDING: {
@@ -38,15 +31,25 @@ const statusConfig = {
 		variant: "outline" as const,
 		className: "border-yellow-500 text-yellow-600 bg-yellow-50",
 	},
-	ACCEPTED: {
-		label: "Accepted",
-		variant: "default" as const,
-		className: "bg-green-500 text-white",
+	EMPLOYER_APPROVED: {
+		label: "Awaiting Confirmation",
+		variant: "outline" as const,
+		className: "border-orange-500 text-orange-600 bg-orange-50",
 	},
-	REJECTED: {
-		label: "Rejected",
+	DOCTOR_CONFIRMED: {
+		label: "Confirmed",
+		variant: "default" as const,
+		className: "bg-emerald-500 text-white",
+	},
+	DOCTOR_REJECTED: {
+		label: "Doctor Rejected",
+		variant: "default" as const,
+		className: "bg-red-500 text-white",
+	},
+	EMPLOYER_REJECTED: {
+		label: "Employer Rejected",
 		variant: "destructive" as const,
-		className: "",
+		className: "bg-red-500 text-white",
 	},
 	CANCELLED: {
 		label: "Cancelled",
@@ -58,7 +61,14 @@ const statusConfig = {
 		variant: "default" as const,
 		className: "bg-blue-500 text-white",
 	},
-};
+} satisfies Record<
+	$Enums.JobApplicationStatus,
+	{
+		label: string;
+		variant: "outline" | "default" | "destructive" | "secondary";
+		className: string;
+	}
+>;
 
 const verificationStatusConfig = {
 	APPROVED: {
@@ -286,37 +296,7 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		enableHiding: false,
 		cell: ({ row }) => {
 			const application = row.original;
-			const isPending = application.status === "PENDING";
-
-			return (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="size-8 p-0">
-							<span className="sr-only">Open menu</span>
-							<MoreHorizontal className="size-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuItem>View Application</DropdownMenuItem>
-						<DropdownMenuItem>View Doctor Profile</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						{isPending && (
-							<>
-								<DropdownMenuItem className="text-green-600">
-									Accept Application
-								</DropdownMenuItem>
-								<DropdownMenuItem className="text-red-600">
-									Reject Application
-								</DropdownMenuItem>
-							</>
-						)}
-						{!isPending && (
-							<DropdownMenuItem>View Cover Letter</DropdownMenuItem>
-						)}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			);
+			return <ApplicationActions application={application} />;
 		},
 	},
 ];

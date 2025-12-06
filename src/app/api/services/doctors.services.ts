@@ -1,6 +1,7 @@
 import { HTTPException } from "hono/http-exception";
 import { prisma } from "@/lib/prisma";
 import "server-only";
+import type { JobApplication } from "../../../../prisma/generated/prisma/client";
 import type { CreateJobApplicationInput } from "../types/jobs.types";
 
 class DoctorsService {
@@ -200,6 +201,147 @@ class DoctorsService {
 		});
 
 		return { success: true };
+	}
+
+	/**
+	 * Cancel application (for PENDING or DOCTOR_CONFIRMED status)
+	 * - PENDING: Deleted the job application
+	 * - DOCTOR_CONFIRMED: Requires cancellation reason, notifies employer
+	 */
+	async cancelDoctorJobApplication(
+		applicationId: string,
+		doctorProfileId: string,
+		cancellationReason?: string,
+	) {
+		const application = await prisma.jobApplication.findFirst({
+			where: {
+				id: applicationId,
+				doctorProfileId,
+			},
+			include: {
+				job: {
+					include: {
+						facility: {
+							select: {
+								id: true,
+								name: true,
+								contactEmail: true,
+								contactPhone: true,
+							},
+						},
+					},
+				},
+				DoctorProfile: {
+					include: {
+						doctorVerification: {
+							select: {
+								fullName: true,
+								phoneNumber: true,
+							},
+						},
+					},
+				},
+			},
+		});
+
+		if (!application) {
+			throw new HTTPException(404, {
+				message: "Application not found",
+			});
+		}
+
+		// Only allow cancellation for PENDING or EMPLOYER_APPROVED
+		const allowedStatuses = ["PENDING", "DOCTOR_CONFIRMED"];
+		if (!allowedStatuses.includes(application.status)) {
+			throw new HTTPException(400, {
+				message: "Cannot cancel application",
+			});
+		}
+
+		// DOCTOR_CONFIRMED requires a cancellation reason with min 10 chars
+		if (application.status === "DOCTOR_CONFIRMED") {
+			if (!cancellationReason) {
+				throw new HTTPException(400, {
+					message:
+						"Cancellation reason is required when cancelling a confirmed application",
+				});
+			}
+			if (cancellationReason.length < 10) {
+				throw new HTTPException(400, {
+					message:
+						"Please provide at least 10 characters for the cancellation reason",
+				});
+			}
+			if (cancellationReason.length > 500) {
+				throw new HTTPException(400, {
+					message: "Cancellation reason must be less than 500 characters",
+				});
+			}
+		}
+
+		// PENDING: delete the application, DOCTOR_CONFIRMED: update status to CANCELLED
+		let updatedApplication: JobApplication;
+		if (application.status === "PENDING") {
+			// Use transaction for atomic delete + job status update
+			[updatedApplication] = await prisma.$transaction([
+				prisma.jobApplication.delete({
+					where: { id: applicationId },
+				}),
+				prisma.job.update({
+					where: { id: application.jobId },
+					data: { status: "OPEN" },
+				}),
+			]);
+		} else {
+			updatedApplication = await prisma.jobApplication.update({
+				where: { id: applicationId },
+				data: {
+					status: "CANCELLED",
+					cancelledAt: new Date(),
+					cancellationReason: cancellationReason || null,
+					job: {
+						update: {
+							status: "OPEN",
+							updatedAt: new Date(),
+						},
+					},
+				},
+			});
+		}
+
+		// Notify employer if the application was already approved
+		if (application.status === "DOCTOR_CONFIRMED") {
+			const doctorName =
+				application.DoctorProfile?.doctorVerification?.fullName || "A doctor";
+			const jobTitle = application.job.title || "Untitled Job";
+			const facilityEmail = application.job.facility.contactEmail;
+			const facilityPhone = application.job.facility.contactPhone;
+
+			// TODO: Implement actual WhatsApp notification
+			console.log("=== WHATSAPP NOTIFICATION (TODO) ===");
+			console.log(`To: ${facilityPhone}`);
+			console.log(
+				`Message: ${doctorName} has cancelled their confirmed application for "${jobTitle}".`,
+			);
+			console.log(`Reason: ${cancellationReason}`);
+			console.log("=====================================");
+
+			// TODO: Implement actual email notification
+			console.log("=== EMAIL NOTIFICATION (TODO) ===");
+			console.log(`To: ${facilityEmail}`);
+			console.log(`Subject: Application Cancelled - ${jobTitle}`);
+			console.log(
+				`Body: ${doctorName} has cancelled their confirmed application for "${jobTitle}".`,
+			);
+			console.log(`Reason: ${cancellationReason}`);
+			console.log("==================================");
+		}
+
+		return {
+			success: true,
+			data: updatedApplication,
+			notifiedEmployer: application.status === "EMPLOYER_APPROVED",
+		};
 	}
 }
 

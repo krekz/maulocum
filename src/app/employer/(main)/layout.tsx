@@ -1,4 +1,4 @@
-import { NavbarEmployer } from "@/app/employer/_components/navbar";
+import { NavbarEmployer } from "@/app/employer/_components/employer-navbar";
 
 export default function MainEmployerLayout({
 	children,

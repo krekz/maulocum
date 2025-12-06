@@ -337,6 +337,84 @@ const app = new Hono()
 				);
 			}
 		},
+	)
+
+	// ============================================
+	// Double Opt-In Job Application Routes
+	// ============================================
+
+	/**
+	 * POST /api/v2/admin/applications/:applicationId/approve
+	 * Employer approves an application - triggers WhatsApp notification to doctor
+	 */
+	.post(
+		"/applications/:applicationId/approve",
+		zValidator("param", z.object({ applicationId: z.string() })),
+		async (c) => {
+			const { applicationId } = c.req.valid("param");
+
+			try {
+				const result = await adminService.approveApplication(applicationId);
+
+				return c.json({
+					success: true,
+					message: "Application approved. Confirmation link sent to doctor.",
+					data: {
+						application: result.application,
+						confirmationUrl: result.confirmationUrl,
+					},
+				});
+			} catch (error) {
+				console.error("Error approving application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * POST /api/v2/admin/applications/:applicationId/reject
+	 * Employer rejects an application
+	 */
+	.post(
+		"/applications/:applicationId/reject",
+		zValidator("param", z.object({ applicationId: z.string() })),
+		zValidator("json", z.object({ reason: z.string().optional() })),
+		async (c) => {
+			const { applicationId } = c.req.valid("param");
+			const { reason } = c.req.valid("json");
+
+			try {
+				const result = await adminService.rejectApplication(
+					applicationId,
+					reason,
+				);
+
+				return c.json({
+					success: true,
+					message: "Application rejected.",
+					data: result.application,
+				});
+			} catch (error) {
+				console.error("Error rejecting application:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
 	);
 
 export default app;

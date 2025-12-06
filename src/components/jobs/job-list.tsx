@@ -26,7 +26,7 @@ function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 
 	if (!jobListings) {
 		return (
-			<div className="w-full md:w-[340px] shrink-0">
+			<div className="w-full md:w-[500px] shrink-0">
 				<div className="bg-white rounded-xl p-6 border border-slate-100 text-center">
 					<p className="text-slate-500 text-sm">No job listings found</p>
 				</div>
@@ -36,7 +36,7 @@ function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 
 	if (isPending) {
 		return (
-			<div className="w-full md:w-[340px] shrink-0 space-y-3">
+			<div className="w-full md:w-[500px] shrink-0 space-y-3">
 				{Array.from({ length: 4 }).map((_, index) => (
 					<div
 						key={index}

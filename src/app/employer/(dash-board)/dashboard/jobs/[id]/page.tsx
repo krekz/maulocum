@@ -1,3 +1,14 @@
+import {
+	ArrowLeft,
+	Banknote,
+	Briefcase,
+	Calendar,
+	Clock,
+	Edit3,
+	MapPin,
+	Sparkles,
+	TrendingUp,
+} from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -5,283 +16,330 @@ import { CloseJobButton } from "@/components/employer/close-job-button";
 import { DeleteJobButton } from "@/components/employer/delete-job-button";
 import { JobApplicantsTable } from "@/components/employer/job-applicants-table";
 import { ReopenJobButton } from "@/components/employer/reopen-job-button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { backendApi } from "@/lib/rpc";
+
+const statusConfig = {
+	OPEN: {
+		label: "Open",
+		className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+		dot: "bg-emerald-500",
+	},
+	FILLED: {
+		label: "Filled",
+		className: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+		dot: "bg-blue-500",
+	},
+	CLOSED: {
+		label: "Closed",
+		className: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+		dot: "bg-slate-400",
+	},
+} as const;
+
+const urgencyConfig = {
+	LOW: {
+		label: "Low Priority",
+		className: "bg-slate-100 text-slate-600",
+		icon: null,
+	},
+	MEDIUM: {
+		label: "Medium",
+		className: "bg-amber-100 text-amber-700",
+		icon: null,
+	},
+	HIGH: {
+		label: "High Priority",
+		className: "bg-orange-100 text-orange-700",
+		icon: TrendingUp,
+	},
+} as const;
 
 async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const cookie = await headers();
 	const res = await backendApi.api.v2.facilities.jobs[":id"].$get(
-		{
-			param: {
-				id,
-			},
-		},
-		{
-			headers: {
-				cookie: cookie.get("cookie") || "",
-			},
-		},
+		{ param: { id } },
+		{ headers: { cookie: cookie.get("cookie") || "" } },
 	);
 
 	if (!res.ok) {
-		switch (res.status) {
-			case 401:
-			case 403:
-			case 404:
-				return notFound();
-			default:
-				return <div>Something went wrong</div>;
-		}
+		if ([401, 403, 404].includes(res.status)) return notFound();
+		return (
+			<div className="min-h-[50vh] flex items-center justify-center">
+				<p className="text-muted-foreground">Something went wrong</p>
+			</div>
+		);
 	}
 
 	const { data: job } = await res.json();
+	if (!job) return notFound();
 
-	if (!job) {
-		return notFound();
-	}
-
-	const formatDate = (date: string) => {
-		return new Date(date).toLocaleDateString("en-US", {
+	const formatDate = (date: string) =>
+		new Date(date).toLocaleDateString("en-MY", {
+			weekday: "short",
 			month: "short",
 			day: "numeric",
 			year: "numeric",
 		});
-	};
 
-	const formatTime = (time: string) => {
-		return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
+	const formatTime = (time: string) =>
+		new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
 			hour: "numeric",
 			minute: "2-digit",
 			hour12: true,
 		});
-	};
 
-	const getStatusBadge = (status: string) => {
-		const styles = {
-			OPEN: "bg-green-100 text-green-800 border-green-200",
-			FILLED: "bg-blue-100 text-blue-800 border-blue-200",
-			CLOSED: "bg-gray-100 text-gray-800 border-gray-200",
-			CANCELLED: "bg-red-100 text-red-800 border-red-200",
-		};
-		return styles[status as keyof typeof styles] || styles.OPEN;
-	};
-
-	const getUrgencyBadge = (urgency: string) => {
-		const styles = {
-			LOW: "bg-gray-100 text-gray-700 border-gray-200",
-			MEDIUM: "bg-yellow-100 text-yellow-800 border-yellow-200",
-			HIGH: "bg-orange-100 text-orange-800 border-orange-200",
-			URGENT: "bg-red-100 text-red-800 border-red-200",
-		};
-		return styles[urgency as keyof typeof styles] || styles.MEDIUM;
-	};
+	const status = statusConfig[job.status as keyof typeof statusConfig];
+	const urgency = urgencyConfig[job.urgency as keyof typeof urgencyConfig];
 
 	return (
-		<div className="container mx-auto px-4 py-8 max-w-5xl">
-			{/* Header */}
-			<div className="mb-8">
-				<div className="flex items-start justify-between mb-4">
-					<div className="flex-1">
-						<h1 className="text-3xl font-bold text-gray-900 mb-2">
-							{job.title || "Untitled Position"}
-						</h1>
-						<p className="text-gray-600 flex items-center gap-2">
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-								/>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-								/>
-							</svg>
-							{job.location || "Location not specified"}
-						</p>
-					</div>
-					<div className="flex gap-2">
-						<span
-							className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadge(job.status)}`}
-						>
-							{job.status}
-						</span>
-						<span
-							className={`px-3 py-1 rounded-full text-sm font-medium border ${getUrgencyBadge(job.urgency)}`}
-						>
-							{job.urgency}
-						</span>
-					</div>
-				</div>
-			</div>
+		<div className="min-h-screen bg-linear-to-b from-slate-50/50 to-white">
+			{/* Hero Header */}
+			<div className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl">
+				<div className="mx-auto px-4 py-8 ">
+					{/* Back Button */}
+					<Link
+						href="/employer/dashboard/jobs"
+						className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-sm"
+					>
+						<ArrowLeft className="size-4" />
+						Back to Jobs
+					</Link>
 
-			{/* Main Content Grid */}
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				{/* Left Column - Main Details */}
-				<div className="lg:col-span-2 space-y-6">
-					{/* Description */}
-					<div className="bg-white rounded-lg border border-gray-200 p-6">
-						<h2 className="text-xl font-semibold text-gray-900 mb-4">
-							Job Description
-						</h2>
-						<p className="text-gray-700 whitespace-pre-wrap">
-							{job.description || "No description provided."}
-						</p>
-					</div>
-
-					{/* Required Specialists */}
-					{job.requiredSpecialists && job.requiredSpecialists.length > 0 && (
-						<div className="bg-white rounded-lg border border-gray-200 p-6">
-							<h2 className="text-xl font-semibold text-gray-900 mb-4">
-								Required Specialists
-							</h2>
-							<div className="flex flex-wrap gap-2">
-								{job.requiredSpecialists.map((specialist: string) => (
-									<span
-										key={specialist}
-										className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm font-medium border border-blue-200"
-									>
-										{specialist}
-									</span>
-								))}
-							</div>
-						</div>
-					)}
-
-					{/* Schedule Details */}
-					<div className="bg-white rounded-lg border border-gray-200 p-6">
-						<h2 className="text-xl font-semibold text-gray-900 mb-4">
-							Schedule
-						</h2>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<p className="text-sm text-gray-500 mb-1">Start Date</p>
-								<p className="text-gray-900 font-medium">
-									{formatDate(job.startDate)}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500 mb-1">End Date</p>
-								<p className="text-gray-900 font-medium">
-									{formatDate(job.endDate)}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500 mb-1">Start Time</p>
-								<p className="text-gray-900 font-medium">
-									{formatTime(job.startTime)}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500 mb-1">End Time</p>
-								<p className="text-gray-900 font-medium">
-									{formatTime(job.endTime)}
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				{/* Right Column - Summary Card */}
-				<div className="lg:col-span-1">
-					<div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
-						<h2 className="text-xl font-semibold text-gray-900 mb-6">
-							Job Summary
-						</h2>
-
+					{/* Title Section */}
+					<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 						<div className="space-y-4">
-							{/* Pay Rate */}
-							<div className="pb-4 border-b border-gray-200">
-								<p className="text-sm text-gray-500 mb-1">Compensation</p>
-								<p className="text-2xl font-bold text-gray-900">
-									${job.payRate}
-									<span className="text-sm font-normal text-gray-600">
-										/{job.payBasis.toLowerCase()}
-									</span>
-								</p>
+							<div className="flex items-center gap-3 flex-wrap">
+								<Badge
+									variant="outline"
+									className={`${status.className} border px-3 py-1`}
+								>
+									<span
+										className={`size-2 rounded-full ${status.dot} mr-2 animate-pulse`}
+									/>
+									{status.label}
+								</Badge>
+								{urgency && (
+									<Badge className={`${urgency.className} border-0`}>
+										{urgency.icon && <urgency.icon className="size-3 mr-1" />}
+										{urgency.label}
+									</Badge>
+								)}
 							</div>
 
-							{/* Job Type */}
-							<div className="pb-4 border-b border-gray-200">
-								<p className="text-sm text-gray-500 mb-1">Job Type</p>
-								<p className="text-gray-900 font-medium capitalize">
-									{job.jobType.toLowerCase()}
-								</p>
-							</div>
+							<h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
+								{job.title || "Untitled Position"}
+							</h1>
 
-							{/* Duration */}
-							<div className="pb-4 border-b border-gray-200">
-								<p className="text-sm text-gray-500 mb-1">Duration</p>
-								<p className="text-gray-900 font-medium">
-									{formatDate(job.startDate)} - {formatDate(job.endDate)}
-								</p>
-							</div>
-
-							{/* Posted Date */}
-							<div className="pb-4 border-b border-gray-200">
-								<p className="text-sm text-gray-500 mb-1">Posted</p>
-								<p className="text-gray-900 font-medium">
-									{formatDate(job.createdAt)}
-								</p>
-							</div>
-
-							{/* Last Updated */}
-							<div>
-								<p className="text-sm text-gray-500 mb-1">Last Updated</p>
-								<p className="text-gray-900 font-medium">
-									{formatDate(job.updatedAt)}
-								</p>
+							<div className="flex items-center gap-4 text-slate-300 flex-wrap">
+								<span className="flex items-center gap-2">
+									<MapPin className="size-4" />
+									{job.location || "Location not specified"}
+								</span>
+								<span className="flex items-center gap-2">
+									<Briefcase className="size-4" />
+									{job.jobType.charAt(0) +
+										job.jobType.slice(1).toLowerCase().replace("_", " ")}
+								</span>
 							</div>
 						</div>
 
-						{/* Action Buttons */}
-						<div className="mt-6 space-y-3">
-							<Link
-								href={`/employer/dashboard/jobs/${job.id}/edit`}
-								className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-center"
-							>
-								Edit Job
-							</Link>
-							<button
-								type="button"
-								className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg border border-gray-300 transition-colors"
-							>
-								View Applicants
-							</button>
-							{job.status === "OPEN" && (
-								<CloseJobButton
-									jobId={job.id}
-									jobTitle={job.title || "Untitled Position"}
-								/>
-							)}
-							{job.status === "CLOSED" && (
-								<ReopenJobButton
-									jobId={job.id}
-									jobTitle={job.title || "Untitled Position"}
-								/>
-							)}
-							<div className="pt-3 border-t border-gray-200">
-								<DeleteJobButton
-									jobId={job.id}
-									jobTitle={job.title || "Untitled Position"}
-								/>
-							</div>
+						{/* Pay Rate Highlight */}
+						<div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+							<p className="text-slate-400 text-sm mb-1">Compensation</p>
+							<p className="text-4xl font-bold text-white">
+								RM{job.payRate}
+								<span className="text-lg font-normal text-slate-400">
+									/{job.payBasis.toLowerCase()}
+								</span>
+							</p>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Applicants Section */}
-			<div className="mt-8">
-				<JobApplicantsTable jobId={job.id} />
+			{/* Main Content */}
+			<div className="mx-auto py-8">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+					{/* Left Column */}
+					<div className="lg:col-span-2 space-y-6">
+						{/* Quick Stats */}
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+							<Card className="bg-linear-to-br from-blue-50 to-white border-blue-100">
+								<CardContent className="p-4">
+									<Calendar className="size-5 text-blue-600 mb-2" />
+									<p className="text-xs text-muted-foreground">Start Date</p>
+									<p className="font-semibold text-sm">
+										{formatDate(job.startDate)}
+									</p>
+								</CardContent>
+							</Card>
+							<Card className="bg-linear-to-br from-purple-50 to-white border-purple-100">
+								<CardContent className="p-4">
+									<Calendar className="size-5 text-purple-600 mb-2" />
+									<p className="text-xs text-muted-foreground">End Date</p>
+									<p className="font-semibold text-sm">
+										{formatDate(job.endDate)}
+									</p>
+								</CardContent>
+							</Card>
+							<Card className="bg-linear-to-br from-amber-50 to-white border-amber-100">
+								<CardContent className="p-4">
+									<Clock className="size-5 text-amber-600 mb-2" />
+									<p className="text-xs text-muted-foreground">Shift Start</p>
+									<p className="font-semibold text-sm">
+										{formatTime(job.startTime)}
+									</p>
+								</CardContent>
+							</Card>
+							<Card className="bg-linear-to-br from-emerald-50 to-white border-emerald-100">
+								<CardContent className="p-4">
+									<Clock className="size-5 text-emerald-600 mb-2" />
+									<p className="text-xs text-muted-foreground">Shift End</p>
+									<p className="font-semibold text-sm">
+										{formatTime(job.endTime)}
+									</p>
+								</CardContent>
+							</Card>
+						</div>
+
+						{/* Description */}
+						<Card>
+							<CardHeader>
+								<CardTitle className="flex items-center gap-2 text-lg">
+									<Sparkles className="size-5 text-primary" />
+									Job Description
+								</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+									{job.description || "No description provided."}
+								</p>
+							</CardContent>
+						</Card>
+
+						{/* Applicants Section */}
+						<JobApplicantsTable jobId={job.id} />
+					</div>
+
+					{/* Right Column - Sticky Sidebar */}
+					<div className="lg:col-span-1">
+						<div className="sticky top-6 space-y-6">
+							{/* Actions Card */}
+							<Card className="overflow-hidden">
+								<CardHeader className="bg-linear-to-r from-primary/5 to-transparent">
+									<CardTitle className="text-lg">Quick Actions</CardTitle>
+								</CardHeader>
+								<CardContent className="p-4 space-y-3">
+									<Button asChild className="w-full" size="lg">
+										<Link href={`/employer/dashboard/jobs/${job.id}/edit`}>
+											<Edit3 className="size-4 mr-2" />
+											Edit Job
+										</Link>
+									</Button>
+
+									{job.status === "OPEN" && (
+										<CloseJobButton
+											jobId={job.id}
+											jobTitle={job.title || "Untitled Position"}
+										/>
+									)}
+
+									{(job.status === "CLOSED" || job.status === "FILLED") && (
+										<ReopenJobButton
+											jobId={job.id}
+											jobTitle={job.title || "Untitled Position"}
+										/>
+									)}
+
+									<Separator className="my-4" />
+
+									<DeleteJobButton
+										jobId={job.id}
+										jobTitle={job.title || "Untitled Position"}
+									/>
+								</CardContent>
+							</Card>
+
+							{/* Job Details Card */}
+							<Card>
+								<CardHeader>
+									<CardTitle className="text-lg">Job Details</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm flex items-center gap-2">
+											<Banknote className="size-4" />
+											Pay Rate
+										</span>
+										<span className="font-semibold">
+											RM{job.payRate}/{job.payBasis.toLowerCase()}
+										</span>
+									</div>
+									<Separator />
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm flex items-center gap-2">
+											<Briefcase className="size-4" />
+											Job Type
+										</span>
+										<span className="font-medium capitalize">
+											{job.jobType.toLowerCase().replace("_", " ")}
+										</span>
+									</div>
+									<Separator />
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm flex items-center gap-2">
+											<MapPin className="size-4" />
+											Location
+										</span>
+										<span className="font-medium text-right text-sm max-w-[150px] truncate">
+											{job.location || "Not specified"}
+										</span>
+									</div>
+									<Separator />
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm flex items-center gap-2">
+											<MapPin className="size-4" />
+											Specialists
+										</span>
+										<span className="font-medium text-right text-sm max-w-[150px] truncate">
+											{job.requiredSpecialists.map((specialist) => (
+												<Badge
+													key={specialist}
+													variant="secondary"
+													className="bg-primary/5 text-primary border border-primary/10 px-3 py-1.5"
+												>
+													{specialist}
+												</Badge>
+											))}
+										</span>
+									</div>
+									<Separator />
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm">
+											Posted
+										</span>
+										<span className="font-medium text-sm">
+											{formatDate(job.createdAt)}
+										</span>
+									</div>
+									<div className="flex items-center justify-between">
+										<span className="text-muted-foreground text-sm">
+											Updated
+										</span>
+										<span className="font-medium text-sm">
+											{formatDate(job.updatedAt)}
+										</span>
+									</div>
+								</CardContent>
+							</Card>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

@@ -109,13 +109,6 @@ const NavbarEmployer = ({
 				<nav className="hidden justify-between lg:flex">
 					<div className="flex items-center gap-6">
 						<Link href={logo.url} className="flex items-center gap-2">
-							<Image
-								width={24}
-								height={24}
-								src={logo.src}
-								className="w-8"
-								alt={logo.alt}
-							/>
 							<span className="text-lg font-semibold text-primary">
 								{logo.title}
 							</span>
@@ -132,7 +125,7 @@ const NavbarEmployer = ({
 						{/* Not logged in */}
 						{!session && (
 							<Button asChild variant="outline" size="sm">
-								<Link href="/login">Login</Link>
+								<a href="/login">Login</a>
 							</Button>
 						)}
 
@@ -272,7 +265,7 @@ const NavbarEmployer = ({
 										{/* Not logged in */}
 										{!session && (
 											<Button asChild variant="outline">
-												<Link href="/login">Login</Link>
+												<a href="/login">Login</a>
 											</Button>
 										)}
 

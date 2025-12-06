@@ -2,6 +2,8 @@ import { Calendar, MapPin } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { backendApi } from "@/lib/rpc";
+import type { $Enums } from "../../../../../prisma/generated/prisma/client";
+import { CancelApplicationDialog } from "./cancel-application-dialog";
 import ReviewsDialog from "./reviews-dialog";
 
 async function HistoryPage() {
@@ -96,32 +98,44 @@ async function HistoryPage() {
 		);
 	}
 
-	const getStatusBadge = (status: string) => {
-		switch (status.toUpperCase()) {
+	const getStatusBadge = (status: $Enums.JobApplicationStatus) => {
+		switch (status) {
 			case "COMPLETED":
 				return {
 					label: "Completed",
 					className: "bg-emerald-50 text-emerald-700",
 				};
-			case "ACCEPTED":
+			case "DOCTOR_REJECTED":
 				return {
-					label: "Accepted",
-					className: "bg-emerald-50 text-emerald-700",
+					label: "Rejected by doctor",
+					className: "bg-red-50 text-red-700",
 				};
 			case "PENDING":
 				return {
 					label: "Pending",
 					className: "bg-amber-50 text-amber-700",
 				};
-			case "REJECTED":
+			case "EMPLOYER_REJECTED":
 				return {
-					label: "Rejected",
+					label: "Rejected by employer",
 					className: "bg-red-50 text-red-700",
 				};
 			case "CANCELLED":
 				return {
 					label: "Cancelled",
 					className: "bg-slate-100 text-slate-600",
+				};
+			case "DOCTOR_CONFIRMED":
+				return {
+					label: "Confirmed",
+					className: "bg-emerald-50 text-emerald-700",
+					desc: "You confirmed the job application",
+				};
+			case "EMPLOYER_APPROVED":
+				return {
+					label: "Waiting for your confirmation",
+					className: "bg-blue-50 text-blue-700",
+					desc: "Employer approved the job application",
 				};
 			default:
 				return {
@@ -162,6 +176,9 @@ async function HistoryPage() {
 				{applications.data.map((application) => {
 					const statusBadge = getStatusBadge(application.status);
 					const isCompleted = application.status.toUpperCase() === "COMPLETED";
+					const canCancel =
+						application.status === "PENDING" ||
+						application.status === "DOCTOR_CONFIRMED";
 
 					return (
 						<div
@@ -170,17 +187,10 @@ async function HistoryPage() {
 						>
 							<div className="flex items-start justify-between gap-4">
 								<div className="flex-1 min-w-0">
-									{/* Title & Status */}
-									<div className="flex items-center gap-2 mb-1">
-										<h4 className="font-medium text-slate-900 text-sm truncate">
-											{application.job.title || "Untitled Job"}
-										</h4>
-										<span
-											className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.className}`}
-										>
-											{statusBadge.label}
-										</span>
-									</div>
+									{/* Title */}
+									<h4 className="font-medium text-slate-900 text-sm truncate">
+										{application.job.title || "Untitled Job"}
+									</h4>
 
 									{/* Facility Name */}
 									<p className="text-xs text-slate-500 mb-2">
@@ -210,12 +220,24 @@ async function HistoryPage() {
 
 								{/* Actions */}
 								<div className="flex items-center gap-2 shrink-0">
+									<span
+										className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${statusBadge.className}`}
+									>
+										{statusBadge.label}
+									</span>
 									<Link
 										href={`/jobs/${application.job.id}`}
 										className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
 									>
 										View Details
 									</Link>
+									{canCancel && (
+										<CancelApplicationDialog
+											applicationId={application.id}
+											jobTitle={application.job.title || "Untitled Job"}
+											status={application.status}
+										/>
+									)}
 									{isCompleted && (
 										<ReviewsDialog
 											facilityId={application.job.facility.id}

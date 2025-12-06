@@ -29,7 +29,7 @@ async function JobApplicantsPage() {
 	const totalApplicants = applicants.length;
 	const pendingCount = applicants.filter((a) => a.status === "PENDING").length;
 	const acceptedCount = applicants.filter(
-		(a) => a.status === "ACCEPTED",
+		(a) => a.status === "DOCTOR_CONFIRMED",
 	).length;
 	const uniqueJobs = new Set(applicants.map((a) => a.job.id)).size;
 

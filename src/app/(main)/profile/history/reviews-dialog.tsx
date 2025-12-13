@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StarIcon } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, StarIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,21 +27,21 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { client } from "@/lib/rpc";
 
 const reviewFormSchema = z.object({
 	rating: z.number().min(1, "Please select a rating").max(5),
 	comment: z
 		.string()
-		.min(5, "Comment must be at least 5 characters")
-		.max(500, "Comment cannot exceed 500 characters"),
+		.max(1000, "Comment cannot exceed 1000 characters")
+		.optional(),
 });
 
 type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
 interface ReviewsDialogProps {
-	facilityId: string;
+	jobId: string;
 	facilityName: string;
-	onSubmitReview?: (data: ReviewFormValues) => void;
 	trigger?: React.ReactNode;
 }
 
@@ -90,13 +92,9 @@ function StarRating({
 	);
 }
 
-function ReviewsDialog({
-	facilityName = "Facility",
-	onSubmitReview,
-	trigger,
-}: ReviewsDialogProps) {
+function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 	const [open, setOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const queryClient = useQueryClient();
 
 	const form = useForm<ReviewFormValues>({
 		resolver: zodResolver(reviewFormSchema),
@@ -106,26 +104,40 @@ function ReviewsDialog({
 		},
 	});
 
+	const reviewMutation = useMutation({
+		mutationFn: async (data: ReviewFormValues) => {
+			const response = await client.api.v2.doctors.jobs[":jobId"].review.$post({
+				param: { jobId },
+				json: {
+					rating: data.rating,
+					comment: data.comment,
+				},
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || "Failed to submit review");
+			}
+
+			return response.json();
+		},
+		onSuccess: (data) => {
+			toast.success(data.message || "Review submitted successfully");
+			setOpen(false);
+			form.reset();
+			queryClient.invalidateQueries({ queryKey: ["doctor-applications"] });
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || "Failed to submit review");
+		},
+	});
+
 	const handleRatingChange = (rating: number) => {
 		form.setValue("rating", rating, { shouldValidate: true });
 	};
 
-	const onSubmit = async (data: ReviewFormValues) => {
-		setIsSubmitting(true);
-		try {
-			// Call the onSubmitReview callback if provided
-			if (onSubmitReview) {
-				onSubmitReview(data);
-			}
-
-			// Close the dialog and reset the form
-			setOpen(false);
-			form.reset();
-		} catch (error) {
-			console.error("Error submitting review:", error);
-		} finally {
-			setIsSubmitting(false);
-		}
+	const onSubmit = (data: ReviewFormValues) => {
+		reviewMutation.mutate(data);
 	};
 
 	return (
@@ -193,8 +205,15 @@ function ReviewsDialog({
 							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "Submitting..." : "Submit Review"}
+							<Button type="submit" disabled={reviewMutation.isPending}>
+								{reviewMutation.isPending ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Submitting...
+									</>
+								) : (
+									"Submit Review"
+								)}
 							</Button>
 						</DialogFooter>
 					</form>

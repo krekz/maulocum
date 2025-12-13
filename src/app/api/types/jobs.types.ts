@@ -29,7 +29,7 @@ export const fullAccessSelect = {
 			contactPhone: true,
 			profileImage: true,
 			description: true,
-			reviews: {
+			facilityReviews: {
 				select: {
 					id: true,
 					rating: true,

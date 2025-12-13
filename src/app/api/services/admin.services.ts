@@ -38,13 +38,13 @@ class AdminService {
 						},
 						facilityVerification: true,
 						contactInfo: true,
-						reviews: true,
+						facilityReviews: true,
 						jobs: true,
 						staffs: true,
 						_count: {
 							select: {
 								jobs: true,
-								reviews: true,
+								facilityReviews: true,
 							},
 						},
 					},

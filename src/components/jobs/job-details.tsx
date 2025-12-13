@@ -155,9 +155,10 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	// Calculate average rating
 	const avgRating =
-		selectedJob.facility.reviews && selectedJob.facility.reviews.length > 0
-			? selectedJob.facility.reviews.reduce((a, b) => a + b.rating, 0) /
-				selectedJob.facility.reviews.length
+		selectedJob.facility.facilityReviews &&
+		selectedJob.facility.facilityReviews.length > 0
+			? selectedJob.facility.facilityReviews.reduce((a, b) => a + b.rating, 0) /
+				selectedJob.facility.facilityReviews.length
 			: 0;
 
 	return (

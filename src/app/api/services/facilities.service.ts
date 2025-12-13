@@ -9,7 +9,6 @@ import {
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import type {
 	CreateContactInfoInput,
-	CreateReviewInput,
 	FacilityQuery,
 	FacilityRegistrationApiInput,
 	FacilityVerificationEditApiInput,
@@ -401,7 +400,7 @@ export class FacilityService {
 					orderBy: { createdAt: "desc" },
 					take: 10,
 				},
-				reviews: {
+				facilityReviews: {
 					orderBy: { createdAt: "desc" },
 					take: 10,
 				},
@@ -409,7 +408,7 @@ export class FacilityService {
 				_count: {
 					select: {
 						jobs: true,
-						reviews: true,
+						facilityReviews: true,
 					},
 				},
 			},
@@ -450,7 +449,7 @@ export class FacilityService {
 						_count: {
 							select: {
 								jobs: true,
-								reviews: true,
+								doctorReviews: true,
 							},
 						},
 					},
@@ -527,23 +526,10 @@ export class FacilityService {
 		}
 	}
 
-	// Add review to facility
-	async addReview(data: CreateReviewInput) {
-		try {
-			return prisma.review.create({
-				data,
-			});
-		} catch (error) {
-			console.error(error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, { message: "Failed to add review" });
-		}
-	}
-
 	// Get facility reviews
 	async getFacilityReviews(facilityId: string) {
 		try {
-			return prisma.review.findMany({
+			return prisma.facilityReview.findMany({
 				where: { facilityId },
 				orderBy: { createdAt: "desc" },
 			});
@@ -587,7 +573,7 @@ export class FacilityService {
 						include: {
 							facilityVerification: true,
 							contactInfo: true,
-							reviews: true,
+							doctorReviews: true,
 						},
 					},
 				},

@@ -361,6 +361,104 @@ class DoctorsService {
 			notifiedEmployer: application.status === "EMPLOYER_APPROVED",
 		};
 	}
+
+	/**
+	 * Submit a facility review for a completed job
+	 * Only allowed for COMPLETED job applications
+	 * Doctor reviews the facility they worked at
+	 */
+	async submitFacilityReview(
+		doctorProfileId: string,
+		jobId: string,
+		rating: number,
+		comment?: string,
+	) {
+		// Find the job application for this doctor and job
+		const application = await prisma.jobApplication.findFirst({
+			where: {
+				jobId,
+				doctorProfileId,
+			},
+			include: {
+				job: {
+					select: {
+						facilityId: true,
+						title: true,
+					},
+				},
+				facilityReview: {
+					select: { id: true },
+				},
+			},
+		});
+
+		if (!application) {
+			throw new HTTPException(404, {
+				message: "Job application not found",
+			});
+		}
+
+		// Only allow reviews for completed jobs
+		if (application.status !== "COMPLETED") {
+			throw new HTTPException(400, {
+				message: "Reviews can only be submitted for completed jobs",
+			});
+		}
+
+		// Check if review already exists
+		if (application.facilityReview) {
+			throw new HTTPException(409, {
+				message: "You have already reviewed this facility for this job",
+			});
+		}
+
+		// Create the facility review
+		const review = await prisma.facilityReview.create({
+			data: {
+				rating,
+				comment,
+				doctorProfileId,
+				facilityId: application.job.facilityId,
+				jobApplicationId: application.id,
+			},
+			select: {
+				id: true,
+				rating: true,
+				comment: true,
+				createdAt: true,
+			},
+		});
+
+		return review;
+	}
+
+	/**
+	 * Check if a doctor can review a facility for a specific job
+	 */
+	async canReviewFacility(doctorProfileId: string, jobId: string) {
+		const application = await prisma.jobApplication.findFirst({
+			where: {
+				jobId,
+				doctorProfileId,
+				status: "COMPLETED",
+			},
+			include: {
+				facilityReview: {
+					select: { id: true },
+				},
+			},
+		});
+
+		if (!application) {
+			return { canReview: false, reason: "No completed application found" };
+		}
+
+		if (application.facilityReview) {
+			return { canReview: false, reason: "Already reviewed" };
+		}
+
+		return { canReview: true, reason: null };
+	}
 }
 
 export const doctorsService = new DoctorsService();

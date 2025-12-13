@@ -240,7 +240,7 @@ async function HistoryPage() {
 									)}
 									{isCompleted && (
 										<ReviewsDialog
-											facilityId={application.job.facility.id}
+											jobId={application.job.id}
 											facilityName={application.job.facility.name}
 										/>
 									)}

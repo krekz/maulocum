@@ -97,7 +97,7 @@ async function FacilityDetails({ params }: FacilityDetailsProps) {
 								{facility.clinicName}
 							</h1>
 							<ReviewsDialog
-								facilityId={facility.id}
+								jobId={facility.id} // TODO: change to jobid
 								facilityName={facility.clinicName}
 							/>
 						</div>

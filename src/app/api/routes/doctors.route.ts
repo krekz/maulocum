@@ -219,6 +219,69 @@ const app = new Hono<{ Variables: AppVariables }>()
 				);
 			}
 		},
+	)
+
+	/*
+	 * Submit a review for a completed job
+	 * POST /api/v2/doctors/jobs/:jobId/review
+	 */
+	.post(
+		"/jobs/:jobId/review",
+		requireValidDoctorProfile,
+		zValidator(
+			"param",
+			z.object({
+				jobId: z.cuid().min(5, "Job ID is required"),
+			}),
+		),
+		zValidator(
+			"json",
+			z.object({
+				rating: z
+					.number()
+					.int("Rating must be a whole number")
+					.min(1, "Rating must be at least 1")
+					.max(5, "Rating cannot exceed 5"),
+				comment: z
+					.string()
+					.max(1000, "Comment must be less than 1000 characters")
+					.optional(),
+			}),
+		),
+		async (c) => {
+			try {
+				const { jobId } = c.req.valid("param");
+				const { rating, comment } = c.req.valid("json");
+				const doctorProfile = c.get("doctorProfile");
+
+				const review = await doctorsService.submitFacilityReview(
+					doctorProfile.id,
+					jobId,
+					rating,
+					comment,
+				);
+
+				return c.json(
+					{
+						success: true,
+						data: review,
+						message: "Review submitted successfully",
+					},
+					201,
+				);
+			} catch (error) {
+				console.error("Error submitting review:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status || 500,
+				);
+			}
+		},
 	);
 
 export default app;

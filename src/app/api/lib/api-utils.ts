@@ -97,7 +97,7 @@ export const requireActiveEmployer = async (c: Context, next: Next) => {
 				include: {
 					facilityVerification: true,
 					contactInfo: true,
-					reviews: true,
+					facilityReviews: true,
 				},
 			},
 		},

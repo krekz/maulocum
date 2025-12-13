@@ -174,8 +174,11 @@ async function HistoryPage() {
 			{/* Applications List */}
 			<div className="divide-y divide-slate-50">
 				{applications.data.map((application) => {
-					const statusBadge = getStatusBadge(application.status);
 					const isCompleted = application.status.toUpperCase() === "COMPLETED";
+					const hasReviewed = isCompleted && application.facilityReview;
+					const statusBadge = hasReviewed
+						? { label: "Reviewed", className: "bg-purple-50 text-purple-700" }
+						: getStatusBadge(application.status);
 					const canCancel =
 						application.status === "PENDING" ||
 						application.status === "DOCTOR_CONFIRMED";
@@ -238,7 +241,7 @@ async function HistoryPage() {
 											status={application.status}
 										/>
 									)}
-									{isCompleted && (
+									{isCompleted && !application.facilityReview && (
 										<ReviewsDialog
 											jobId={application.job.id}
 											facilityName={application.job.facility.name}

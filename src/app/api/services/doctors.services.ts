@@ -115,6 +115,11 @@ class DoctorsService {
 							},
 						},
 					},
+					facilityReview: {
+						select: {
+							id: true,
+						},
+					},
 				},
 				orderBy: {
 					appliedAt: "desc",

@@ -6,7 +6,6 @@ import { requireActiveEmployer, requireAuth } from "../lib/api-utils";
 import { facilityService } from "../services/facilities.service";
 import {
 	createContactInfoSchema,
-	createReviewSchema,
 	facilityQuerySchema,
 	facilityRegistrationApiSchema,
 	facilityVerificationEditApiSchema,
@@ -705,47 +704,5 @@ const app = new Hono<{ Variables: AppVariables }>()
 				);
 			}
 		},
-	)
-
-	/**
-	 * POST /api/v2/facilities/:id/review
-	 * Add review to facility
-	 * @PROTECTED route
-	 */
-	.post(
-		"/:id/review",
-		// todo: requireactiveDoctor (doctor review the employer)
-		zValidator("param", z.object({ id: z.string() })),
-		zValidator("json", createReviewSchema.omit({ facilityId: true })),
-		async (c) => {
-			try {
-				const { id } = c.req.valid("param");
-				const data = c.req.valid("json");
-				const review = await facilityService.addReview({
-					...data,
-					facilityId: id,
-				});
-				return c.json(
-					{
-						success: true,
-						message: "Review added successfully",
-						data: review,
-					},
-					201,
-				);
-			} catch (error) {
-				console.error(error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
 	);
-
 export default app;

@@ -282,6 +282,40 @@ const app = new Hono<{ Variables: AppVariables }>()
 				);
 			}
 		},
-	);
+	)
+
+	/*
+	 * Get all facility reviews made by the doctor
+	 * GET /api/v2/doctors/jobs/reviews
+	 */
+	.get("/jobs/reviews", requireValidDoctorProfile, async (c) => {
+		try {
+			const doctorProfile = c.get("doctorProfile");
+
+			const reviews = await doctorsService.getDoctorFacilityReviews(
+				doctorProfile.id,
+			);
+
+			return c.json(
+				{
+					success: true,
+					data: reviews,
+					message: "Reviews fetched successfully",
+				},
+				200,
+			);
+		} catch (error) {
+			console.error("Error fetching reviews:", error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status || 500,
+			);
+		}
+	});
 
 export default app;

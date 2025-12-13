@@ -459,6 +459,50 @@ class DoctorsService {
 
 		return { canReview: true, reason: null };
 	}
+
+	/**
+	 * Get all facility reviews made by a doctor
+	 */
+	async getDoctorFacilityReviews(doctorProfileId: string) {
+		const reviews = await prisma.facilityReview.findMany({
+			where: {
+				doctorProfileId,
+			},
+			select: {
+				id: true,
+				rating: true,
+				comment: true,
+				createdAt: true,
+				updatedAt: true,
+				facility: {
+					select: {
+						id: true,
+						name: true,
+						address: true,
+						profileImage: true,
+					},
+				},
+				jobApplication: {
+					select: {
+						id: true,
+						job: {
+							select: {
+								id: true,
+								title: true,
+								startDate: true,
+								endDate: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+		});
+
+		return reviews;
+	}
 }
 
 export const doctorsService = new DoctorsService();

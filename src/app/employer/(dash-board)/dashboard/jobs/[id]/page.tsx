@@ -14,13 +14,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CloseJobButton } from "@/components/employer/close-job-button";
 import { DeleteJobButton } from "@/components/employer/delete-job-button";
-import { JobApplicantsTable } from "@/components/employer/job-applicants-table";
 import { ReopenJobButton } from "@/components/employer/reopen-job-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { backendApi } from "@/lib/rpc";
+import { JobApplicantsSection } from "./_components/job-applicants-section";
 
 const statusConfig = {
 	OPEN: {
@@ -223,7 +223,7 @@ async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 						</Card>
 
 						{/* Applicants Section */}
-						<JobApplicantsTable jobId={job.id} />
+						<JobApplicantsSection jobId={job.id} />
 					</div>
 
 					{/* Right Column - Sticky Sidebar */}

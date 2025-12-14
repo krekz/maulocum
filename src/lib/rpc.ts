@@ -40,5 +40,10 @@ export interface TSingleJobApplicant {
 			yearsOfExperience: number;
 			verificationStatus: string;
 		} | null;
+		avgRating: number | null;
+	} | null;
+	doctorReview: {
+		id: string;
+		rating: number;
 	} | null;
 }

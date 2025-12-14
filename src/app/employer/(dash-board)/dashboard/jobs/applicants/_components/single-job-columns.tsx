@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ArrowUpDown, Mail, Phone, User } from "lucide-react";
+import { ArrowUpDown, Mail, Phone, Star, User } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import type { TSingleJobApplicant } from "@/lib/rpc";
 import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
 import { ApplicationActions } from "./application-actions";
+import { ReviewDoctorDialog } from "./review-doctor-dialog";
 
 const statusConfig = {
 	PENDING: {
@@ -60,6 +61,12 @@ const statusConfig = {
 		className: string;
 	}
 >;
+
+const reviewedStatusConfig = {
+	label: "Reviewed",
+	variant: "default" as const,
+	className: "bg-purple-500 text-white",
+};
 
 const verificationStatusConfig = {
 	APPROVED: {
@@ -161,6 +168,24 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 		},
 	},
 	{
+		id: "rating",
+		header: "Rating",
+		cell: ({ row }) => {
+			const avgRating = row.original.DoctorProfile?.avgRating;
+			if (avgRating === null || avgRating === undefined) {
+				return (
+					<span className="text-muted-foreground text-sm">No reviews</span>
+				);
+			}
+			return (
+				<div className="flex items-center gap-1">
+					<Star className="size-4 fill-yellow-400 text-yellow-400" />
+					<span className="text-sm font-medium">{avgRating.toFixed(1)}</span>
+				</div>
+			);
+		},
+	},
+	{
 		id: "verification",
 		header: "Verification",
 		cell: ({ row }) => {
@@ -192,6 +217,20 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 		),
 		cell: ({ row }) => {
 			const status = row.original.status;
+			const hasReviewed = row.original.doctorReview !== null;
+			const isReviewed = status === "COMPLETED" && hasReviewed;
+
+			if (isReviewed) {
+				return (
+					<Badge
+						variant={reviewedStatusConfig.variant}
+						className={reviewedStatusConfig.className}
+					>
+						{reviewedStatusConfig.label}
+					</Badge>
+				);
+			}
+
 			const config = statusConfig[status as keyof typeof statusConfig];
 			return (
 				<Badge variant={config?.variant} className={config?.className}>
@@ -229,7 +268,22 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 		enableHiding: false,
 		cell: ({ row }) => {
 			const application = row.original;
-			return <ApplicationActions application={application as any} />;
+			const isCompleted = application.status === "COMPLETED";
+			const hasReviewed = application.doctorReview !== null;
+			const doctorName =
+				application.DoctorProfile?.doctorVerification?.fullName ?? "Doctor";
+
+			return (
+				<div className="flex items-center gap-2">
+					<ApplicationActions application={application} />
+					{isCompleted && !hasReviewed && (
+						<ReviewDoctorDialog
+							applicationId={application.id}
+							doctorName={doctorName}
+						/>
+					)}
+				</div>
+			);
 		},
 	},
 ];

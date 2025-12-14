@@ -161,7 +161,7 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 								{application.DoctorProfile?.user.name}
 							</span>
 							's application for{" "}
-							<span className="font-semibold">{application.job.title}</span>?
+							<span className="font-semibold">{application.job?.title}</span>?
 							<br />
 							<br />A WhatsApp message with a confirmation link will be sent to
 							the doctor. The booking will only be finalized once the doctor

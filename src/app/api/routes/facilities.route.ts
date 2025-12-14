@@ -704,5 +704,54 @@ const app = new Hono<{ Variables: AppVariables }>()
 				);
 			}
 		},
+	)
+
+	/**
+	 * POST /api/v2/facilities/applications/:applicationId/review
+	 * Submit a review for a doctor after completing a job
+	 * @PROTECTED route
+	 */
+	.post(
+		"/applications/:applicationId/review",
+		requireActiveEmployer,
+		zValidator("param", z.object({ applicationId: z.string() })),
+		zValidator(
+			"json",
+			z.object({
+				rating: z.number().min(1).max(5),
+				comment: z.string().max(1000).optional(),
+			}),
+		),
+		async (c) => {
+			try {
+				const { applicationId } = c.req.valid("param");
+				const { rating, comment } = c.req.valid("json");
+				const staffProfile = c.get("staffProfile");
+
+				const review = await facilityService.submitDoctorReview(
+					applicationId,
+					staffProfile.facilityId,
+					rating,
+					comment,
+				);
+
+				return c.json({
+					success: true,
+					message: "Review submitted successfully",
+					data: review,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
 	);
+
 export default app;

@@ -745,13 +745,51 @@ export class FacilityService {
 							},
 						},
 					},
+					doctorReview: {
+						select: {
+							id: true,
+							rating: true,
+						},
+					},
 				},
 				orderBy: {
 					appliedAt: "desc",
 				},
 			});
 
-			return applications;
+			// Get unique doctor profile IDs
+			const doctorProfileIds = [
+				...new Set(
+					applications
+						.map((a) => a.DoctorProfile?.id)
+						.filter((id): id is string => !!id),
+				),
+			];
+
+			// Batch fetch average ratings using aggregation
+			const avgRatings = await prisma.doctorReview.groupBy({
+				by: ["doctorProfileId"],
+				where: { doctorProfileId: { in: doctorProfileIds } },
+				_avg: { rating: true },
+			});
+
+			// Create a map for quick lookup
+			const avgRatingMap = new Map(
+				avgRatings.map((r) => [r.doctorProfileId, r._avg.rating]),
+			);
+
+			// Attach avg rating to each applicant
+			const applicantsWithAvgRating = applications.map((application) => ({
+				...application,
+				DoctorProfile: application.DoctorProfile
+					? {
+							...application.DoctorProfile,
+							avgRating: avgRatingMap.get(application.DoctorProfile.id) ?? null,
+						}
+					: null,
+			}));
+
+			return applicantsWithAvgRating;
 		} catch (error) {
 			console.error("Error in facility.service.getJobApplicants:", error);
 			if (error instanceof HTTPException) throw error;
@@ -881,6 +919,17 @@ export class FacilityService {
 									image: true,
 								},
 							},
+							doctorReviews: {
+								select: {
+									rating: true,
+								},
+							},
+						},
+					},
+					doctorReview: {
+						select: {
+							id: true,
+							rating: true,
 						},
 					},
 				},
@@ -889,7 +938,26 @@ export class FacilityService {
 				},
 			});
 
-			return applicants;
+			// Calculate average rating for each doctor
+			const applicantsWithAvgRating = applicants.map((applicant) => {
+				const reviews = applicant.DoctorProfile?.doctorReviews ?? [];
+				const avgRating =
+					reviews.length > 0
+						? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+						: null;
+
+				return {
+					...applicant,
+					DoctorProfile: applicant.DoctorProfile
+						? {
+								...applicant.DoctorProfile,
+								avgRating,
+							}
+						: null,
+				};
+			});
+
+			return applicantsWithAvgRating;
 		} catch (error) {
 			console.error("Error in facility.service.getJobApplicants:", error);
 			if (error instanceof HTTPException) throw error;
@@ -977,6 +1045,83 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to delete job",
+			});
+		}
+	}
+
+	/**
+	 * Submit a review for a doctor after completing a job
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
+	async submitDoctorReview(
+		applicationId: string,
+		facilityId: string,
+		rating: number,
+		comment?: string,
+	) {
+		try {
+			// Get the job application with related data
+			const application = await prisma.jobApplication.findFirst({
+				where: {
+					id: applicationId,
+					job: { facilityId },
+				},
+				include: {
+					job: { select: { facilityId: true } },
+					doctorReview: { select: { id: true } },
+					DoctorProfile: { select: { id: true } },
+				},
+			});
+
+			if (!application) {
+				throw new HTTPException(404, {
+					message: "Job application not found",
+				});
+			}
+
+			if (!application.DoctorProfile) {
+				throw new HTTPException(400, {
+					message: "No doctor profile associated with this application",
+				});
+			}
+
+			// Check if job is completed
+			if (application.status !== "COMPLETED") {
+				throw new HTTPException(400, {
+					message: "Can only review doctors for completed jobs",
+				});
+			}
+
+			// Check if already reviewed
+			if (application.doctorReview) {
+				throw new HTTPException(400, {
+					message: "You have already reviewed this doctor for this job",
+				});
+			}
+
+			// Create the review
+			const review = await prisma.doctorReview.create({
+				data: {
+					rating,
+					comment,
+					doctorProfileId: application.DoctorProfile.id,
+					facilityId,
+					jobApplicationId: applicationId,
+				},
+				select: {
+					id: true,
+					rating: true,
+					comment: true,
+					createdAt: true,
+				},
+			});
+
+			return review;
+		} catch (error) {
+			console.error("Error in facility.service.submitDoctorReview:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to submit review",
 			});
 		}
 	}

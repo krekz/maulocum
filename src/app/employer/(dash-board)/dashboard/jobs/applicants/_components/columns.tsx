@@ -10,6 +10,7 @@ import {
 	Mail,
 	MapPin,
 	Phone,
+	Star,
 	User,
 } from "lucide-react";
 import Image from "next/image";
@@ -24,6 +25,7 @@ import {
 import type { TJobApplicant } from "@/lib/rpc";
 import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
 import { ApplicationActions } from "./application-actions";
+import { ReviewDoctorDialog } from "./review-doctor-dialog";
 
 const statusConfig = {
 	PENDING: {
@@ -69,6 +71,12 @@ const statusConfig = {
 		className: string;
 	}
 >;
+
+const reviewedStatusConfig = {
+	label: "Reviewed",
+	variant: "default" as const,
+	className: "bg-purple-500 text-white",
+};
 
 const verificationStatusConfig = {
 	APPROVED: {
@@ -228,6 +236,24 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		},
 	},
 	{
+		id: "rating",
+		header: "Rating",
+		cell: ({ row }) => {
+			const avgRating = row.original.DoctorProfile?.avgRating;
+			if (avgRating === null || avgRating === undefined) {
+				return (
+					<span className="text-muted-foreground text-sm">No reviews</span>
+				);
+			}
+			return (
+				<div className="flex items-center gap-1">
+					<Star className="size-4 fill-yellow-400 text-yellow-400" />
+					<span className="text-sm font-medium">{avgRating.toFixed(1)}</span>
+				</div>
+			);
+		},
+	},
+	{
 		id: "verification",
 		header: "Verification",
 		cell: ({ row }) => {
@@ -259,6 +285,20 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		),
 		cell: ({ row }) => {
 			const status = row.original.status;
+			const hasReviewed = row.original.doctorReview !== null;
+			const isReviewed = status === "COMPLETED" && hasReviewed;
+
+			if (isReviewed) {
+				return (
+					<Badge
+						variant={reviewedStatusConfig.variant}
+						className={reviewedStatusConfig.className}
+					>
+						{reviewedStatusConfig.label}
+					</Badge>
+				);
+			}
+
 			const config = statusConfig[status as keyof typeof statusConfig];
 			return (
 				<Badge variant={config?.variant} className={config?.className}>
@@ -296,7 +336,24 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		enableHiding: false,
 		cell: ({ row }) => {
 			const application = row.original;
-			return <ApplicationActions application={application} />;
+			const isCompleted = application.status === "COMPLETED";
+			const hasReviewed = application.doctorReview !== null;
+			const doctorName =
+				application.DoctorProfile?.doctorVerification?.fullName ??
+				application.DoctorProfile?.user?.name ??
+				"Doctor";
+
+			return (
+				<div className="flex items-center gap-2">
+					<ApplicationActions application={application} />
+					{isCompleted && !hasReviewed && (
+						<ReviewDoctorDialog
+							applicationId={application.id}
+							doctorName={doctorName}
+						/>
+					)}
+				</div>
+			);
 		},
 	},
 ];

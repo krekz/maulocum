@@ -107,7 +107,7 @@ const app = new Hono()
 				c.req.valid("json");
 
 			try {
-				const result = await adminService.createDoctorVerificationAction({
+				await adminService.createDoctorVerificationAction({
 					doctorId: verificationId,
 					action,
 					rejectionReason,
@@ -117,7 +117,6 @@ const app = new Hono()
 				return c.json({
 					success: true,
 					message: "Verification processed successfully",
-					data: result?.doctorProfile,
 				});
 			} catch (error) {
 				console.error("Error processing verification:", error);
@@ -126,7 +125,6 @@ const app = new Hono()
 					{
 						success: false,
 						message: httpError.message,
-						data: null,
 					},
 					httpError.status,
 				);

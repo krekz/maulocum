@@ -157,17 +157,20 @@ class AdminService {
 			const [verifications, total] = await Promise.all([
 				prisma.doctorVerification.findMany({
 					where,
-					include: {
+					select: {
+						id: true,
+						fullName: true,
+						verificationStatus: true,
+						reviewedBy: true,
+						apcNumber: true,
+						specialty: true,
+						yearsOfExperience: true,
+						location: true,
 						doctorProfile: {
-							include: {
+							select: {
 								user: {
 									select: {
-										id: true,
-										name: true,
 										email: true,
-										image: true,
-										roles: true,
-										createdAt: true,
 									},
 								},
 							},
@@ -269,6 +272,7 @@ class AdminService {
 					where: { id: doctorProfile.id },
 					data: {
 						verificationStatus: "APPROVED",
+						reviewedBy: "ADMIN",
 						reviewedAt: new Date(),
 					},
 				});
@@ -282,12 +286,7 @@ class AdminService {
 					},
 				});
 
-				return {
-					doctorProfile: {
-						...doctorProfile,
-						verificationStatus: "APPROVED",
-					},
-				};
+				return;
 			} else {
 				// REJECT
 				if (!rejectionReason) {
@@ -303,17 +302,12 @@ class AdminService {
 						verificationStatus: "REJECTED",
 						rejectionReason,
 						allowAppeal,
+						reviewedBy: "ADMIN",
 						reviewedAt: new Date(),
 					},
 				});
 
-				return {
-					doctorProfile: {
-						...doctorProfile,
-						status: "REJECTED",
-						rejectionReason,
-					},
-				};
+				return;
 			}
 		} catch (error) {
 			console.error(error);

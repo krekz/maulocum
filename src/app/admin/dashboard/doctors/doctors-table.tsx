@@ -34,6 +34,7 @@ type DoctorVerification = {
 	specialty: string | null;
 	yearsOfExperience: number;
 	location: string;
+	reviewedBy: string | null;
 	verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
 	doctorProfile: {
 		user: {
@@ -104,6 +105,13 @@ const columns: ColumnDef<DoctorVerification>[] = [
 		filterFn: (row, id, value) => {
 			return value.includes(row.getValue(id));
 		},
+	},
+	{
+		id: "reviewedBy",
+		header: "Reviewed By",
+		cell: ({ row }) => (
+			<div className="text-center">{row.getValue("reviewedBy") || "None"}</div>
+		),
 	},
 	{
 		id: "actions",

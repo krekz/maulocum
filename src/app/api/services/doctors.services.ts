@@ -508,6 +508,92 @@ class DoctorsService {
 
 		return reviews;
 	}
+
+	async submitJobBookmark(doctorProfileId: string, jobId: string) {
+		try {
+			const checkJobExist = await prisma.job.findUnique({
+				where: { id: jobId },
+				select: { id: true },
+			});
+
+			if (!checkJobExist) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			const existingBookmark = await prisma.jobBookmark.findUnique({
+				where: {
+					jobId_doctorProfileId: { jobId, doctorProfileId },
+				},
+			});
+
+			if (existingBookmark) {
+				await prisma.jobBookmark.delete({
+					where: {
+						jobId_doctorProfileId: { jobId, doctorProfileId },
+					},
+				});
+				return { bookmarked: false };
+			}
+
+			await prisma.jobBookmark.create({
+				data: { jobId, doctorProfileId },
+			});
+			return { bookmarked: true };
+		} catch (error) {
+			console.error(error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to bookmark job",
+			});
+		}
+	}
+
+	async getBookmarkedJobs(doctorProfileId: string) {
+		try {
+			const bookmarks = await prisma.jobBookmark.findMany({
+				where: { doctorProfileId },
+				orderBy: { createdAt: "desc" },
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							location: true,
+							payRate: true,
+							payBasis: true,
+							requiredSpecialists: true,
+							startDate: true,
+							facility: {
+								select: {
+									name: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			return bookmarks.map((b) => ({
+				id: b.job.id,
+				title: b.job.title,
+				facilityName: b.job.facility.name,
+				date: b.job.startDate,
+				location: b.job.location,
+				specialist: b.job.requiredSpecialists[0] ?? null,
+				payRate: b.job.payRate,
+				payBasis: b.job.payBasis,
+				bookmarkedAt: b.createdAt,
+			}));
+		} catch (error) {
+			console.error(error);
+			throw new HTTPException(500, {
+				message: "Failed to fetch bookmarked jobs",
+			});
+		}
+	}
 }
 
 export const doctorsService = new DoctorsService();

@@ -97,6 +97,7 @@ model DoctorProfile {
   doctorReviews      DoctorReview[] // Reviews received by this doctor from facilities
   jobApplications    JobApplication[]
   doctorVerification DoctorVerification?
+  bookmarks          JobBookmark[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -218,6 +219,7 @@ model Job {
   updatedAt           DateTime         @updatedAt
   staff               StaffProfile?    @relation(fields: [staffId], references: [id])
   staffId             String?
+  bookmarkedBy        JobBookmark[]
 
   @@index([facilityId])
   @@index([status])
@@ -341,4 +343,14 @@ model FacilityVerification {
   updatedAt              DateTime           @updatedAt
 
   @@map("facility_verification")
+}
+
+model JobBookmark {
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId           String
+  createdAt       DateTime      @default(now())
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  doctorProfileId String
+
+  @@id([jobId, doctorProfileId])
 }

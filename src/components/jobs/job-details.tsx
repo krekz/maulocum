@@ -21,6 +21,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useToggleBookmark } from "@/lib/hooks/useBookmark";
 import type { JobResponse } from "@/lib/rpc";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -33,10 +34,40 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const selectedJobId = searchParams.get("id");
+	const toggleBookmark = useToggleBookmark();
 
 	type SingleJob = NonNullable<typeof jobListings>["jobs"][number];
 
 	const [selectedJob, setSelectedJob] = useState<SingleJob | null>(null);
+	const [localBookmarkState, setLocalBookmarkState] = useState<
+		Record<string, boolean>
+	>({});
+
+	// Get isBookmarked: local state takes priority, fallback to server data
+	const isBookmarked =
+		selectedJob?.id && selectedJob.id in localBookmarkState
+			? localBookmarkState[selectedJob.id]
+			: selectedJob && "isBookmarked" in selectedJob
+				? selectedJob.isBookmarked
+				: false;
+
+	const handleToggleBookmark = () => {
+		if (!selectedJob?.id) return;
+		// Optimistically update local state
+		setLocalBookmarkState((prev) => ({
+			...prev,
+			[selectedJob.id]: !isBookmarked,
+		}));
+		toggleBookmark.mutate(selectedJob.id, {
+			onError: () => {
+				// Revert on error
+				setLocalBookmarkState((prev) => ({
+					...prev,
+					[selectedJob.id]: isBookmarked,
+				}));
+			},
+		});
+	};
 
 	useEffect(() => {
 		if (selectedJobId && jobListings?.jobs) {
@@ -222,12 +253,27 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 						<TooltipContent>Open in new tab</TooltipContent>
 					</Tooltip>
 
-					<button
-						type="button"
-						className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-					>
-						<Bookmark className="w-4 h-4 text-slate-500" />
-					</button>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<button
+								type="button"
+								onClick={handleToggleBookmark}
+								disabled={toggleBookmark.isPending}
+								className={`p-2 rounded-lg border transition-colors disabled:opacity-50 ${
+									isBookmarked
+										? "border-amber-200 bg-amber-50 text-amber-500"
+										: "border-slate-200 hover:bg-slate-50 text-slate-500"
+								}`}
+							>
+								<Bookmark
+									className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
+								/>
+							</button>
+						</TooltipTrigger>
+						<TooltipContent>
+							{isBookmarked ? "Remove bookmark" : "Bookmark job"}
+						</TooltipContent>
+					</Tooltip>
 
 					<Popover>
 						<PopoverTrigger asChild>

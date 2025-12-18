@@ -316,6 +316,68 @@ const app = new Hono<{ Variables: AppVariables }>()
 				httpError.status || 500,
 			);
 		}
-	});
+	})
+	.get("/bookmarks", requireValidDoctorProfile, async (c) => {
+		try {
+			const doctorId = c.get("doctorProfile").id;
+			const bookmarks = await doctorsService.getBookmarkedJobs(doctorId);
+
+			return c.json(
+				{
+					success: true,
+					data: bookmarks,
+				},
+				200,
+			);
+		} catch (error) {
+			console.error("Error fetching bookmarks:", error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status || 500,
+			);
+		}
+	})
+	.post(
+		"/bookmarks",
+		requireValidDoctorProfile,
+		zValidator(
+			"json",
+			z.object({ jobId: z.cuid().min(5, "Job ID is required") }),
+		),
+		async (c) => {
+			try {
+				const doctorId = c.get("doctorProfile").id;
+				const { jobId } = c.req.valid("json");
+
+				const result = await doctorsService.submitJobBookmark(doctorId, jobId);
+
+				return c.json(
+					{
+						success: true,
+						bookmarked: result.bookmarked,
+						message: result.bookmarked
+							? "Job bookmarked successfully"
+							: "Bookmark removed successfully",
+					},
+					200,
+				);
+			} catch (error) {
+				console.error("Error toggling bookmark:", error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status || 500,
+				);
+			}
+		},
+	);
 
 export default app;

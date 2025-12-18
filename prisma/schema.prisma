@@ -62,6 +62,11 @@ enum PayBasis {
   MONTHLY
 }
 
+enum Reviewer {
+  AUTOMATED
+  ADMIN
+}
+
 model User {
   id                  String         @id
   name                String
@@ -113,6 +118,7 @@ model DoctorVerification {
   apcDocumentUrl     String
   verificationStatus VerificationStatus @default(PENDING)
   rejectionReason    String?
+  reviewedBy         Reviewer?
   allowAppeal        Boolean            @default(true)
   submittedAt        DateTime           @default(now())
   reviewedAt         DateTime?

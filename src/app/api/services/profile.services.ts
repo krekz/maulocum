@@ -11,6 +11,7 @@ import type {
 	DoctorVerificationEditData,
 } from "@/lib/schemas/doctor-verification.schema";
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
+import { automatedDoctorVerification } from "../lib/automated-doctor-verification";
 
 class ProfileServices {
 	async getUserProfile(userId: string) {
@@ -222,6 +223,18 @@ class ProfileServices {
 				});
 			}
 
+			const automatedVerification = await automatedDoctorVerification(
+				data.apcDocumentUrl,
+				{
+					name: data.fullName.trim(),
+					fullId: data.fullId,
+					provisionalId: data.provisionalId,
+				},
+			);
+
+			const verificationStatus =
+				automatedVerification.success === true ? "APPROVED" : "PENDING";
+
 			// Update user and create doctor profile with verification in a single nested write
 			const updatedUser = await prisma.user.update({
 				where: { id: data.userId },
@@ -240,7 +253,9 @@ class ProfileServices {
 									fullId: data.fullId,
 									apcNumber: data.apcNumber,
 									apcDocumentUrl: data.apcDocumentUrl,
-									verificationStatus: "PENDING",
+									verificationStatus,
+									reviewedBy:
+										verificationStatus === "APPROVED" ? "AUTOMATED" : "ADMIN",
 								},
 							},
 						},

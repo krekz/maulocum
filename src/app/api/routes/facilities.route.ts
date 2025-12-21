@@ -6,7 +6,6 @@ import { requireActiveEmployer, requireAuth } from "../lib/api-utils";
 import { facilityService } from "../services/facilities.service";
 import {
 	createContactInfoSchema,
-	createReviewSchema,
 	facilityQuerySchema,
 	facilityRegistrationApiSchema,
 	facilityVerificationEditApiSchema,
@@ -708,31 +707,39 @@ const app = new Hono<{ Variables: AppVariables }>()
 	)
 
 	/**
-	 * POST /api/v2/facilities/:id/review
-	 * Add review to facility
+	 * POST /api/v2/facilities/applications/:applicationId/review
+	 * Submit a review for a doctor after completing a job
 	 * @PROTECTED route
 	 */
 	.post(
-		"/:id/review",
-		// todo: requireactiveDoctor (doctor review the employer)
-		zValidator("param", z.object({ id: z.string() })),
-		zValidator("json", createReviewSchema.omit({ facilityId: true })),
+		"/applications/:applicationId/review",
+		requireActiveEmployer,
+		zValidator("param", z.object({ applicationId: z.string() })),
+		zValidator(
+			"json",
+			z.object({
+				rating: z.number().min(1).max(5),
+				comment: z.string().max(1000).optional(),
+			}),
+		),
 		async (c) => {
 			try {
-				const { id } = c.req.valid("param");
-				const data = c.req.valid("json");
-				const review = await facilityService.addReview({
-					...data,
-					facilityId: id,
-				});
-				return c.json(
-					{
-						success: true,
-						message: "Review added successfully",
-						data: review,
-					},
-					201,
+				const { applicationId } = c.req.valid("param");
+				const { rating, comment } = c.req.valid("json");
+				const staffProfile = c.get("staffProfile");
+
+				const review = await facilityService.submitDoctorReview(
+					applicationId,
+					staffProfile.facilityId,
+					rating,
+					comment,
 				);
+
+				return c.json({
+					success: true,
+					message: "Review submitted successfully",
+					data: review,
+				});
 			} catch (error) {
 				console.error(error);
 				const httpError = error as HTTPException;
@@ -740,7 +747,6 @@ const app = new Hono<{ Variables: AppVariables }>()
 					{
 						success: false,
 						message: httpError.message,
-						data: null,
 					},
 					httpError.status,
 				);

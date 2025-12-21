@@ -81,15 +81,20 @@ export class JobService {
 
 			// Check if user has doctor or admin role
 			let hasFullAccess = false;
+			let doctorProfileId: string | null = null;
 			if (session?.user?.id) {
 				const user = await prisma.user.findUnique({
 					where: { id: session.user.id },
-					select: { roles: true },
+					select: {
+						roles: true,
+						doctorProfile: { select: { id: true } },
+					},
 				});
 				hasFullAccess =
 					user?.roles.includes("DOCTOR") ||
 					user?.roles.includes("ADMIN") ||
 					false;
+				doctorProfileId = user?.doctorProfile?.id ?? null;
 			}
 
 			if (hasFullAccess) {
@@ -99,7 +104,15 @@ export class JobService {
 						skip,
 						take: limit,
 						orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-						select: fullAccessSelect,
+						select: {
+							...fullAccessSelect,
+							bookmarkedBy: doctorProfileId
+								? {
+										where: { doctorProfileId },
+										select: { jobId: true },
+									}
+								: false,
+						},
 					}),
 					prisma.job.count({ where }),
 				]);
@@ -109,7 +122,13 @@ export class JobService {
 				}
 
 				return {
-					jobs: fullAccessJobs,
+					jobs: fullAccessJobs.map((job) => ({
+						...job,
+						isBookmarked: Array.isArray(job.bookmarkedBy)
+							? job.bookmarkedBy.length > 0
+							: false,
+						bookmarkedBy: undefined,
+					})),
 					pagination: {
 						total,
 						page,

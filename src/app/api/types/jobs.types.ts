@@ -29,7 +29,7 @@ export const fullAccessSelect = {
 			contactPhone: true,
 			profileImage: true,
 			description: true,
-			reviews: {
+			facilityReviews: {
 				select: {
 					id: true,
 					rating: true,
@@ -70,7 +70,7 @@ export const limitedAccessSelect = {
 // Dynamic types derived from select objects
 export type FullAccessJob = Prisma.JobGetPayload<{
 	select: typeof fullAccessSelect;
-}>;
+}> & { isBookmarked: boolean };
 
 export type LimitedAccessJob = Prisma.JobGetPayload<{
 	select: typeof limitedAccessSelect;

@@ -24,11 +24,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import type { TJobApplicant } from "@/lib/rpc";
+import type { TJobApplicant, TSingleJobApplicant } from "@/lib/rpc";
 import { client } from "@/lib/rpc";
 
 interface ApplicationActionsProps {
-	application: TJobApplicant;
+	application: TJobApplicant | TSingleJobApplicant;
 }
 
 export function ApplicationActions({ application }: ApplicationActionsProps) {
@@ -158,10 +158,10 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 						<AlertDialogDescription>
 							Are you sure you want to approve{" "}
 							<span className="font-semibold">
-								{application.DoctorProfile?.user.name}
+								{application.DoctorProfile?.doctorVerification?.fullName ??
+									"this doctor"}
 							</span>
-							's application for{" "}
-							<span className="font-semibold">{application.job.title}</span>?
+							's application?
 							<br />
 							<br />A WhatsApp message with a confirmation link will be sent to
 							the doctor. The booking will only be finalized once the doctor
@@ -197,7 +197,8 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 						<AlertDialogDescription>
 							Are you sure you want to reject{" "}
 							<span className="font-semibold">
-								{application.DoctorProfile?.user.name}
+								{application.DoctorProfile?.doctorVerification?.fullName ??
+									"this doctor"}
 							</span>
 							's application?
 						</AlertDialogDescription>

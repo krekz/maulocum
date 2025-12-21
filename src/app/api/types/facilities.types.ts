@@ -33,12 +33,6 @@ export const createContactInfoSchema = contactInfoSchema.omit({
 	createdAt: true,
 });
 
-// Create review schema
-export const createReviewSchema = reviewSchema.omit({
-	id: true,
-	createdAt: true,
-});
-
 export const facilityRegistrationSchema = z.object({
 	companyName: z
 		.string()
@@ -143,4 +137,3 @@ export type FacilityQuery = z.infer<typeof facilityQuerySchema>;
 export type ContactInfo = z.infer<typeof contactInfoSchema>;
 export type CreateContactInfoInput = z.infer<typeof createContactInfoSchema>;
 export type Review = z.infer<typeof reviewSchema>;
-export type CreateReviewInput = z.infer<typeof createReviewSchema>;

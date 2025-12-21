@@ -62,6 +62,11 @@ enum PayBasis {
   MONTHLY
 }
 
+enum Reviewer {
+  AUTOMATED
+  ADMIN
+}
+
 model User {
   id                  String         @id
   name                String
@@ -88,9 +93,11 @@ model DoctorProfile {
   id                 String              @id @default(cuid())
   userId             String              @unique
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviews            Review[]
+  facilityReviews    FacilityReview[] // Reviews written by this doctor about facilities
+  doctorReviews      DoctorReview[] // Reviews received by this doctor from facilities
   jobApplications    JobApplication[]
   doctorVerification DoctorVerification?
+  bookmarks          JobBookmark[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -112,6 +119,7 @@ model DoctorVerification {
   apcDocumentUrl     String
   verificationStatus VerificationStatus @default(PENDING)
   rejectionReason    String?
+  reviewedBy         Reviewer?
   allowAppeal        Boolean            @default(true)
   submittedAt        DateTime           @default(now())
   reviewedAt         DateTime?
@@ -177,7 +185,8 @@ model Facility {
   ownerId              String                @unique
   owner                User                  @relation("FacilityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   jobs                 Job[]
-  reviews              Review[]
+  facilityReviews      FacilityReview[] // Reviews received by this facility from doctors
+  doctorReviews        DoctorReview[] // Reviews written by this facility about doctors
   contactInfo          ContactInfo[]
   staffs               StaffProfile[]
   facilityVerification FacilityVerification?
@@ -210,6 +219,7 @@ model Job {
   updatedAt           DateTime         @updatedAt
   staff               StaffProfile?    @relation(fields: [staffId], references: [id])
   staffId             String?
+  bookmarkedBy        JobBookmark[]
 
   @@index([facilityId])
   @@index([status])
@@ -236,25 +246,56 @@ model JobApplication {
   // Cancellation fields
   cancelledAt        DateTime?
   cancellationReason String?
+  // Review relations (one review per completed job per direction)
+  facilityReview     FacilityReview? // Doctor's review of the facility
+  doctorReview       DoctorReview? // Facility's review of the doctor
 
   @@unique([jobId, doctorProfileId])
   @@index([jobId])
   @@index([doctorProfileId])
   @@index([confirmationToken])
+  @@index([doctorProfileId, status]) // Composite index for efficient status-based queries per doctor
   @@map("job_application")
 }
 
-model Review {
-  id              String         @id @default(cuid())
-  rating          Int
-  comment         String
-  createdAt       DateTime       @default(now())
-  DoctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
-  doctorProfileId String?
-  Facility        Facility?      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  facilityId      String?
+// Review written by a doctor about a facility after completing a job
+model FacilityReview {
+  id               String         @id @default(cuid())
+  rating           Int
+  comment          String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  doctorProfile    DoctorProfile  @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  doctorProfileId  String
+  facility         Facility       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facilityId       String
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String         @unique
 
-  @@map("review")
+  @@unique([doctorProfileId, jobApplicationId])
+  @@index([facilityId])
+  @@index([doctorProfileId])
+  @@map("facility_review")
+}
+
+// Review written by a facility about a doctor after completing a job
+model DoctorReview {
+  id               String         @id @default(cuid())
+  rating           Int
+  comment          String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  doctorProfile    DoctorProfile  @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  doctorProfileId  String
+  facility         Facility       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facilityId       String
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String         @unique
+
+  @@unique([facilityId, jobApplicationId])
+  @@index([facilityId])
+  @@index([doctorProfileId])
+  @@map("doctor_review")
 }
 
 model ContactInfo {
@@ -302,4 +343,14 @@ model FacilityVerification {
   updatedAt              DateTime           @updatedAt
 
   @@map("facility_verification")
+}
+
+model JobBookmark {
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId           String
+  createdAt       DateTime      @default(now())
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  doctorProfileId String
+
+  @@id([jobId, doctorProfileId])
 }

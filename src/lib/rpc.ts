@@ -12,8 +12,38 @@ export type JobResponse = InferResponseType<typeof backendApi.api.v2.jobs.$get>;
 const $getJob = backendApi.api.v2.facilities.jobs[":id"].$get;
 export type JobDetailProps = InferResponseType<typeof $getJob>;
 
+// All applicants (includes job data)
 type TJobApplicantsResponse = InferResponseType<
 	typeof backendApi.api.v2.facilities.jobs.applicants.$get
 >;
-// Extract the single applicant type from the data array
 export type TJobApplicant = NonNullable<TJobApplicantsResponse["data"]>[number];
+
+// Single job applicants - infer from useJobApplicants hook return type
+// The API returns different fields than TJobApplicant, so we define it separately
+export interface TSingleJobApplicant {
+	id: string;
+	appliedAt: string;
+	status: string;
+	coverLetter: string | null;
+	updatedAt: string;
+	DoctorProfile: {
+		id: string;
+		user: {
+			email: string;
+			image: string | null;
+		} | null;
+		doctorVerification: {
+			fullName: string;
+			phoneNumber: string;
+			location: string;
+			specialty: string | null;
+			yearsOfExperience: number;
+			verificationStatus: string;
+		} | null;
+		avgRating: number | null;
+	} | null;
+	doctorReview: {
+		id: string;
+		rating: number;
+	} | null;
+}

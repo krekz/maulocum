@@ -7,6 +7,7 @@ import {
 	History,
 	Menu,
 	Settings,
+	Star,
 	User,
 } from "lucide-react";
 import Link from "next/link";
@@ -117,6 +118,11 @@ export function ProfileSidebar() {
 			href: "/profile/history",
 			icon: <History className="h-4 w-4" />,
 			label: "History",
+		},
+		{
+			href: "/profile/reviews",
+			icon: <Star className="h-4 w-4" />,
+			label: "Reviews",
 		},
 		{
 			href: "/profile/bookmarks",

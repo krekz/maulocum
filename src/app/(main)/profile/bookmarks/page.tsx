@@ -1,53 +1,29 @@
 "use client";
 
-import { Bookmark, Calendar, MapPin } from "lucide-react";
+import { format } from "date-fns";
+import { Bookmark, Calendar, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import { useBookmarks, useToggleBookmark } from "@/lib/hooks/useBookmark";
 
 function BookmarkPage() {
-	const [bookmarkedJobs, setBookmarkedJobs] = React.useState([
-		{
-			id: "job-1",
-			title: "GP Locum - Weekend Shift",
-			facilityName: "KL Medical Center",
-			date: "12 May 2024",
-			location: "Kuala Lumpur",
-			specialist: "Emergency Medicine",
-			payRate: "800",
-			payBasis: "DAILY",
-		},
-		{
-			id: "job-2",
-			title: "Family Medicine - Morning",
-			facilityName: "Selangor Family Clinic",
-			date: "18 May 2024",
-			location: "Petaling Jaya, Selangor",
-			specialist: "General Practice",
-			payRate: "650",
-			payBasis: "DAILY",
-		},
-		{
-			id: "job-3",
-			title: "Paediatrics Clinic Cover",
-			facilityName: "Penang Health Center",
-			date: "25 May 2024",
-			location: "Georgetown, Penang",
-			specialist: "Paediatrics",
-			payRate: "750",
-			payBasis: "DAILY",
-		},
-	]);
-
-	const removeBookmark = (id: string) => {
-		setBookmarkedJobs(bookmarkedJobs.filter((job) => job.id !== id));
-	};
+	const { data, isLoading } = useBookmarks();
+	const toggleBookmarkMutation = useToggleBookmark();
 
 	const formatPayRate = (payRate: string, payBasis: string) => {
 		const basis = payBasis === "HOURLY" ? "/hr" : "/day";
 		return `RM ${payRate}${basis}`;
 	};
 
-	// Empty state
+	if (isLoading) {
+		return (
+			<div className="min-h-[50vh] flex items-center justify-center">
+				<Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+			</div>
+		);
+	}
+
+	const bookmarkedJobs = data?.data ?? [];
+
 	if (bookmarkedJobs.length === 0) {
 		return (
 			<div className="min-h-[50vh] flex flex-col items-center justify-center rounded-xl px-6 py-10 text-center shadow-sm">
@@ -95,11 +71,13 @@ function BookmarkPage() {
 								{/* Title & Specialist Badge */}
 								<div className="flex items-center gap-2 mb-1">
 									<h4 className="font-medium text-slate-900 text-sm truncate">
-										{job.title}
+										{job.title ?? "Untitled Job"}
 									</h4>
-									<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700">
-										{job.specialist}
-									</span>
+									{job.specialist && (
+										<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700">
+											{job.specialist}
+										</span>
+									)}
 								</div>
 
 								{/* Facility Name */}
@@ -111,12 +89,14 @@ function BookmarkPage() {
 								<div className="flex items-center gap-3 text-xs text-slate-400">
 									<span className="flex items-center gap-1">
 										<Calendar className="w-3 h-3" />
-										{job.date}
+										{format(new Date(job.date), "dd MMM yyyy")}
 									</span>
-									<span className="flex items-center gap-1">
-										<MapPin className="w-3 h-3" />
-										{job.location}
-									</span>
+									{job.location && (
+										<span className="flex items-center gap-1">
+											<MapPin className="w-3 h-3" />
+											{job.location}
+										</span>
+									)}
 									<span className="font-medium text-emerald-600">
 										{formatPayRate(job.payRate, job.payBasis)}
 									</span>
@@ -127,8 +107,9 @@ function BookmarkPage() {
 							<div className="flex items-center gap-2 shrink-0">
 								<button
 									type="button"
-									onClick={() => removeBookmark(job.id)}
-									className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 transition-colors"
+									onClick={() => toggleBookmarkMutation.mutate(job.id)}
+									disabled={toggleBookmarkMutation.isPending}
+									className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-50"
 									title="Remove bookmark"
 								>
 									<Bookmark className="w-4 h-4 fill-current" />

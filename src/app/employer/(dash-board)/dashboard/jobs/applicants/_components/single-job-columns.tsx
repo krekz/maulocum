@@ -2,17 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import {
-	ArrowUpDown,
-	Briefcase,
-	Calendar,
-	Clock,
-	Mail,
-	MapPin,
-	Phone,
-	Star,
-	User,
-} from "lucide-react";
+import { ArrowUpDown, Mail, Phone, Star, User } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +12,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { TJobApplicant } from "@/lib/rpc";
+import type { TSingleJobApplicant } from "@/lib/rpc";
 import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
 import { ApplicationActions } from "./application-actions";
 import { ReviewDoctorDialog } from "./review-doctor-dialog";
@@ -93,13 +83,7 @@ const verificationStatusConfig = {
 	},
 };
 
-const urgencyConfig = {
-	HIGH: { label: "High", className: "bg-red-100 text-red-700" },
-	MEDIUM: { label: "Medium", className: "bg-yellow-100 text-yellow-700" },
-	LOW: { label: "Low", className: "bg-green-100 text-green-700" },
-};
-
-export const columns: ColumnDef<TJobApplicant>[] = [
+export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 	{
 		accessorKey: "DoctorProfile",
 		header: "Applicant",
@@ -125,7 +109,7 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 					)}
 					<div className="flex flex-col">
 						<span className="font-medium text-foreground">
-							{verification?.fullName ?? user?.name ?? "Unknown"}
+							{verification?.fullName ?? "Unknown"}
 						</span>
 						<span className="text-xs text-muted-foreground">
 							{verification?.specialty ?? "General Practitioner"}
@@ -136,64 +120,14 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		},
 	},
 	{
-		accessorKey: "job",
-		header: ({ column }) => (
-			<Button
-				variant="ghost"
-				onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-				className="-ml-4"
-			>
-				Job Position
-				<ArrowUpDown className="ml-2 size-4" />
-			</Button>
-		),
+		id: "experience",
+		header: "Experience",
 		cell: ({ row }) => {
-			const job = row.original.job;
+			const verification = row.original.DoctorProfile?.doctorVerification;
 			return (
-				<div className="flex flex-col gap-1 min-w-[180px]">
-					<div className="flex items-center gap-2">
-						<Briefcase className="size-4 text-muted-foreground" />
-						<span className="font-medium">{job.title ?? "Untitled Job"}</span>
-					</div>
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
-						<MapPin className="size-3" />
-						<span>{job.location ?? "No location"}</span>
-					</div>
-				</div>
-			);
-		},
-	},
-	{
-		accessorKey: "job.urgency",
-		header: "Urgency",
-		cell: ({ row }) => {
-			const urgency = row.original.job.urgency;
-			const config = urgencyConfig[urgency];
-			return (
-				<Badge variant="outline" className={config.className}>
-					{config.label}
-				</Badge>
-			);
-		},
-	},
-	{
-		id: "schedule",
-		header: "Schedule",
-		cell: ({ row }) => {
-			const job = row.original.job;
-			return (
-				<div className="flex flex-col gap-1 text-sm min-w-[140px]">
-					<div className="flex items-center gap-2">
-						<Calendar className="size-3 text-muted-foreground" />
-						<span>{format(new Date(job.startDate), "MMM d, yyyy")}</span>
-					</div>
-					<div className="flex items-center gap-2 text-muted-foreground">
-						<Clock className="size-3" />
-						<span>
-							{job.startTime} - {job.endTime}
-						</span>
-					</div>
-				</div>
+				<span className="text-sm">
+					{verification?.yearsOfExperience ?? 0} years
+				</span>
 			);
 		},
 	},
@@ -225,9 +159,7 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>
-									{verification?.phoneNumber ?? user?.phoneNumber ?? "No phone"}
-								</p>
+								<p>{verification?.phoneNumber ?? "No phone"}</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>
@@ -339,9 +271,7 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 			const isCompleted = application.status === "COMPLETED";
 			const hasReviewed = application.doctorReview !== null;
 			const doctorName =
-				application.DoctorProfile?.doctorVerification?.fullName ??
-				application.DoctorProfile?.user?.name ??
-				"Doctor";
+				application.DoctorProfile?.doctorVerification?.fullName ?? "Doctor";
 
 			return (
 				<div className="flex items-center gap-2">

@@ -39,9 +39,9 @@ const reviewFormSchema = z.object({
 
 type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
-interface ReviewsDialogProps {
-	jobId: string;
-	facilityName: string;
+interface ReviewDoctorDialogProps {
+	applicationId: string;
+	doctorName: string;
 	trigger?: React.ReactNode;
 }
 
@@ -92,7 +92,11 @@ function StarRating({
 	);
 }
 
-function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
+export function ReviewDoctorDialog({
+	applicationId,
+	doctorName,
+	trigger,
+}: ReviewDoctorDialogProps) {
 	const [open, setOpen] = useState(false);
 	const queryClient = useQueryClient();
 
@@ -106,8 +110,10 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 
 	const reviewMutation = useMutation({
 		mutationFn: async (data: ReviewFormValues) => {
-			const response = await client.api.v2.doctors.jobs[":jobId"].review.$post({
-				param: { jobId },
+			const response = await client.api.v2.facilities.applications[
+				":applicationId"
+			].review.$post({
+				param: { applicationId },
 				json: {
 					rating: data.rating,
 					comment: data.comment,
@@ -125,7 +131,7 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 			toast.success(data.message || "Review submitted successfully");
 			setOpen(false);
 			form.reset();
-			queryClient.invalidateQueries({ queryKey: ["doctor-applications"] });
+			queryClient.invalidateQueries({ queryKey: ["job-applicants"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || "Failed to submit review");
@@ -143,14 +149,18 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				{trigger || <Button variant="outline">Leave a Review</Button>}
+				{trigger || (
+					<Button variant="outline" size="sm">
+						Review Doctor
+					</Button>
+				)}
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>Review {facilityName}</DialogTitle>
+					<DialogTitle>Review {doctorName}</DialogTitle>
 					<DialogDescription>
-						Share your experience with this facility to help others make
-						informed decisions.
+						Share your experience working with this doctor to help other
+						facilities make informed decisions.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -181,7 +191,7 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 									<FormLabel>Your Review</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Share your experience with this facility..."
+											placeholder="Share your experience working with this doctor..."
 											className="resize-none"
 											{...field}
 										/>
@@ -192,9 +202,8 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 						/>
 
 						<FormDescription className="text-xs italic">
-							Note: Your review will be posted anonymously. Only your rating and
-							comments will be visible to others, not your name or personal
-							information.
+							Note: Your review will help other facilities when considering this
+							doctor for future positions.
 						</FormDescription>
 
 						<DialogFooter>
@@ -222,5 +231,3 @@ function ReviewsDialog({ jobId, facilityName, trigger }: ReviewsDialogProps) {
 		</Dialog>
 	);
 }
-
-export default ReviewsDialog;

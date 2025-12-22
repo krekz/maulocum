@@ -1,16 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ExternalLink, Loader2, Upload, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
+	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { client } from "@/lib/rpc";
+import { useUpdateDoctorVerification } from "@/lib/hooks/useDoctorSubmitVerification";
 import {
-	type DoctorVerificationEditData,
+	type DoctorVerificationSchema,
 	doctorVerificationEditSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 import { useEditVerificationStore } from "@/lib/store/useEditVerificationStore";
@@ -45,12 +45,14 @@ interface EditVerificationFormProps {
 export function EditVerificationForm({
 	verification,
 }: EditVerificationFormProps) {
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const { setIsEditing } = useEditVerificationStore();
-	const router = useRouter();
+	const updateMutation = useUpdateDoctorVerification();
 
-	const form = useForm<DoctorVerificationEditData>({
+	type EditFormValues = Omit<DoctorVerificationSchema, "apcDocument"> & {
+		apcDocument?: File;
+	};
+
+	const form = useForm<EditFormValues>({
 		resolver: zodResolver(doctorVerificationEditSchema),
 		defaultValues: {
 			fullName: verification.fullName,
@@ -63,59 +65,28 @@ export function EditVerificationForm({
 		},
 	});
 
-	async function onSubmit(data: DoctorVerificationEditData) {
-		setIsSubmitting(true);
+	const selectedFile = form.watch("apcDocument");
 
+	async function onSubmit(data: EditFormValues) {
 		try {
-			if (selectedFile) {
-				toast.loading("Uploading document...");
-
-				const uploadResponse = await client.api.v2.profile.verification[
-					":verificationId"
-				]["replace-document"].$post({
-					param: {
-						verificationId: verification.id,
-					},
-					form: {
-						file: new File([selectedFile], selectedFile.name, {
-							type: selectedFile.type,
-						}),
-					},
-				});
-
-				if (!uploadResponse.ok) {
-					const error = await uploadResponse.json();
-					throw new Error(error.message, {
-						cause: uploadResponse.status,
-					});
-				}
-				toast.dismiss();
-			}
-
-			toast.loading("Saving changes...");
-
-			const submitFormResponse = await client.api.v2.profile.verification[
-				":verificationId"
-			].$patch({
-				param: {
+			toast.promise(
+				updateMutation.mutateAsync({
 					verificationId: verification.id,
+					fullName: data.fullName,
+					location: data.location,
+					specialty: data.specialty || undefined,
+					yearsOfExperience: data.yearsOfExperience,
+					provisionalId: data.provisionalId || undefined,
+					fullId: data.fullId || undefined,
+					apcNumber: data.apcNumber,
+					apcDocument: data.apcDocument,
+				}),
+				{
+					loading: "Saving changes...",
+					success: "Verification updated successfully!",
+					error: "Failed to update verification",
 				},
-				json: {
-					...data,
-				},
-			});
-
-			if (!submitFormResponse.ok) {
-				const error = await submitFormResponse.json();
-				throw new Error(error.message, {
-					cause: submitFormResponse.status,
-				});
-			}
-
-			toast.dismiss();
-			toast.success("Verification updated successfully!");
-			setIsEditing(false);
-			router.refresh();
+			);
 		} catch (error) {
 			toast.dismiss();
 			console.error("Error updating verification:", error);
@@ -124,14 +95,11 @@ export function EditVerificationForm({
 					? error.message
 					: "Failed to update verification";
 			toast.error(errorMessage);
-		} finally {
-			setIsSubmitting(false);
 		}
 	}
 
 	return (
 		<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-			{/* Header */}
 			<div className="px-4 py-3 border-b border-slate-100">
 				<h3 className="font-semibold text-slate-900 text-sm">
 					Edit Verification Details
@@ -141,12 +109,22 @@ export function EditVerificationForm({
 				</p>
 			</div>
 
-			{/* Form */}
 			<div className="p-4">
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+						<div className="flex items-center justify-between">
+							<a
+								href={verification.apcDocumentUrl}
+								target="_blank"
+								rel="noreferrer"
+								className="text-xs text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+							>
+								<ExternalLink className="h-3.5 w-3.5" />
+								Download current document
+							</a>
+						</div>
+
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-							{/* Full Name */}
 							<FormField
 								control={form.control}
 								name="fullName"
@@ -171,7 +149,6 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							{/* Location */}
 							<FormField
 								control={form.control}
 								name="location"
@@ -196,7 +173,6 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							{/* Specialty */}
 							<FormField
 								control={form.control}
 								name="specialty"
@@ -237,7 +213,6 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							{/* Years of Experience */}
 							<FormField
 								control={form.control}
 								name="yearsOfExperience"
@@ -258,6 +233,9 @@ export function EditVerificationForm({
 												placeholder="5"
 												className="h-9 text-sm"
 												{...field}
+												value={
+													typeof field.value === "number" ? field.value : 0
+												}
 												onChange={(e) => field.onChange(Number(e.target.value))}
 											/>
 										</FormControl>
@@ -266,7 +244,30 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							{/* Provisional ID */}
+							<FormField
+								control={form.control}
+								name="apcNumber"
+								render={({ field }) => (
+									<FormItem>
+										<label
+											htmlFor="apcNumber"
+											className="text-xs font-medium text-slate-700 mb-1.5 block"
+										>
+											APC Number <span className="text-red-500">*</span>
+										</label>
+										<FormControl>
+											<Input
+												id="apcNumber"
+												placeholder="APC-12345-2024"
+												className="h-9 text-sm"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage className="text-xs" />
+									</FormItem>
+								)}
+							/>
+
 							<FormField
 								control={form.control}
 								name="provisionalId"
@@ -294,7 +295,6 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							{/* Full ID */}
 							<FormField
 								control={form.control}
 								name="fullId"
@@ -321,118 +321,86 @@ export function EditVerificationForm({
 									</FormItem>
 								)}
 							/>
+						</div>
 
-							{/* APC Number */}
-							<FormField
-								control={form.control}
-								name="apcNumber"
-								render={({ field }) => (
-									<FormItem className="sm:col-span-2">
-										<label
-											htmlFor="apcNumber"
-											className="text-xs font-medium text-slate-700 mb-1.5 block"
-										>
-											APC Number <span className="text-red-500">*</span>
-										</label>
-										<FormControl>
-											<Input
-												id="apcNumber"
-												placeholder="APC-12345-2024"
-												className="h-9 text-sm"
-												{...field}
+						<FormField
+							control={form.control}
+							name="apcDocument"
+							render={() => (
+								<FormItem>
+									<FormLabel>Upload New APC Document (Optional)</FormLabel>
+									<FormControl>
+										<div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+											<input
+												type="file"
+												accept=".pdf"
+												onChange={(e) => {
+													const file = e.target.files?.[0];
+													if (file) {
+														form.setValue("apcDocument", file);
+													}
+												}}
+												className="hidden"
+												id="apc-upload-edit"
 											/>
-										</FormControl>
-										<FormMessage className="text-xs" />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						{/* APC Document Upload */}
-						<div>
-							<span className="text-xs font-medium text-slate-700 mb-1.5 block">
-								APC Document
-							</span>
-							<div className="border border-dashed border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-colors bg-slate-50">
-								<input
-									type="file"
-									accept=".pdf"
-									onChange={(e) => {
-										const file = e.target.files?.[0];
-										if (file) {
-											setSelectedFile(file);
-										}
-									}}
-									className="hidden"
-									id="apc-upload-edit"
-									disabled={isSubmitting}
-								/>
-								<label
-									htmlFor="apc-upload-edit"
-									className="cursor-pointer flex flex-col items-center gap-2"
-								>
-									{selectedFile ? (
-										<>
-											<div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-												<CheckCircle2 className="w-5 h-5 text-emerald-600" />
-											</div>
-											<p className="text-sm font-medium text-slate-900">
-												{selectedFile.name}
-											</p>
-											<p className="text-[10px] text-slate-500">
-												New file selected. Click &quot;Save&quot; to upload.
-											</p>
-										</>
-									) : (
-										<>
-											<div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
-												<Upload className="w-5 h-5 text-slate-600" />
-											</div>
-											<p className="text-sm font-medium text-slate-700">
-												Replace document
-											</p>
-											<p className="text-[10px] text-slate-500">
-												Click to select new PDF (Max 1MB)
-											</p>
-											<a
-												href={verification.apcDocumentUrl}
-												target="_blank"
-												rel="noopener noreferrer"
-												onClick={(e) => e.stopPropagation()}
-												className="mt-1 text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+											<label
+												htmlFor="apc-upload-edit"
+												className="cursor-pointer flex flex-col items-center gap-2"
 											>
-												View Current
-												<ExternalLink className="w-3 h-3" />
-											</a>
-										</>
-									)}
-								</label>
-							</div>
-						</div>
+												{selectedFile ? (
+													<>
+														<CheckCircle2 className="h-8 w-8 text-green-600" />
+														<p className="text-sm font-medium">
+															{selectedFile.name}
+														</p>
+														<p className="text-xs text-muted-foreground">
+															New file selected. Click "Save" to upload.
+														</p>
+													</>
+												) : (
+													<>
+														<Upload className="h-8 w-8 text-muted-foreground" />
+														<p className="text-sm font-medium">
+															Click to select a new document
+														</p>
+														<p className="text-xs text-muted-foreground">
+															PDF only (Max 1MB)
+														</p>
+													</>
+												)}
+											</label>
+										</div>
+									</FormControl>
+									<FormDescription>
+										Leave empty if you don’t want to change the current
+										document.
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-						{/* Actions */}
 						<div className="flex gap-2 pt-2">
 							<button
 								type="button"
 								onClick={() => setIsEditing(false)}
-								disabled={isSubmitting}
-								className="flex-1 h-9 px-4 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+								disabled={updateMutation.isPending}
+								className="flex-1 h-9 px-4 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center disabled:opacity-50"
 							>
-								<X className="w-3.5 h-3.5" />
 								Cancel
 							</button>
 							<button
 								type="submit"
-								disabled={isSubmitting}
+								disabled={updateMutation.isPending}
 								className="flex-1 h-9 px-4 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
 							>
-								{isSubmitting ? (
+								{updateMutation.isPending ? (
 									<>
 										<Loader2 className="w-3.5 h-3.5 animate-spin" />
 										Saving...
 									</>
 								) : (
-									"Save Changes"
+									"Save"
 								)}
 							</button>
 						</div>

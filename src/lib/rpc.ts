@@ -12,6 +12,14 @@ export type JobResponse = InferResponseType<typeof backendApi.api.v2.jobs.$get>;
 const $getJob = backendApi.api.v2.facilities.jobs[":id"].$get;
 export type JobDetailProps = InferResponseType<typeof $getJob>;
 
+// Facility staffs
+type TFacilityStaffsResponse = InferResponseType<
+	typeof backendApi.api.v2.facilities.staffs.$get
+>;
+export type TFacilityStaff = NonNullable<
+	TFacilityStaffsResponse["data"]
+>[number];
+
 // All applicants (includes job data)
 type TJobApplicantsResponse = InferResponseType<
 	typeof backendApi.api.v2.facilities.jobs.applicants.$get

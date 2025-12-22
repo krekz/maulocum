@@ -120,6 +120,41 @@ export class FacilityService {
 		}
 	}
 
+	// Get all staffs for employer's facility
+	async getMyFacilityStaffs(facilityId: string) {
+		try {
+			return prisma.staffProfile.findMany({
+				where: {
+					facilityId,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+				select: {
+					id: true,
+					role: true,
+					isActive: true,
+					createdAt: true,
+					updatedAt: true,
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+							image: true,
+						},
+					},
+				},
+			});
+		} catch (error) {
+			console.error("Error in facility.service.getMyFacilityStaffs:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch facility staffs",
+			});
+		}
+	}
+
 	async updateFacilityVerificationStatus(
 		facilityId: string,
 		verificationStatus: Prisma.EnumVerificationStatusFilter,

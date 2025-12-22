@@ -52,6 +52,7 @@ export function DoctorDetailsForm({
 			yearsOfExperience: 0,
 			provisionalId: "",
 			fullId: "",
+			apcNumber: "",
 		},
 	});
 
@@ -77,18 +78,19 @@ export function DoctorDetailsForm({
 					yearsOfExperience: data.yearsOfExperience,
 					provisionalId: data.provisionalId || undefined,
 					fullId: data.fullId || undefined,
-					apcNumber: "",
+					apcNumber: data.apcNumber,
 					apcDocument: selectedFile,
 				}),
 				{
 					loading: "Submitting verification...",
 					success: "Verification submitted successfully!",
 					error: "Failed to submit verification",
+					finally() {
+						form.reset();
+						router.refresh();
+					},
 				},
 			);
-
-			toast.dismiss();
-			router.refresh();
 		} catch (error) {
 			toast.dismiss();
 			const errorMessage =

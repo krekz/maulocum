@@ -57,7 +57,6 @@ export function useVerifyDoctor() {
 
 	return useMutation({
 		mutationFn: async (data: DoctorVerificationSchema) => {
-			console.log(data);
 			const res = await client.api.v2.profile["verify-doctor"].$post({
 				form: {
 					location: data.location,

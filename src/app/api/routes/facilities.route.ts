@@ -10,10 +10,10 @@ import {
 	facilityRegistrationApiSchema,
 	facilityVerificationEditApiSchema,
 } from "../types/facilities.types";
-import type { AppVariables } from "../types/hono.types";
+import type { FacilityVariables } from "../types/hono.types";
 import { jobPostInputSchema, jobPostSchema } from "../types/jobs.types";
 
-const app = new Hono<{ Variables: AppVariables }>()
+const app = new Hono<{ Variables: FacilityVariables }>()
 	/**
 	 * GET /api/v2/facilities
 	 * Get all facilities with pagination and filtering

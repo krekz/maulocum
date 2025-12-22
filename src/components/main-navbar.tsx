@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+import { cn, handleLogout } from "@/lib/utils";
 import { ProfileAvatar } from "./profile/profile-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
@@ -41,7 +41,7 @@ interface MenuItem {
 	className?: string;
 }
 
-interface Navbar1Props {
+interface NavbarProps {
 	logo?: {
 		url: string;
 		src: string;
@@ -133,19 +133,9 @@ const MainNavbar = ({
 		login: { text: "Log in", url: "/login" },
 		signup: { text: "Sign up", url: "/register" },
 	},
-}: Navbar1Props) => {
+}: NavbarProps) => {
 	const { data: session, isPending } = authClient.useSession();
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-	const handleLogout = async () => {
-		await authClient.signOut({
-			fetchOptions: {
-				onSuccess: () => {
-					window.location.href = "/login";
-				},
-			},
-		});
-	};
 
 	const closeSheet = () => {
 		setIsSheetOpen(false);
@@ -205,7 +195,7 @@ const MainNavbar = ({
 										"https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=150&h=150"
 									}
 									fallback={session.user.name?.charAt(0).toUpperCase() || "U"}
-									onLogout={handleLogout}
+									onLogout={() => handleLogout()}
 								/>
 							</>
 						) : (
@@ -307,10 +297,7 @@ const MainNavbar = ({
 													</div>
 												</div>
 												<Button
-													onClick={() => {
-														handleLogout();
-														closeSheet();
-													}}
+													onClick={() => handleLogout()}
 													variant="outline"
 													className="active:scale-95"
 												>

@@ -1,16 +1,17 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { handleLogout } from "@/lib/utils";
 import { useFacilityName } from "../_hooks/use-facility-name";
 
 function EmployerAppSidebar() {
-	const { data: facilityName } = useFacilityName();
+	const { data } = useFacilityName();
 
 	return (
 		<AppSidebar
-			data={{
+			main={{
 				header: {
-					title: facilityName || "MauLocum",
+					title: data?.facilityName || "Facility",
 					url: "/employer/dashboard",
 				},
 				basic: [
@@ -50,6 +51,12 @@ function EmployerAppSidebar() {
 					},
 				],
 			}}
+			user={{
+				name: data?.user.name || "Unknown",
+				email: data?.user.email,
+				avatar: data?.user.image || "",
+			}}
+			logout={() => handleLogout()}
 		/>
 	);
 }

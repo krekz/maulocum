@@ -7,7 +7,10 @@ import {
 	generateFileKey,
 	uploadToR2,
 } from "@/lib/r2";
-import type { DoctorVerificationSchema } from "@/lib/schemas/doctor-verification.schema";
+import type {
+	DoctorVerificationEditSchema,
+	DoctorVerificationSchema,
+} from "@/lib/schemas/doctor-verification.schema";
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
 import { automatedDoctorVerification } from "../lib/automated-doctor-verification";
 
@@ -58,7 +61,7 @@ class ProfileServices {
 
 	async updateDoctorVerificationDetails(
 		verificationId: string,
-		data: DoctorVerificationSchema,
+		data: DoctorVerificationEditSchema & { yearsOfExperience: number },
 	) {
 		try {
 			// Check if verification exists and is PENDING or REJECTED
@@ -82,6 +85,36 @@ class ProfileServices {
 				});
 			}
 
+			let apcDocumentUrl: string | undefined;
+			if (data.apcDocument) {
+				// Validate file type
+				const allowedTypes = ["application/pdf"];
+				if (!allowedTypes.includes(data.apcDocument.type)) {
+					throw new HTTPException(400, {
+						message: "Invalid file type. Only PDF is allowed",
+					});
+				}
+
+				// Validate file size (1MB max)
+				const maxSize = 1 * 1024 * 1024;
+				if (data.apcDocument.size > maxSize) {
+					throw new HTTPException(400, {
+						message: "File size must be less than 1MB",
+					});
+				}
+
+				const arrayBuffer = await data.apcDocument.arrayBuffer();
+				const buffer = Buffer.from(arrayBuffer);
+				const fileKey = generateFileKey(
+					verification.doctorProfileId,
+					data.apcDocument.name,
+				);
+				const result = await uploadToR2(buffer, fileKey, data.apcDocument.type);
+				const oldKey = extractKeyFromUrl(verification.apcDocumentUrl);
+				await deleteFromR2(oldKey);
+				apcDocumentUrl = result.url;
+			}
+
 			// Update verification
 			await prisma.doctorVerification.update({
 				where: { id: verificationId },
@@ -93,6 +126,7 @@ class ProfileServices {
 					provisionalId: data.provisionalId || null,
 					fullId: data.fullId || null,
 					apcNumber: data.apcNumber,
+					...(apcDocumentUrl ? { apcDocumentUrl } : {}),
 					verificationStatus: "PENDING",
 				},
 			});
@@ -101,86 +135,6 @@ class ProfileServices {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to update verification",
-			});
-		}
-	}
-
-	async replaceDocument(verificationId: string, file: File) {
-		try {
-			if (!file) {
-				throw new HTTPException(400, { message: "File is required" });
-			}
-
-			// Get existing verification
-			const verification = await prisma.doctorVerification.findUnique({
-				where: { id: verificationId },
-				include: {
-					doctorProfile: {
-						select: { userId: true },
-					},
-				},
-			});
-
-			if (!verification) {
-				throw new HTTPException(404, { message: "Verification not found" });
-			}
-			if (
-				verification.verificationStatus !== "PENDING" &&
-				!(
-					verification.verificationStatus === "REJECTED" &&
-					verification.allowAppeal
-				)
-			) {
-				throw new HTTPException(400, {
-					message:
-						"You are not allowed to replace document for this verification",
-				});
-			}
-
-			// Validate file type
-			const allowedTypes = ["application/pdf"];
-			if (!allowedTypes.includes(file.type)) {
-				throw new HTTPException(400, {
-					message: "Invalid file type. Only PDF is allowed",
-				});
-			}
-
-			// Validate file size (1MB max)
-			const maxSize = 1 * 1024 * 1024;
-			if (file.size > maxSize) {
-				throw new HTTPException(400, {
-					message: "File size must be less than 1MB",
-				});
-			}
-
-			// Convert file to buffer
-			const arrayBuffer = await file.arrayBuffer();
-			const buffer = Buffer.from(arrayBuffer);
-
-			// Upload new file
-			const fileKey = generateFileKey(
-				verification.doctorProfile.userId,
-				file.name,
-			);
-			const result = await uploadToR2(buffer, fileKey, file.type);
-
-			const oldKey = extractKeyFromUrl(verification.apcDocumentUrl);
-			await deleteFromR2(oldKey);
-
-			// Update verification with new URL and reset to PENDING
-			await prisma.doctorVerification.update({
-				where: { id: verificationId },
-				data: {
-					apcDocumentUrl: result.url,
-					verificationStatus: "PENDING",
-				},
-			});
-			return result;
-		} catch (error) {
-			console.error("Error replacing document:", error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, {
-				message: "Failed to replace document",
 			});
 		}
 	}

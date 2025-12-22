@@ -45,7 +45,7 @@ function EmployerAppSidebar() {
 						items: [
 							{
 								title: "All Staff",
-								url: "/employer/dashboard/staff/all",
+								url: "/employer/dashboard/staffs",
 							},
 						],
 					},

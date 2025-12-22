@@ -279,6 +279,36 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 		}
 	})
 
+	/**
+	 * GET /api/v2/facilities/staffs
+	 * Get all staffs for employer's facility
+	 * @PROTECTED route
+	 */
+	.get("/staffs", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			const staffs = await facilityService.getMyFacilityStaffs(
+				staffProfile.facilityId,
+			);
+			return c.json({
+				success: true,
+				message: "Staffs fetched successfully",
+				data: staffs,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
 	.get(
 		"/jobs/:id",
 		requireActiveEmployer,

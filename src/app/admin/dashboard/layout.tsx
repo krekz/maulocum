@@ -1,4 +1,3 @@
-import { AppSidebar } from "@/components/app-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -6,61 +5,16 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import AdminSidebar from "../_components/admin-sidebar";
 
 export default function AdminDashboardLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const data = {
-		header: {
-			title: "MauLocum",
-			url: "/admin/dashboard",
-		},
-		basic: [
-			{
-				title: "Dashboard",
-				url: "/admin/dashboard",
-			},
-			{
-				title: "Users",
-				url: "/admin/dashboard/users",
-			},
-		],
-		collapsible: [
-			{
-				title: "Doctors",
-				url: "/admin/dashboard/doctors",
-				items: [
-					{
-						title: "Verifications",
-						url: "/admin/dashboard/doctors/verifications",
-					},
-					{
-						title: "All",
-						url: "/admin/dashboard/doctors",
-					},
-				],
-			},
-			{
-				title: "Facilities",
-				url: "/admin/dashboard/facilities",
-				items: [
-					{
-						title: "Verifications",
-						url: "/admin/dashboard/facilities/verifications",
-					},
-					{
-						title: "All",
-						url: "/admin/dashboard/facilities",
-					},
-				],
-			},
-		],
-	};
 	return (
 		<SidebarProvider>
-			<AppSidebar data={data} />
+			<AdminSidebar />
 			<SidebarInset>
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />

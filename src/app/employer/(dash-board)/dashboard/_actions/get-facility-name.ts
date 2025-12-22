@@ -19,10 +19,17 @@ export async function getFacilityName() {
 			where: {
 				userId: session.user.id,
 			},
-			include: {
+			select: {
 				facility: {
 					select: {
 						name: true,
+					},
+				},
+				user: {
+					select: {
+						name: true,
+						email: true,
+						image: true,
 					},
 				},
 			},
@@ -32,7 +39,10 @@ export async function getFacilityName() {
 			return null;
 		}
 
-		return userFacilityProfile.facility.name;
+		return {
+			facilityName: userFacilityProfile.facility.name,
+			user: userFacilityProfile.user,
+		};
 	} catch (error) {
 		console.error("Error fetching facility name:", error);
 		return null;

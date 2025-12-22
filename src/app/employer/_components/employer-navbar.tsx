@@ -31,7 +31,7 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+import { cn, handleLogout } from "@/lib/utils";
 
 interface MenuItem {
 	title: string;
@@ -184,18 +184,14 @@ const NavbarEmployer = ({
 												<UserCog className="mr-2 h-4 w-4" />
 												Employer Profile
 											</Link>
-											<Link
-												href="/"
-												className={cn(
-													buttonVariants({
-														variant: "destructive",
-													}),
-													"justify-start",
-												)}
+											<Button
+												onClick={() => handleLogout()}
+												variant="destructive"
+												className="justify-start"
 											>
 												<LogOut className="mr-2 h-4 w-4" />
 												Logout
-											</Link>
+											</Button>
 										</div>
 									</PopoverContent>
 								</Popover>

@@ -1,4 +1,5 @@
 import { HTTPException } from "hono/http-exception";
+import type { UserType } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
 	deleteFromR2,
@@ -6,10 +7,7 @@ import {
 	generateFileKey,
 	uploadToR2,
 } from "@/lib/r2";
-import type {
-	DoctorVerificationApiData,
-	DoctorVerificationEditData,
-} from "@/lib/schemas/doctor-verification.schema";
+import type { DoctorVerificationSchema } from "@/lib/schemas/doctor-verification.schema";
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
 import { automatedDoctorVerification } from "../lib/automated-doctor-verification";
 
@@ -60,7 +58,7 @@ class ProfileServices {
 
 	async updateDoctorVerificationDetails(
 		verificationId: string,
-		data: DoctorVerificationEditData,
+		data: DoctorVerificationSchema,
 	) {
 		try {
 			// Check if verification exists and is PENDING or REJECTED
@@ -187,14 +185,11 @@ class ProfileServices {
 		}
 	}
 
-	async submitDoctorVerification(data: DoctorVerificationApiData) {
+	async submitDoctorVerification(
+		user: UserType,
+		data: DoctorVerificationSchema,
+	) {
 		try {
-			// Check if user exists
-			const user = await prisma.user.findUnique({
-				where: { id: data.userId },
-				include: { doctorProfile: true },
-			});
-
 			if (!user) {
 				throw new HTTPException(404, { message: "User not found" });
 			}
@@ -207,6 +202,12 @@ class ProfileServices {
 				});
 			}
 
+			if (!user.phoneNumber) {
+				throw new HTTPException(403, {
+					message: "Phone number required",
+				});
+			}
+
 			// Check if verification already exists
 			if (user.doctorProfile) {
 				throw new HTTPException(400, {
@@ -214,17 +215,14 @@ class ProfileServices {
 				});
 			}
 
-			// Get user's phone number from their account
-			const userPhone = user.phoneNumber;
-
-			if (!userPhone) {
-				throw new HTTPException(400, {
-					message: "Phone number is required but not found in user account",
-				});
-			}
+			//todo: upload apc
+			const uploadedAPC = await profileServices.uploadDoctorAPC(
+				data.apcDocument,
+				user.id,
+			);
 
 			const automatedVerification = await automatedDoctorVerification(
-				data.apcDocumentUrl,
+				uploadedAPC.url,
 				{
 					name: data.fullName.trim(),
 					fullId: data.fullId,
@@ -237,7 +235,7 @@ class ProfileServices {
 
 			// Update user and create doctor profile with verification in a single nested write
 			const updatedUser = await prisma.user.update({
-				where: { id: data.userId },
+				where: { id: user.id },
 				data: {
 					location: data.location,
 					doctorProfile: {
@@ -245,14 +243,14 @@ class ProfileServices {
 							doctorVerification: {
 								create: {
 									fullName: data.fullName,
-									phoneNumber: userPhone,
+									phoneNumber: user.phoneNumber,
 									location: data.location,
 									specialty: data.specialty,
 									yearsOfExperience: data.yearsOfExperience,
 									provisionalId: data.provisionalId,
 									fullId: data.fullId,
 									apcNumber: data.apcNumber,
-									apcDocumentUrl: data.apcDocumentUrl,
+									apcDocumentUrl: uploadedAPC.url,
 									verificationStatus,
 									reviewedBy:
 										verificationStatus === "APPROVED" ? "AUTOMATED" : "ADMIN",

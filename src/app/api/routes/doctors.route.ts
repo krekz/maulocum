@@ -4,10 +4,10 @@ import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireValidDoctorProfile } from "../lib/api-utils";
 import { doctorsService } from "../services/doctors.services";
-import type { AppVariables } from "../types/hono.types";
+import type { DoctorVariables } from "../types/hono.types";
 import { createJobApplicationSchema } from "../types/jobs.types";
 
-const app = new Hono<{ Variables: AppVariables }>()
+const app = new Hono<{ Variables: DoctorVariables }>()
 
 	/*
 	 * Apply for a job

@@ -36,6 +36,11 @@ export const auth = betterAuth({
 							isActive: true,
 						},
 					},
+					doctorProfile: {
+						select: {
+							id: true,
+						},
+					},
 					phoneNumber: true,
 					phoneNumberVerified: true,
 				},
@@ -47,6 +52,7 @@ export const auth = betterAuth({
 					isEmployer: isEmployer?.staffProfile?.isActive ?? false,
 					phoneNumber: isEmployer?.phoneNumber,
 					phoneNumberVerified: isEmployer?.phoneNumberVerified,
+					doctorProfile: isEmployer?.doctorProfile?.id ?? null,
 				},
 				session,
 			};

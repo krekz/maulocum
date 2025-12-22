@@ -24,13 +24,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useVerifyDoctor } from "@/lib/hooks/useDoctorSubmitVerification";
 import {
-	useUploadAPC,
-	useVerifyDoctor,
-} from "@/lib/hooks/useDoctorSubmitVerification";
-import {
-	type DoctorVerificationCreateData,
-	doctorVerificationCreateSchema,
+	type DoctorVerificationSchema,
+	doctorVerificationSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 
 interface DoctorVerificationFormProps {
@@ -39,17 +36,15 @@ interface DoctorVerificationFormProps {
 }
 
 export function DoctorDetailsForm({
-	userId,
 	phoneNumber,
 }: DoctorVerificationFormProps) {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const router = useRouter();
 
-	const uploadMutation = useUploadAPC();
 	const verifyMutation = useVerifyDoctor();
 
-	const form = useForm<DoctorVerificationCreateData>({
-		resolver: zodResolver(doctorVerificationCreateSchema),
+	const form = useForm<DoctorVerificationSchema>({
+		resolver: zodResolver(doctorVerificationSchema),
 		defaultValues: {
 			fullName: "",
 			location: "",
@@ -57,7 +52,6 @@ export function DoctorDetailsForm({
 			yearsOfExperience: 0,
 			provisionalId: "",
 			fullId: "",
-			apcNumber: "",
 		},
 	});
 
@@ -66,7 +60,7 @@ export function DoctorDetailsForm({
 		form.setValue("apcDocument", file);
 	};
 
-	async function onSubmit(data: DoctorVerificationCreateData) {
+	async function onSubmit(data: DoctorVerificationSchema) {
 		try {
 			// Validate file is selected
 			if (!selectedFile) {
@@ -74,38 +68,26 @@ export function DoctorDetailsForm({
 				return;
 			}
 
-			// Upload the file
-			toast.loading("Uploading document...");
-			const uploadResult = await uploadMutation.mutateAsync({
-				file: selectedFile,
-				userId,
-			});
-
-			if (!uploadResult.success) {
-				toast.dismiss();
-				toast.error(uploadResult.message);
-				return;
-			}
-
-			const apcDocumentUrl = uploadResult.data?.url;
-			toast.dismiss();
-
 			// Submit verification
-			toast.loading("Submitting verification...");
-			await verifyMutation.mutateAsync({
-				userId,
-				fullName: data.fullName,
-				location: data.location,
-				specialty: data.specialty || undefined,
-				yearsOfExperience: data.yearsOfExperience,
-				provisionalId: data.provisionalId || undefined,
-				fullId: data.fullId || undefined,
-				apcNumber: data.apcNumber,
-				apcDocumentUrl,
-			});
+			toast.promise(
+				verifyMutation.mutateAsync({
+					fullName: data.fullName,
+					location: data.location,
+					specialty: data.specialty || undefined,
+					yearsOfExperience: data.yearsOfExperience,
+					provisionalId: data.provisionalId || undefined,
+					fullId: data.fullId || undefined,
+					apcNumber: "",
+					apcDocument: selectedFile,
+				}),
+				{
+					loading: "Submitting verification...",
+					success: "Verification submitted successfully!",
+					error: "Failed to submit verification",
+				},
+			);
 
 			toast.dismiss();
-			toast.success("Verification submitted successfully!");
 			router.refresh();
 		} catch (error) {
 			toast.dismiss();
@@ -327,17 +309,13 @@ export function DoctorDetailsForm({
 					<div className="flex gap-4 pt-4">
 						<Button
 							type="submit"
-							disabled={
-								uploadMutation.isPending ||
-								verifyMutation.isPending ||
-								!selectedFile
-							}
+							disabled={verifyMutation.isPending || !selectedFile}
 							className="flex-1"
 						>
-							{uploadMutation.isPending || verifyMutation.isPending ? (
+							{verifyMutation.isPending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									{uploadMutation.isPending ? "Uploading..." : "Submitting..."}
+									Submitting...
 								</>
 							) : (
 								"Submit for Verification"

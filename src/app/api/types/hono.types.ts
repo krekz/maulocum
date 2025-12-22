@@ -24,9 +24,19 @@ type DoctorProfileContext = Prisma.DoctorProfileGetPayload<{
 }>;
 
 // Extend Hono context with custom variables
-export type AppVariables = {
-	staffProfile: StaffProfileContext;
+export type DoctorVariables = {
 	doctorProfile: DoctorProfileContext;
+	session: Session;
+	user: UserType;
+};
+
+export type ProfileVariables = {
+	session: Session;
+	user: UserType;
+};
+
+export type FacilityVariables = {
+	staffProfile: StaffProfileContext;
 	session: Session;
 	user: UserType;
 };

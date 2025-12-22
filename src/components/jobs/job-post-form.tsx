@@ -2,7 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Briefcase, CalendarIcon, Clock, Loader2 } from "lucide-react";
+import {
+	Briefcase,
+	CalendarIcon,
+	Check,
+	ChevronsUpDown,
+	Clock,
+	Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,6 +20,14 @@ import {
 } from "@/app/api/types/jobs.types";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from "@/components/ui/command";
 import {
 	Form,
 	FormControl,
@@ -53,9 +68,7 @@ export function JobPostForm({
 	onSubmitSuccess,
 }: JobPostFormProps) {
 	const router = useRouter();
-	const [selectedSpecialists, setSelectedSpecialists] = useState<string[]>(
-		initialData?.requiredSpecialists || [],
-	);
+	const [isSpecialistsOpen, setIsSpecialistsOpen] = useState(false);
 	const postJobMutation = usePostJob();
 
 	const form = useForm<JobPostFormValues>({
@@ -80,17 +93,6 @@ export function JobPostForm({
 		},
 	});
 
-	const handleSpecialistToggle = (value: string) => {
-		if (value === "all") return;
-
-		const newSpecialists = selectedSpecialists.includes(value)
-			? selectedSpecialists.filter((s) => s !== value)
-			: [...selectedSpecialists, value];
-
-		setSelectedSpecialists(newSpecialists);
-		form.setValue("requiredSpecialists", newSpecialists);
-	};
-
 	const onSubmit = async (data: JobPostFormValues) => {
 		try {
 			if (mode === "edit" && initialData?.id) {
@@ -111,15 +113,15 @@ export function JobPostForm({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 				{/* Job Details Section */}
-				<div className="bg-card p-6 rounded-lg border shadow-sm space-y-6">
-					<h2 className="text-xl font-semibold flex items-center gap-2">
-						<Briefcase className="size-5" />
+				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
+					<h2 className="text-base font-semibold flex items-center gap-2">
+						<Briefcase className="size-4" />
 						Job Details
 					</h2>
 
-					<div className="space-y-4">
+					<div className="space-y-3">
 						<FormField
 							control={form.control}
 							name="title"
@@ -128,6 +130,7 @@ export function JobPostForm({
 									<FormLabel>Job Title</FormLabel>
 									<FormControl>
 										<Input
+											className="h-9"
 											placeholder="e.g. General Practitioner Locum"
 											{...field}
 										/>
@@ -144,6 +147,7 @@ export function JobPostForm({
 									<FormLabel>Location</FormLabel>
 									<FormControl>
 										<Input
+											className="h-9"
 											placeholder="e.g. Petaling Jaya, Selangor"
 											{...field}
 										/>
@@ -162,7 +166,7 @@ export function JobPostForm({
 									<FormControl>
 										<Textarea
 											placeholder="Provide a detailed description of the role and requirements"
-											rows={4}
+											rows={3}
 											{...field}
 										/>
 									</FormControl>
@@ -175,7 +179,7 @@ export function JobPostForm({
 							)}
 						/>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<FormField
 								control={form.control}
 								name="jobType"
@@ -189,7 +193,7 @@ export function JobPostForm({
 											defaultValue={field.value}
 										>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="h-9">
 													<SelectValue placeholder="Select job type" />
 												</SelectTrigger>
 											</FormControl>
@@ -218,7 +222,7 @@ export function JobPostForm({
 											defaultValue={field.value}
 										>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="h-9">
 													<SelectValue placeholder="Select urgency" />
 												</SelectTrigger>
 											</FormControl>
@@ -234,46 +238,112 @@ export function JobPostForm({
 							/>
 						</div>
 
-						<FormItem>
-							<FormLabel>
-								Required Specialists <span className="text-red-500">*</span>
-							</FormLabel>
-							<div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-								{SPECIALIST_OPTIONS.filter((opt) => opt.value !== "all").map(
-									(specialist) => (
-										<Button
-											key={specialist.value}
-											type="button"
-											variant={
-												selectedSpecialists.includes(specialist.value)
-													? "default"
-													: "outline"
-											}
-											size="sm"
-											onClick={() => handleSpecialistToggle(specialist.value)}
-											className="justify-start"
+						<FormField
+							control={form.control}
+							name="requiredSpecialists"
+							render={({ field }) => {
+								const values = field.value ?? [];
+								const labels = values
+									.map(
+										(v) => SPECIALIST_OPTIONS.find((o) => o.value === v)?.label,
+									)
+									.filter(Boolean);
+
+								return (
+									<FormItem>
+										<FormLabel>
+											Required Specialists{" "}
+											<span className="text-red-500">*</span>
+										</FormLabel>
+										<Popover
+											open={isSpecialistsOpen}
+											onOpenChange={setIsSpecialistsOpen}
 										>
-											{specialist.label}
-										</Button>
-									),
-								)}
-							</div>
-							<FormDescription>
-								Select all specialties that are suitable for this position
-							</FormDescription>
-						</FormItem>
+											<PopoverTrigger asChild>
+												<FormControl>
+													<Button
+														variant="outline"
+														role="combobox"
+														aria-expanded={isSpecialistsOpen}
+														className={cn(
+															"h-9 w-full justify-between text-left font-normal",
+															values.length === 0 && "text-muted-foreground",
+														)}
+													>
+														<span className="truncate">
+															{labels.length > 0
+																? labels.join(", ")
+																: "Select specialists"}
+														</span>
+														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+													</Button>
+												</FormControl>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-[--radix-popover-trigger-width] p-0"
+												align="start"
+											>
+												<Command>
+													<CommandInput placeholder="Search specialists..." />
+													<CommandList>
+														<CommandEmpty>No specialist found.</CommandEmpty>
+														<CommandGroup>
+															{SPECIALIST_OPTIONS.filter(
+																(opt) => opt.value !== "all",
+															).map((option) => {
+																const isSelected = values.includes(
+																	option.value,
+																);
+																return (
+																	<CommandItem
+																		key={option.value}
+																		value={option.label}
+																		onSelect={() => {
+																			const next = isSelected
+																				? values.filter(
+																						(v) => v !== option.value,
+																					)
+																				: [...values, option.value];
+																			field.onChange(next);
+																		}}
+																	>
+																		<Check
+																			className={cn(
+																				"mr-2 h-4 w-4",
+																				isSelected
+																					? "opacity-100"
+																					: "opacity-0",
+																			)}
+																		/>
+																		{option.label}
+																	</CommandItem>
+																);
+															})}
+														</CommandGroup>
+													</CommandList>
+												</Command>
+											</PopoverContent>
+										</Popover>
+										<FormDescription>
+											Select all specialties that are suitable for this position
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								);
+							}}
+						/>
 					</div>
 				</div>
 
 				{/* Schedule & Compensation Section */}
-				<div className="bg-card p-6 rounded-lg border shadow-sm space-y-6">
-					<h2 className="text-xl font-semibold flex items-center gap-2">
-						<Clock className="size-5" />
+				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
+					<h2 className="text-base font-semibold flex items-center gap-2">
+						<Clock className="size-4" />
 						Schedule & Compensation
 					</h2>
 
-					<div className="space-y-4">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div className="space-y-3">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<FormField
 								control={form.control}
 								name="startDate"
@@ -288,7 +358,7 @@ export function JobPostForm({
 													<Button
 														variant="outline"
 														className={cn(
-															"w-full justify-start text-left font-normal",
+															"h-9 w-full justify-start text-left font-normal",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -332,7 +402,7 @@ export function JobPostForm({
 													<Button
 														variant="outline"
 														className={cn(
-															"w-full justify-start text-left font-normal",
+															"h-9 w-full justify-start text-left font-normal",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -363,7 +433,7 @@ export function JobPostForm({
 							/>
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<FormField
 								control={form.control}
 								name="startTime"
@@ -373,7 +443,12 @@ export function JobPostForm({
 											Start Time <span className="text-red-500">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input type="time" placeholder="09:00" {...field} />
+											<Input
+												className="h-9"
+												type="time"
+												placeholder="09:00"
+												{...field}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -389,7 +464,12 @@ export function JobPostForm({
 											End Time <span className="text-red-500">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input type="time" placeholder="17:00" {...field} />
+											<Input
+												className="h-9"
+												type="time"
+												placeholder="17:00"
+												{...field}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -397,7 +477,7 @@ export function JobPostForm({
 							/>
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<FormField
 								control={form.control}
 								name="payRate"
@@ -407,7 +487,7 @@ export function JobPostForm({
 											Pay Rate <span className="text-red-500">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input placeholder="e.g. 40" {...field} />
+											<Input className="h-9" placeholder="e.g. 40" {...field} />
 										</FormControl>
 										<FormDescription>
 											Enter the amount (e.g., 40 for RM40)
@@ -430,7 +510,7 @@ export function JobPostForm({
 											defaultValue={field.value}
 										>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger className="h-9">
 													<SelectValue placeholder="Select pay basis" />
 												</SelectTrigger>
 											</FormControl>
@@ -450,7 +530,7 @@ export function JobPostForm({
 				</div>
 
 				{/* Form Actions */}
-				<div className="flex justify-end space-x-4">
+				<div className="flex justify-end gap-2">
 					<Button
 						variant="outline"
 						type="button"

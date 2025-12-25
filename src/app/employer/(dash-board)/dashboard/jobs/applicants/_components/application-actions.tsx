@@ -43,7 +43,7 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 	// Approve mutation
 	const approveMutation = useMutation({
 		mutationFn: async () => {
-			const response = await client.api.v2.admin.applications[
+			const response = await client.api.v2.facilities.applications[
 				":applicationId"
 			].approve.$post({
 				param: { applicationId: application.id },
@@ -75,7 +75,7 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 	// Reject mutation
 	const rejectMutation = useMutation({
 		mutationFn: async () => {
-			const response = await client.api.v2.admin.applications[
+			const response = await client.api.v2.facilities.applications[
 				":applicationId"
 			].reject.$post({
 				param: { applicationId: application.id },

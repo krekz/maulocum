@@ -1,4 +1,5 @@
 import { HTTPException } from "hono/http-exception";
+import type { UserType } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
 	deleteFromR2,
@@ -7,8 +8,8 @@ import {
 	uploadToR2,
 } from "@/lib/r2";
 import type {
-	DoctorVerificationApiData,
-	DoctorVerificationEditData,
+	DoctorVerificationEditSchema,
+	DoctorVerificationSchema,
 } from "@/lib/schemas/doctor-verification.schema";
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
 import { automatedDoctorVerification } from "../lib/automated-doctor-verification";
@@ -60,7 +61,7 @@ class ProfileServices {
 
 	async updateDoctorVerificationDetails(
 		verificationId: string,
-		data: DoctorVerificationEditData,
+		data: DoctorVerificationEditSchema & { yearsOfExperience: number },
 	) {
 		try {
 			// Check if verification exists and is PENDING or REJECTED
@@ -84,6 +85,36 @@ class ProfileServices {
 				});
 			}
 
+			let apcDocumentUrl: string | undefined;
+			if (data.apcDocument) {
+				// Validate file type
+				const allowedTypes = ["application/pdf"];
+				if (!allowedTypes.includes(data.apcDocument.type)) {
+					throw new HTTPException(400, {
+						message: "Invalid file type. Only PDF is allowed",
+					});
+				}
+
+				// Validate file size (1MB max)
+				const maxSize = 1 * 1024 * 1024;
+				if (data.apcDocument.size > maxSize) {
+					throw new HTTPException(400, {
+						message: "File size must be less than 1MB",
+					});
+				}
+
+				const arrayBuffer = await data.apcDocument.arrayBuffer();
+				const buffer = Buffer.from(arrayBuffer);
+				const fileKey = generateFileKey(
+					verification.doctorProfileId,
+					data.apcDocument.name,
+				);
+				const result = await uploadToR2(buffer, fileKey, data.apcDocument.type);
+				const oldKey = extractKeyFromUrl(verification.apcDocumentUrl);
+				await deleteFromR2(oldKey);
+				apcDocumentUrl = result.url;
+			}
+
 			// Update verification
 			await prisma.doctorVerification.update({
 				where: { id: verificationId },
@@ -95,6 +126,7 @@ class ProfileServices {
 					provisionalId: data.provisionalId || null,
 					fullId: data.fullId || null,
 					apcNumber: data.apcNumber,
+					...(apcDocumentUrl ? { apcDocumentUrl } : {}),
 					verificationStatus: "PENDING",
 				},
 			});
@@ -107,94 +139,11 @@ class ProfileServices {
 		}
 	}
 
-	async replaceDocument(verificationId: string, file: File) {
+	async submitDoctorVerification(
+		user: UserType,
+		data: DoctorVerificationSchema,
+	) {
 		try {
-			if (!file) {
-				throw new HTTPException(400, { message: "File is required" });
-			}
-
-			// Get existing verification
-			const verification = await prisma.doctorVerification.findUnique({
-				where: { id: verificationId },
-				include: {
-					doctorProfile: {
-						select: { userId: true },
-					},
-				},
-			});
-
-			if (!verification) {
-				throw new HTTPException(404, { message: "Verification not found" });
-			}
-			if (
-				verification.verificationStatus !== "PENDING" &&
-				!(
-					verification.verificationStatus === "REJECTED" &&
-					verification.allowAppeal
-				)
-			) {
-				throw new HTTPException(400, {
-					message:
-						"You are not allowed to replace document for this verification",
-				});
-			}
-
-			// Validate file type
-			const allowedTypes = ["application/pdf"];
-			if (!allowedTypes.includes(file.type)) {
-				throw new HTTPException(400, {
-					message: "Invalid file type. Only PDF is allowed",
-				});
-			}
-
-			// Validate file size (1MB max)
-			const maxSize = 1 * 1024 * 1024;
-			if (file.size > maxSize) {
-				throw new HTTPException(400, {
-					message: "File size must be less than 1MB",
-				});
-			}
-
-			// Convert file to buffer
-			const arrayBuffer = await file.arrayBuffer();
-			const buffer = Buffer.from(arrayBuffer);
-
-			// Upload new file
-			const fileKey = generateFileKey(
-				verification.doctorProfile.userId,
-				file.name,
-			);
-			const result = await uploadToR2(buffer, fileKey, file.type);
-
-			const oldKey = extractKeyFromUrl(verification.apcDocumentUrl);
-			await deleteFromR2(oldKey);
-
-			// Update verification with new URL and reset to PENDING
-			await prisma.doctorVerification.update({
-				where: { id: verificationId },
-				data: {
-					apcDocumentUrl: result.url,
-					verificationStatus: "PENDING",
-				},
-			});
-			return result;
-		} catch (error) {
-			console.error("Error replacing document:", error);
-			if (error instanceof HTTPException) throw error;
-			throw new HTTPException(500, {
-				message: "Failed to replace document",
-			});
-		}
-	}
-
-	async submitDoctorVerification(data: DoctorVerificationApiData) {
-		try {
-			// Check if user exists
-			const user = await prisma.user.findUnique({
-				where: { id: data.userId },
-				include: { doctorProfile: true },
-			});
-
 			if (!user) {
 				throw new HTTPException(404, { message: "User not found" });
 			}
@@ -207,6 +156,12 @@ class ProfileServices {
 				});
 			}
 
+			if (!user.phoneNumber) {
+				throw new HTTPException(403, {
+					message: "Phone number required",
+				});
+			}
+
 			// Check if verification already exists
 			if (user.doctorProfile) {
 				throw new HTTPException(400, {
@@ -214,17 +169,14 @@ class ProfileServices {
 				});
 			}
 
-			// Get user's phone number from their account
-			const userPhone = user.phoneNumber;
-
-			if (!userPhone) {
-				throw new HTTPException(400, {
-					message: "Phone number is required but not found in user account",
-				});
-			}
+			//todo: upload apc
+			const uploadedAPC = await profileServices.uploadDoctorAPC(
+				data.apcDocument,
+				user.id,
+			);
 
 			const automatedVerification = await automatedDoctorVerification(
-				data.apcDocumentUrl,
+				uploadedAPC.url,
 				{
 					name: data.fullName.trim(),
 					fullId: data.fullId,
@@ -237,7 +189,7 @@ class ProfileServices {
 
 			// Update user and create doctor profile with verification in a single nested write
 			const updatedUser = await prisma.user.update({
-				where: { id: data.userId },
+				where: { id: user.id },
 				data: {
 					location: data.location,
 					doctorProfile: {
@@ -245,14 +197,14 @@ class ProfileServices {
 							doctorVerification: {
 								create: {
 									fullName: data.fullName,
-									phoneNumber: userPhone,
+									phoneNumber: user.phoneNumber,
 									location: data.location,
 									specialty: data.specialty,
 									yearsOfExperience: data.yearsOfExperience,
 									provisionalId: data.provisionalId,
 									fullId: data.fullId,
 									apcNumber: data.apcNumber,
-									apcDocumentUrl: data.apcDocumentUrl,
+									apcDocumentUrl: uploadedAPC.url,
 									verificationStatus,
 									reviewedBy:
 										verificationStatus === "APPROVED" ? "AUTOMATED" : "ADMIN",

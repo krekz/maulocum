@@ -1,5 +1,6 @@
 import { load } from "cheerio";
 import { PDFParse } from "pdf-parse";
+import { CanvasFactory } from "pdf-parse/worker";
 import { request } from "undici";
 
 export interface MMCParams {
@@ -114,7 +115,7 @@ async function scanAPCDocs(url: string | URL) {
 	try {
 		const res = await fetch(url);
 		const buffer = Buffer.from(await res.arrayBuffer());
-		const parser = new PDFParse({ data: buffer });
+		const parser = new PDFParse({ data: buffer, CanvasFactory });
 		const result = await parser.getText();
 		await parser.destroy();
 

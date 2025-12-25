@@ -1,37 +1,50 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
+import type { DoctorVerificationSchema } from "../schemas/doctor-verification.schema";
 
-interface VerifyDoctorParams {
-	userId: string;
-	fullName: string;
-	location: string;
-	specialty?: string;
-	yearsOfExperience: number;
-	provisionalId?: string;
-	fullId?: string;
-	apcNumber: string;
-	apcDocumentUrl: string;
-}
+export function useUpdateDoctorVerification() {
+	const queryClient = useQueryClient();
 
-/**
- * Hook to upload APC document to R2
- */
-export function useUploadAPC() {
 	return useMutation({
-		mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
-			const res = await client.api.v2.profile["upload-apc"].$post({
-				form: {
-					file: new File([file], file.name, { type: file.type }),
-					userId,
-				},
+		mutationFn: async (input: {
+			verificationId: string;
+			fullName: string;
+			location: string;
+			specialty?: string;
+			yearsOfExperience: number;
+			provisionalId?: string;
+			fullId?: string;
+			apcNumber: string;
+			apcDocument?: File;
+		}) => {
+			const { verificationId, apcDocument, ...rest } = input;
+			const form = {
+				location: rest.location,
+				fullName: rest.fullName,
+				apcNumber: rest.apcNumber,
+				yearsOfExperience: String(rest.yearsOfExperience),
+				specialty: rest.specialty,
+				provisionalId: rest.provisionalId,
+				fullId: rest.fullId,
+				apcDocument: apcDocument ?? "",
+			};
+
+			const res = await client.api.v2.profile.verification[
+				":verificationId"
+			].$patch({
+				param: { verificationId },
+				form,
 			});
 
 			if (!res.ok) {
 				const error = await res.json();
-				throw new Error(error.message || "Failed to upload file");
+				throw new Error(error.message || "Failed to update verification");
 			}
 
 			return res.json();
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["user-profile"] });
 		},
 	});
 }
@@ -42,10 +55,19 @@ export function useUploadAPC() {
 export function useVerifyDoctor() {
 	const queryClient = useQueryClient();
 
-	return useMutation<unknown, Error, VerifyDoctorParams>({
-		mutationFn: async (data) => {
+	return useMutation({
+		mutationFn: async (data: DoctorVerificationSchema) => {
 			const res = await client.api.v2.profile["verify-doctor"].$post({
-				json: data,
+				form: {
+					location: data.location,
+					fullName: data.fullName,
+					yearsOfExperience: data.yearsOfExperience.toString(),
+					specialty: data.specialty,
+					provisionalId: data.provisionalId,
+					fullId: data.fullId,
+					apcNumber: data.apcNumber,
+					apcDocument: data.apcDocument,
+				},
 			});
 
 			if (!res.ok) {

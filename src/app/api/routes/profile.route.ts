@@ -3,61 +3,33 @@ import { Hono } from "hono";
 import type { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import {
-	doctorVerificationApiSchema,
-	doctorVerificationEditSchema,
+	doctorCreateExtendedVerificationSchemaAPI,
+	doctorVerificationEditSchemaAPI,
 } from "@/lib/schemas/doctor-verification.schema";
 import { UserRole } from "../../../../prisma/generated/prisma/enums";
+import { requireAuth } from "../lib/api-utils";
 import { profileServices } from "../services/profile.services";
+import type { ProfileVariables } from "../types/hono.types";
 
-const app = new Hono()
-
-	// Upload APC document to R2
-	.post(
-		"/upload-apc",
-		zValidator(
-			"form",
-			z.object({ file: z.instanceof(File), userId: z.string() }),
-		),
-		async (c) => {
-			try {
-				const formData = c.req.valid("form");
-				const file = formData.file;
-				const userId = formData.userId;
-
-				const result = await profileServices.uploadDoctorAPC(file, userId);
-
-				return c.json(
-					{
-						success: true,
-						data: result,
-						message: "File uploaded successfully",
-					},
-					200,
-				);
-			} catch (error) {
-				console.error("Error uploading file:", error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
+const app = new Hono<{ Variables: ProfileVariables }>()
 	// Submit doctor verification
 	.post(
 		"/verify-doctor",
-		zValidator("json", doctorVerificationApiSchema),
+		zValidator("form", doctorCreateExtendedVerificationSchemaAPI),
+		requireAuth,
 		async (c) => {
-			const data = c.req.valid("json");
+			const data = c.req.valid("form");
+			const processedData = {
+				...data,
+				yearsOfExperience: Number(data.yearsOfExperience),
+			};
+			const user = c.get("user");
 
 			try {
-				const verification =
-					await profileServices.submitDoctorVerification(data);
+				const verification = await profileServices.submitDoctorVerification(
+					user,
+					processedData,
+				);
 
 				return c.json(
 					{
@@ -82,57 +54,23 @@ const app = new Hono()
 			}
 		},
 	)
-	// Replace APC document for existing verification
-	.post(
-		"/verification/:verificationId/replace-document",
-		zValidator("form", z.object({ file: z.instanceof(File) })),
-		zValidator("param", z.object({ verificationId: z.string() })),
-		async (c) => {
-			const { verificationId } = c.req.valid("param");
-			const formData = c.req.valid("form");
-			const file = formData.file;
-
-			try {
-				const uploaded = await profileServices.replaceDocument(
-					verificationId,
-					file,
-				);
-
-				return c.json(
-					{
-						success: true,
-						message: "Document replaced successfully",
-						data: { url: uploaded.url, key: uploaded.key },
-					},
-					200,
-				);
-			} catch (error) {
-				console.error("Error replacing document:", error);
-				const httpError = error as HTTPException;
-				return c.json(
-					{
-						success: false,
-						message: httpError.message,
-						data: null,
-					},
-					httpError.status,
-				);
-			}
-		},
-	)
 	// Update verification details (only for PENDING and REJECTED with AllowAppeal status)
 	.patch(
 		"/verification/:verificationId",
 		zValidator("param", z.object({ verificationId: z.string() })),
-		zValidator("json", doctorVerificationEditSchema),
+		zValidator("form", doctorVerificationEditSchemaAPI),
 		async (c) => {
 			const { verificationId } = c.req.valid("param");
-			const data = c.req.valid("json");
+			const data = c.req.valid("form");
+			const processedData = {
+				...data,
+				yearsOfExperience: Number(data.yearsOfExperience),
+			};
 
 			try {
 				await profileServices.updateDoctorVerificationDetails(
 					verificationId,
-					data,
+					processedData,
 				);
 
 				return c.json(

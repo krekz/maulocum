@@ -19,6 +19,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	NavigationMenu,
@@ -28,6 +29,7 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { Separator } from "@/components/ui/separator";
 import {
 	Sheet,
 	SheetContent,
@@ -36,6 +38,7 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNotifications } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { cn, handleLogout } from "@/lib/utils";
 import { ProfileAvatar } from "./profile/profile-avatar";
@@ -176,29 +179,7 @@ const MainNavbar = ({
 						) : session?.user ? (
 							<>
 								{/* Notifications */}
-								<Popover>
-									<PopoverTrigger asChild>
-										<Button
-											variant="ghost"
-											className="p-3 h-auto rounded-full focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2"
-										>
-											<div className="relative">
-												<Bell className="h-5 w-5" />
-												<span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
-											</div>
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent className="w-80 p-4">
-										<div className="space-y-4">
-											<h4 className="font-medium">Notifications</h4>
-											<div className="border-t pt-4">
-												<div className="text-sm">
-													You have no new notifications
-												</div>
-											</div>
-										</div>
-									</PopoverContent>
-								</Popover>
+								<NotificationBell />
 								<ProfileAvatar
 									imageSrc={
 										session.user.image ||
@@ -453,5 +434,97 @@ const renderMobileMenuItem = (item: MenuItem, closeSheet: () => void) => {
 		</Link>
 	);
 };
+
+function NotificationBell() {
+	const { getUnreadNotifications, markAsReadMutation } = useNotifications();
+
+	const unreadCount = getUnreadNotifications.data?.data?.unreadCount || 0;
+	const notifications = getUnreadNotifications.data?.data?.notifications || [];
+
+	return (
+		<Popover>
+			<PopoverTrigger asChild>
+				<Button
+					variant="ghost"
+					className="p-3 h-auto rounded-full focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 relative"
+				>
+					<Bell className="h-5 w-5" />
+					{unreadCount > 0 && (
+						<Badge
+							variant="destructive"
+							className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+						>
+							{unreadCount > 9 ? "9+" : unreadCount}
+						</Badge>
+					)}
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent className="w-80 p-0" align="end">
+				<div className="flex items-center justify-between p-4 pb-3">
+					<h4 className="font-semibold">Notifications</h4>
+					{unreadCount > 0 && (
+						<Badge variant="secondary" className="rounded-full">
+							{unreadCount} new
+						</Badge>
+					)}
+				</div>
+				<Separator />
+				<div className="max-h-[400px] overflow-y-auto">
+					{getUnreadNotifications.isLoading ? (
+						<div className="p-4 space-y-3">
+							<Skeleton className="h-16 w-full" />
+							<Skeleton className="h-16 w-full" />
+							<Skeleton className="h-16 w-full" />
+						</div>
+					) : notifications.length === 0 ? (
+						<div className="p-8 text-center">
+							<Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+							<p className="text-sm text-muted-foreground">
+								No new notifications
+							</p>
+						</div>
+					) : (
+						<div className="divide-y">
+							{notifications.map((notification) => (
+								<Link
+									onClick={() => {
+										markAsReadMutation.mutate(notification.id);
+									}}
+									key={notification.id}
+									href={notification.actionUrl || "/profile/inbox"}
+									className="block p-4 hover:bg-muted/50 transition-colors"
+								>
+									<div className="space-y-1">
+										<div className="flex items-start justify-between gap-2">
+											<p className="text-sm font-medium leading-tight">
+												{notification.title}
+											</p>
+											{!notification.isRead && (
+												<span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
+											)}
+										</div>
+										<p className="text-xs text-muted-foreground line-clamp-2">
+											{notification.message}
+										</p>
+									</div>
+								</Link>
+							))}
+						</div>
+					)}
+				</div>
+				{notifications.length > 0 && (
+					<>
+						<Separator />
+						<div className="p-2">
+							<Button variant="ghost" className="w-full text-sm" asChild>
+								<Link href="/profile/inbox">View all notifications</Link>
+							</Button>
+						</div>
+					</>
+				)}
+			</PopoverContent>
+		</Popover>
+	);
+}
 
 export { MainNavbar };

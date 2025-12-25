@@ -67,6 +67,27 @@ enum Reviewer {
   ADMIN
 }
 
+enum NotificationType {
+  JOB_APPLICATION_RECEIVED
+  JOB_APPLICATION_APPROVED
+  JOB_APPLICATION_CONFIRMED
+  JOB_APPLICATION_REJECTED
+  JOB_APPLICATION_CANCELLED
+  JOB_POSTED
+  REVIEW_RECEIVED
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  FACILITY_VERIFICATION_APPROVED
+  FACILITY_VERIFICATION_REJECTED
+  STAFF_INVITATION_RECEIVED
+  STAFF_INVITATION_ACCEPTED
+  STAFF_INVITATION_REJECTED
+  STAFF_REMOVED
+  REMINDER_UPCOMING_JOB
+  PAYMENT_RECEIVED
+  MESSAGE_RECEIVED
+}
+
 model User {
   id                  String         @id
   name                String
@@ -84,6 +105,7 @@ model User {
   doctorProfile       DoctorProfile?
   staffProfile        StaffProfile?
   ownedFacilities     Facility[]     @relation("FacilityOwner")
+  notifications       Notification[]
 
   @@unique([email])
   @@map("user")
@@ -98,6 +120,7 @@ model DoctorProfile {
   jobApplications    JobApplication[]
   doctorVerification DoctorVerification?
   bookmarks          JobBookmark[]
+  notifications      Notification[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -189,7 +212,9 @@ model Facility {
   doctorReviews        DoctorReview[] // Reviews written by this facility about doctors
   contactInfo          ContactInfo[]
   staffs               StaffProfile[]
+  staffInvitations     StaffInvitation[]
   facilityVerification FacilityVerification?
+  notifications        Notification[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -220,6 +245,7 @@ model Job {
   staff               StaffProfile?    @relation(fields: [staffId], references: [id])
   staffId             String?
   bookmarkedBy        JobBookmark[]
+  notifications       Notification[]
 
   @@index([facilityId])
   @@index([status])
@@ -249,6 +275,7 @@ model JobApplication {
   // Review relations (one review per completed job per direction)
   facilityReview     FacilityReview? // Doctor's review of the facility
   doctorReview       DoctorReview? // Facility's review of the doctor
+  notifications      Notification[]
 
   @@unique([jobId, doctorProfileId])
   @@index([jobId])
@@ -353,4 +380,68 @@ model JobBookmark {
   doctorProfileId String
 
   @@id([jobId, doctorProfileId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+model StaffInvitation {
+  id         String           @id @default(cuid())
+  facilityId String
+  facility   Facility         @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  email      String
+  role       String // e.g., "staff", "manager", "admin", "hr"
+  token      String           @unique
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  invitedBy  String // userId of the owner/admin who sent invite
+  acceptedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([facilityId, email])
+  @@index([token])
+  @@index([facilityId])
+  @@index([email])
+  @@map("staff_invitation")
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  type    NotificationType
+  title   String
+  message String
+  isRead  Boolean          @default(false)
+
+  // Polymorphic recipient - either userId, doctorProfileId, or facilityId
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorProfileId String?
+  doctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  facilityId      String?
+  facility        Facility?      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  // Optional relations to entities
+  jobId            String?
+  job              Job?            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobApplicationId String?
+  jobApplication   JobApplication? @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  metadata  Json? // Store additional data (e.g., review rating, payment amount)
+  actionUrl String? // Deep link to relevant page
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isRead])
+  @@index([doctorProfileId, isRead])
+  @@index([facilityId, isRead])
+  @@index([createdAt])
+  @@map("notification")
 }

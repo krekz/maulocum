@@ -5,6 +5,7 @@ import {
 	ChevronUp,
 	Heart,
 	History,
+	Mail,
 	Menu,
 	Settings,
 	Star,
@@ -110,6 +111,11 @@ export function ProfileSidebar() {
 			href: "/profile",
 			icon: <User className="h-4 w-4" />,
 			label: "Personal Information",
+		},
+		{
+			href: "/profile/inbox",
+			icon: <Mail className="h-4 w-4" />,
+			label: "Inbox",
 		},
 	];
 

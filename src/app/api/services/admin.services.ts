@@ -2,6 +2,7 @@ import { HTTPException } from "hono/http-exception";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import type { FacilityQuery } from "../types/facilities.types";
+import { notificationService } from "./notification.service";
 
 class AdminService {
 	// Get all facilities for admin with full details
@@ -286,6 +287,20 @@ class AdminService {
 					},
 				});
 
+				// Send notification to doctor
+				await notificationService.createNotification({
+					type: "VERIFICATION_APPROVED",
+					title: "Verification Approved!",
+					message: `Congratulations! Your doctor verification has been approved. You can now apply for jobs.`,
+					doctorProfileId: doctorProfile.doctorProfileId,
+					userId: doctorProfile.doctorProfile.userId,
+					actionUrl: "/profile",
+					metadata: {
+						doctorName: doctorProfile.fullName,
+						specialty: doctorProfile.specialty,
+					},
+				});
+
 				return;
 			} else {
 				// REJECT
@@ -304,6 +319,21 @@ class AdminService {
 						allowAppeal,
 						reviewedBy: "ADMIN",
 						reviewedAt: new Date(),
+					},
+				});
+
+				// Send notification to doctor
+				await notificationService.createNotification({
+					type: "VERIFICATION_REJECTED",
+					title: "Verification Rejected",
+					message: `Your doctor verification has been rejected. ${allowAppeal ? "You can appeal this decision or resubmit with corrections." : "Please contact support for more information."}`,
+					doctorProfileId: doctorProfile.doctorProfileId,
+					userId: doctorProfile.doctorProfile.userId,
+					actionUrl: "/profile",
+					metadata: {
+						doctorName: doctorProfile.fullName,
+						rejectionReason,
+						allowAppeal,
 					},
 				});
 
@@ -536,189 +566,6 @@ class AdminService {
 
 			throw new HTTPException(500, {
 				message: "Failed to update user role",
-			});
-		}
-	}
-
-	// ============================================
-	// Double Opt-In Job Application Flow
-	// ============================================
-
-	/**
-	 * Employer approves an application
-	 * - Updates status to EMPLOYER_APPROVED
-	 * - Generates confirmation token
-	 * - Sends WhatsApp message to doctor (TODO)
-	 */
-	async approveApplication(applicationId: string) {
-		try {
-			// Get application with doctor details
-			const application = await prisma.jobApplication.findUnique({
-				where: { id: applicationId },
-				include: {
-					job: {
-						select: {
-							id: true,
-							title: true,
-							startDate: true,
-							endDate: true,
-							facility: {
-								select: {
-									id: true,
-									name: true,
-								},
-							},
-						},
-					},
-					DoctorProfile: {
-						include: {
-							user: {
-								select: {
-									id: true,
-									name: true,
-									email: true,
-									phoneNumber: true,
-								},
-							},
-						},
-					},
-				},
-			});
-
-			if (!application) {
-				throw new HTTPException(404, {
-					message: "Application not found",
-				});
-			}
-
-			if (application.status !== "PENDING") {
-				throw new HTTPException(400, {
-					message: `Cannot approve application with status: ${application.status}`,
-				});
-			}
-
-			// Generate unique confirmation token
-			const confirmationToken = crypto.randomUUID();
-
-			// Update application status
-			const updatedApplication = await prisma.jobApplication.update({
-				where: { id: applicationId },
-				data: {
-					status: "EMPLOYER_APPROVED",
-					confirmationToken,
-					employerApprovedAt: new Date(),
-				},
-				include: {
-					job: {
-						select: {
-							id: true,
-							title: true,
-							startDate: true,
-							endDate: true,
-							facility: {
-								select: {
-									id: true,
-									name: true,
-								},
-							},
-						},
-					},
-					DoctorProfile: {
-						include: {
-							user: {
-								select: {
-									id: true,
-									name: true,
-									email: true,
-									phoneNumber: true,
-								},
-							},
-						},
-					},
-				},
-			});
-
-			// Build confirmation URL
-			const confirmationUrl = `${process.env.BETTER_AUTH_URL}/jobs/confirm/${confirmationToken}`;
-
-			// TODO: Send WhatsApp message to doctor
-			// For now, just log it
-			console.log("=== WHATSAPP NOTIFICATION (TODO) ===");
-			console.log(`To: ${application.DoctorProfile?.user.phoneNumber}`);
-			console.log(`Doctor: ${application.DoctorProfile?.user.name}`);
-			console.log(
-				`Job: ${application.job.title} at ${application.job.facility.name}`,
-			);
-			console.log(
-				`Dates: ${application.job.startDate} - ${application.job.endDate}`,
-			);
-			console.log(`Confirmation Link: ${confirmationUrl}`);
-			console.log("=====================================");
-
-			return {
-				application: updatedApplication,
-				confirmationUrl,
-			};
-		} catch (error) {
-			console.error("Error approving application:", error);
-			if (error instanceof HTTPException) throw error;
-
-			throw new HTTPException(500, {
-				message: "Failed to approve application",
-			});
-		}
-	}
-
-	/**
-	 * Employer rejects an application
-	 */
-	async rejectApplication(applicationId: string, reason?: string) {
-		try {
-			const application = await prisma.jobApplication.findUnique({
-				where: { id: applicationId },
-			});
-
-			if (!application) {
-				throw new HTTPException(404, {
-					message: "Application not found",
-				});
-			}
-
-			if (
-				application.status === "EMPLOYER_REJECTED" ||
-				application.status === "DOCTOR_REJECTED"
-			) {
-				throw new HTTPException(400, {
-					message: "Application has already been rejected",
-				});
-			}
-
-			if (application.status !== "PENDING") {
-				throw new HTTPException(400, {
-					message: `Cannot reject application with status: ${application.status}`,
-				});
-			}
-
-			const updatedApplication = await prisma.jobApplication.update({
-				where: { id: applicationId },
-				data: {
-					status: "EMPLOYER_REJECTED",
-					rejectedAt: new Date(),
-					rejectionReason: reason,
-					confirmationToken: null,
-					updatedAt: new Date(),
-				},
-			});
-
-			return {
-				application: updatedApplication,
-			};
-		} catch (error) {
-			console.error("Error rejecting application:", error);
-			if (error instanceof HTTPException) throw error;
-
-			throw new HTTPException(500, {
-				message: "Failed to reject application",
 			});
 		}
 	}

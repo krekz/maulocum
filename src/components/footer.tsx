@@ -70,47 +70,47 @@ function Footerdemo() {
 							>
 								Home
 							</Link>
-                            <Link
-                                href="/about"
-                                className="block transition-colors hover:text-primary"
-                            >
-                                About Maulocum
-                            </Link>
-                            <Link
-                                href="/support"
-                                className="block transition-colors hover:text-primary"
-                            >
-                                System Support
-                            </Link>
-                            <Link
-                                href="/privacy"
-                                className="block transition-colors hover:text-primary"
-                            >
-                                Privacy Policy
-                            </Link>
-                            <Link
-                                href="/terms"
-                                className="block transition-colors hover:text-primary"
-                            >
-                                Terms of Service
-                            </Link>
+							<Link
+								href="/about"
+								className="block transition-colors hover:text-primary"
+							>
+								About Maulocum
+							</Link>
+							<Link
+								href="/support"
+								className="block transition-colors hover:text-primary"
+							>
+								System Support
+							</Link>
+							<Link
+								href="/privacy"
+								className="block transition-colors hover:text-primary"
+							>
+								Privacy Policy
+							</Link>
+							<Link
+								href="/terms"
+								className="block transition-colors hover:text-primary"
+							>
+								Terms of Service
+							</Link>
 						</nav>
 					</div>
 					<div>
 						<h3 className="mb-4 text-lg font-semibold">Contact Us</h3>
 						<address className="space-y-2 text-sm not-italic">
-								<p>Kulliyyah of Information & Communication Technology (KICT)</p>
-								<p>International Islamic University Malaysia (IIUM)</p>
-								<p>Jalan Gombak, 53100 Kuala Lumpur, Malaysia</p>
-								<p>
-									Email:{" "}
-									<a
-										href="mailto:maulocum.project@iium.edu.my"
-										className="underline underline-offset-2 hover:text-foreground"
-									>
-										maulocum.project@gmail.com
-									</a>
-								</p>
+							<p>Kulliyyah of Information & Communication Technology (KICT)</p>
+							<p>International Islamic University Malaysia (IIUM)</p>
+							<p>Jalan Gombak, 53100 Kuala Lumpur, Malaysia</p>
+							<p>
+								Email:{" "}
+								<a
+									href="mailto:maulocum.project@iium.edu.my"
+									className="underline underline-offset-2 hover:text-foreground"
+								>
+									maulocum.project@gmail.com
+								</a>
+							</p>
 						</address>
 					</div>
 					<div className="relative">

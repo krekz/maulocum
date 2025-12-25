@@ -6,8 +6,8 @@ import {
 	LogOut,
 	type LucideIcon,
 	Settings,
-	Stethoscope,
 	Star,
+	Stethoscope,
 	User,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,25 +47,18 @@ export function ProfileAvatar({
 	const pathname = usePathname();
 
 	const profileLinks: ProfileLinkItem[] = [
-		{ 	href: "/profile", 
-			label: "Profile", 
-			icon: User },
+		{ href: "/profile", label: "Profile", icon: User },
 		// { href: "/profile/settings", label: "Settings", icon: Cog },
 		{
 			href: "/profile/history",
 			label: "History",
-			icon: Stethoscope },
+			icon: Stethoscope,
+		},
 
-		{ 	href: "/profile/bookmarks", 
-			label: "Bookmarks", 
-			icon: Bookmark },
-		{   href: "/profile/reviews",
-			label: "Reviews",
-			icon: Star  },
+		{ href: "/profile/bookmarks", label: "Bookmarks", icon: Bookmark },
+		{ href: "/profile/reviews", label: "Reviews", icon: Star },
 
-		{ 	href: "/profile/settings", 
-			label: "Settings", 
-			icon: Settings },
+		{ href: "/profile/settings", label: "Settings", icon: Settings },
 		{
 			href: "#",
 			label: "Logout",

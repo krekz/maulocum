@@ -1,11 +1,11 @@
-import { AboutMauLocum } from '@/components/about';
+import { AboutMauLocum } from "@/components/about";
 
 function AboutPage() {
-    return (
-        <div>
-            <AboutMauLocum />
-        </div>
-    );
+	return (
+		<div>
+			<AboutMauLocum />
+		</div>
+	);
 }
 
 export default AboutPage;

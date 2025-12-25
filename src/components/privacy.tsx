@@ -19,20 +19,25 @@ export default function PrivacyPolicyPage() {
 					<section>
 						<p>
 							MauLocum (“we”, “our”, or “the Platform”) is committed to
-							protecting your personal data and respecting your privacy.
-							This Privacy Policy explains how we collect, use, store,
-							and protect your information when you use our web-based
-							locum hiring platform.
+							protecting your personal data and respecting your privacy. This
+							Privacy Policy explains how we collect, use, store, and protect
+							your information when you use our web-based locum hiring platform.
 						</p>
 					</section>
 
 					<section>
 						<h2 className="font-medium">1. Information We Collect</h2>
 						<ul className="list-disc pl-5 space-y-1">
-							<li>Personal information such as name, email, and phone number</li>
-							<li>User role (locum professional, healthcare provider, admin)</li>
+							<li>
+								Personal information such as name, email, and phone number
+							</li>
+							<li>
+								User role (locum professional, healthcare provider, admin)
+							</li>
 							<li>Professional credentials (e.g. APC, certificates)</li>
-							<li>System data such as IP address, browser type, and activity logs</li>
+							<li>
+								System data such as IP address, browser type, and activity logs
+							</li>
 						</ul>
 					</section>
 
@@ -60,10 +65,9 @@ export default function PrivacyPolicyPage() {
 					<section>
 						<h2 className="font-medium">4. Data Sharing</h2>
 						<p>
-							Your data is only shared with verified users (e.g. clinics
-							viewing applicants), system administrators, or trusted service
-							providers under strict confidentiality. We do not sell or trade
-							user data.
+							Your data is only shared with verified users (e.g. clinics viewing
+							applicants), system administrators, or trusted service providers
+							under strict confidentiality. We do not sell or trade user data.
 						</p>
 					</section>
 
@@ -79,9 +83,9 @@ export default function PrivacyPolicyPage() {
 					<section>
 						<h2 className="font-medium">6. Data Retention</h2>
 						<p>
-							Personal data is retained only for as long as necessary to
-							provide platform services, comply with regulations, and
-							support audit or dispute resolution.
+							Personal data is retained only for as long as necessary to provide
+							platform services, comply with regulations, and support audit or
+							dispute resolution.
 						</p>
 					</section>
 
@@ -98,26 +102,22 @@ export default function PrivacyPolicyPage() {
 					<section>
 						<h2 className="font-medium">8. Cookies</h2>
 						<p>
-							MauLocum uses cookies to maintain sessions, improve usability,
-							and analyze traffic. Disabling cookies may affect certain
-							features.
+							MauLocum uses cookies to maintain sessions, improve usability, and
+							analyze traffic. Disabling cookies may affect certain features.
 						</p>
 					</section>
 
 					<section>
 						<h2 className="font-medium">9. Policy Updates</h2>
 						<p>
-							This Privacy Policy may be updated periodically. Continued
-							use of the platform constitutes acceptance of the updated
-							policy.
+							This Privacy Policy may be updated periodically. Continued use of
+							the platform constitutes acceptance of the updated policy.
 						</p>
 					</section>
 
 					<section>
 						<h2 className="font-medium">10. Contact</h2>
-						<p>
-							For privacy-related inquiries, please contact:
-						</p>
+						<p>For privacy-related inquiries, please contact:</p>
 						<p className="mt-1">
 							<strong>MauLocum Project Team</strong>
 							<br />
@@ -125,15 +125,15 @@ export default function PrivacyPolicyPage() {
 							<br />
 							International Islamic University Malaysia (IIUM)
 						</p>
-                         <p>
-                            Email:{" "}
-                            <a
-                                href="mailto:maulocum.project@iium.edu.my"
-                                className="underline underline-offset-2 hover:text-foreground"
-                            >
-                                maulocum.project@iium.edu.my
-                            </a>
-                        </p>
+						<p>
+							Email:{" "}
+							<a
+								href="mailto:maulocum.project@iium.edu.my"
+								className="underline underline-offset-2 hover:text-foreground"
+							>
+								maulocum.project@iium.edu.my
+							</a>
+						</p>
 					</section>
 				</CardContent>
 			</Card>

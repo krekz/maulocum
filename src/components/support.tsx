@@ -4,11 +4,11 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
+	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
-	FormControl,
-	FormDescription,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -43,10 +43,7 @@ export default function SupportPage() {
 			</p>
 
 			<Form {...form}>
-				<form
-					onSubmit={form.handleSubmit(onSubmit)}
-					className="space-y-6"
-				>
+				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 					{/* Email */}
 					<FormField
 						control={form.control}
@@ -56,11 +53,7 @@ export default function SupportPage() {
 							<FormItem>
 								<FormLabel>Email address</FormLabel>
 								<FormControl>
-									<Input
-										type="email"
-										placeholder="your@email.com"
-										{...field}
-									/>
+									<Input type="email" placeholder="your@email.com" {...field} />
 								</FormControl>
 								<FormDescription>
 									We will use this email to respond to your request.

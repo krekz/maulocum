@@ -14,6 +14,7 @@ import type {
 	FacilityVerificationEditApiInput,
 } from "../types/facilities.types";
 import type { JobPostFormValues } from "../types/jobs.types";
+import { notificationService } from "./notification.service";
 
 // Facility Service (Single Responsibility Principle)
 export class FacilityService {
@@ -1157,6 +1158,578 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to submit review",
+			});
+		}
+	}
+
+	// ============================================
+	// Double Opt-In Job Application Flow
+	// ============================================
+
+	/**
+	 * Employer approves an application
+	 * - Updates status to EMPLOYER_APPROVED
+	 * - Generates confirmation token
+	 * - Sends WhatsApp message to doctor (TODO)
+	 */
+	async approveApplication(applicationId: string) {
+		try {
+			// Get application with doctor details
+			const application = await prisma.jobApplication.findUnique({
+				where: { id: applicationId },
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							startDate: true,
+							endDate: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+					DoctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									phoneNumber: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!application) {
+				throw new HTTPException(404, {
+					message: "Application not found",
+				});
+			}
+
+			if (application.status !== "PENDING") {
+				throw new HTTPException(400, {
+					message: `Cannot approve application with status: ${application.status}`,
+				});
+			}
+
+			// Generate unique confirmation token
+			const confirmationToken = crypto.randomUUID();
+
+			// Update application status
+			const updatedApplication = await prisma.jobApplication.update({
+				where: { id: applicationId },
+				data: {
+					status: "EMPLOYER_APPROVED",
+					confirmationToken,
+					employerApprovedAt: new Date(),
+				},
+				include: {
+					job: {
+						select: {
+							id: true,
+							title: true,
+							startDate: true,
+							endDate: true,
+							facility: {
+								select: {
+									id: true,
+									name: true,
+								},
+							},
+						},
+					},
+					DoctorProfile: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+									phoneNumber: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			// Build confirmation URL
+			const confirmationUrl = `${process.env.BETTER_AUTH_URL}/jobs/confirm/${confirmationToken}`;
+
+			// Send notification to doctor
+			if (application.DoctorProfile) {
+				await notificationService.createNotification({
+					type: "JOB_APPLICATION_APPROVED",
+					title: "Application Approved!",
+					message: `Your application for ${application.job.title} at ${application.job.facility.name} has been approved. Please confirm your availability.`,
+					doctorProfileId: application.DoctorProfile.id,
+					jobId: application.job.id,
+					jobApplicationId: application.id,
+					actionUrl: `/jobs/confirm/${confirmationToken}`,
+					metadata: {
+						facilityName: application.job.facility.name,
+						jobTitle: application.job.title,
+						confirmationUrl,
+						startDate: application.job.startDate.toISOString(),
+						endDate: application.job.endDate.toISOString(),
+					},
+				});
+			}
+
+			// TODO: Send WhatsApp message to doctor
+			console.log("=== WHATSAPP NOTIFICATION (TODO) ===");
+			console.log(`To: ${application.DoctorProfile?.user.phoneNumber}`);
+			console.log(`Doctor: ${application.DoctorProfile?.user.name}`);
+			console.log(
+				`Job: ${application.job.title} at ${application.job.facility.name}`,
+			);
+			console.log(
+				`Dates: ${application.job.startDate} - ${application.job.endDate}`,
+			);
+			console.log(`Confirmation Link: ${confirmationUrl}`);
+			console.log("=====================================");
+
+			return {
+				application: updatedApplication,
+				confirmationUrl,
+			};
+		} catch (error) {
+			console.error("Error approving application:", error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to approve application",
+			});
+		}
+	}
+
+	/**
+	 * Employer rejects an application
+	 */
+	async rejectApplication(applicationId: string, reason?: string) {
+		try {
+			const application = await prisma.jobApplication.findUnique({
+				where: { id: applicationId },
+			});
+
+			if (!application) {
+				throw new HTTPException(404, {
+					message: "Application not found",
+				});
+			}
+
+			if (
+				application.status === "EMPLOYER_REJECTED" ||
+				application.status === "DOCTOR_REJECTED"
+			) {
+				throw new HTTPException(400, {
+					message: "Application has already been rejected",
+				});
+			}
+
+			if (application.status !== "PENDING") {
+				throw new HTTPException(400, {
+					message: `Cannot reject application with status: ${application.status}`,
+				});
+			}
+
+			const updatedApplication = await prisma.jobApplication.update({
+				where: { id: applicationId },
+				data: {
+					status: "EMPLOYER_REJECTED",
+					rejectedAt: new Date(),
+					rejectionReason: reason,
+					confirmationToken: null,
+					updatedAt: new Date(),
+				},
+			});
+
+			return {
+				application: updatedApplication,
+			};
+		} catch (error) {
+			console.error("Error rejecting application:", error);
+			if (error instanceof HTTPException) throw error;
+
+			throw new HTTPException(500, {
+				message: "Failed to reject application",
+			});
+		}
+	}
+
+	async inviteStaff(
+		facilityId: string,
+		invitedBy: string,
+		email: string,
+		role: string,
+	) {
+		try {
+			const user = await prisma.user.findUnique({
+				where: { email },
+				select: {
+					id: true,
+					name: true,
+					phoneNumberVerified: true,
+					staffProfile: { select: { id: true, facilityId: true } },
+				},
+			});
+
+			if (!user) {
+				throw new HTTPException(404, {
+					message: "User with this email does not exist",
+				});
+			}
+
+			if (!user.phoneNumberVerified) {
+				throw new HTTPException(400, {
+					message: "User must verify their phone number first",
+				});
+			}
+
+			if (user.staffProfile) {
+				throw new HTTPException(400, {
+					message: "User is already a staff member at another facility",
+				});
+			}
+
+			const existingInvite = await prisma.staffInvitation.findUnique({
+				where: { facilityId_email: { facilityId, email } },
+			});
+
+			if (existingInvite && existingInvite.status === "PENDING") {
+				throw new HTTPException(400, {
+					message: "Invitation already sent to this user",
+				});
+			}
+
+			const [facility, inviter] = await Promise.all([
+				prisma.facility.findUnique({
+					where: { id: facilityId },
+					select: { name: true },
+				}),
+				prisma.user.findUnique({
+					where: { id: invitedBy },
+					select: { name: true },
+				}),
+			]);
+
+			if (!facility || !inviter) {
+				throw new HTTPException(404, {
+					message: "Facility or inviter not found",
+				});
+			}
+
+			const token = `${Math.random().toString(36).substring(2)}${Date.now().toString(36)}`;
+			const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+			const invitation = await prisma.staffInvitation.upsert({
+				create: {
+					facilityId,
+					email,
+					role,
+					token,
+					invitedBy,
+					expiresAt,
+				},
+				update: {
+					token,
+					status: "PENDING",
+					expiresAt,
+				},
+				where: {
+					facilityId_email: { facilityId, email },
+				},
+			});
+
+			await notificationService.notifyStaffInvitation({
+				invitationToken: token,
+				email,
+				facilityName: facility.name,
+				role,
+				invitedByName: inviter.name,
+				userId: user.id,
+			});
+
+			return invitation;
+		} catch (error) {
+			console.error("Error in facility.service.inviteStaff:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to send staff invitation",
+			});
+		}
+	}
+
+	async getStaffInvitation(token: string, userId: string) {
+		try {
+			const invitation = await prisma.staffInvitation.findUnique({
+				where: { token },
+				include: {
+					facility: {
+						select: {
+							id: true,
+							name: true,
+							address: true,
+							ownerId: true,
+						},
+					},
+				},
+			});
+
+			if (!invitation) {
+				throw new HTTPException(404, {
+					message: "Invitation not found",
+				});
+			}
+
+			if (new Date() > invitation.expiresAt) {
+				throw new HTTPException(410, {
+					message: "Invitation has expired",
+				});
+			}
+
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { email: true },
+			});
+
+			if (!user || user.email !== invitation.email) {
+				throw new HTTPException(403, {
+					message: "This invitation is not for your account",
+				});
+			}
+
+			return {
+				id: invitation.id,
+				facilityName: invitation.facility.name,
+				facilityAddress: invitation.facility.address,
+				role: invitation.role,
+				status: invitation.status,
+				expiresAt: invitation.expiresAt,
+				createdAt: invitation.createdAt,
+			};
+		} catch (error) {
+			console.error("Error in facility.service.getStaffInvitation:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch invitation",
+			});
+		}
+	}
+
+	async respondToStaffInvitation(
+		token: string,
+		userId: string,
+		action: "accept" | "decline",
+	) {
+		try {
+			const invitation = await prisma.staffInvitation.findUnique({
+				where: { token },
+				include: {
+					facility: {
+						select: {
+							id: true,
+							name: true,
+							ownerId: true,
+						},
+					},
+				},
+			});
+
+			if (!invitation) {
+				throw new HTTPException(404, {
+					message: "Invitation not found",
+				});
+			}
+
+			if (invitation.status !== "PENDING") {
+				throw new HTTPException(400, {
+					message: `Invitation is already "${invitation.status.toLowerCase()}"`,
+				});
+			}
+
+			if (new Date() > invitation.expiresAt) {
+				await prisma.staffInvitation.update({
+					where: { id: invitation.id },
+					data: { status: "EXPIRED" },
+				});
+				throw new HTTPException(410, {
+					message: "Invitation has expired",
+				});
+			}
+
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { email: true, name: true, staffProfile: true },
+			});
+
+			if (!user || user.email !== invitation.email) {
+				throw new HTTPException(403, {
+					message: "This invitation is not for your account",
+				});
+			}
+
+			if (action === "decline") {
+				await prisma.staffInvitation.update({
+					where: { id: invitation.id },
+					data: { status: "REJECTED", acceptedAt: new Date() },
+				});
+
+				return {
+					success: true,
+					message: "Invitation declined successfully",
+					facilityName: invitation.facility.name,
+				};
+			}
+
+			// Accept action
+			if (user.staffProfile) {
+				throw new HTTPException(400, {
+					message: "You are already a staff member at another facility",
+				});
+			}
+
+			await prisma.$transaction([
+				prisma.staffProfile.create({
+					data: {
+						userId,
+						facilityId: invitation.facilityId,
+						role: invitation.role,
+					},
+				}),
+				prisma.staffInvitation.update({
+					where: { id: invitation.id },
+					data: { status: "ACCEPTED", acceptedAt: new Date() },
+				}),
+			]);
+
+			await notificationService.notifyStaffInvitationAccepted({
+				facilityId: invitation.facilityId,
+				facilityOwnerId: invitation.facility.ownerId,
+				staffName: user.name,
+				role: invitation.role,
+			});
+
+			return {
+				success: true,
+				message: `You are now a staff member at ${invitation.facility.name}`,
+				facilityName: invitation.facility.name,
+			};
+		} catch (error) {
+			console.error(
+				"Error in facility.service.respondToStaffInvitation:",
+				error,
+			);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to respond to invitation",
+			});
+		}
+	}
+
+	async deleteStaff(staffId: string, facilityId: string) {
+		try {
+			const staff = await prisma.staffProfile.findFirst({
+				where: { id: staffId, facilityId },
+				include: {
+					facility: { select: { ownerId: true, name: true } },
+					user: { select: { id: true } },
+				},
+			});
+
+			if (!staff) {
+				throw new HTTPException(404, {
+					message: "Staff member not found",
+				});
+			}
+
+			if (staff.userId === staff.facility.ownerId) {
+				throw new HTTPException(400, {
+					message: "Cannot remove facility owner",
+				});
+			}
+
+			await prisma.staffProfile.delete({
+				where: { id: staffId },
+			});
+
+			await notificationService.notifyStaffRemoved({
+				userId: staff.user.id,
+				facilityName: staff.facility.name,
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.deleteStaff:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to remove staff member",
+			});
+		}
+	}
+
+	async getPendingInvitations(facilityId: string) {
+		try {
+			return prisma.staffInvitation.findMany({
+				where: {
+					facilityId,
+					status: "PENDING",
+					expiresAt: { gt: new Date() },
+				},
+				orderBy: { createdAt: "desc" },
+				select: {
+					id: true,
+					email: true,
+					role: true,
+					createdAt: true,
+					expiresAt: true,
+				},
+			});
+		} catch (error) {
+			console.error("Error in facility.service.getPendingInvitations:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch pending invitations",
+			});
+		}
+	}
+
+	async revokeInvitation(invitationId: string, facilityId: string) {
+		try {
+			const invitation = await prisma.staffInvitation.findFirst({
+				where: { id: invitationId, facilityId },
+			});
+
+			if (!invitation) {
+				throw new HTTPException(404, {
+					message: "Invitation not found",
+				});
+			}
+
+			if (invitation.status !== "PENDING") {
+				throw new HTTPException(400, {
+					message: "Can only revoke pending invitations",
+				});
+			}
+
+			await prisma.staffInvitation.update({
+				where: { id: invitationId },
+				data: { status: "REVOKED" },
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.revokeInvitation:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to revoke invitation",
 			});
 		}
 	}

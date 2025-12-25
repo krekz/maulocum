@@ -14,6 +14,8 @@ import type {
 import type { UserRole } from "../../../../prisma/generated/prisma/enums";
 import { automatedDoctorVerification } from "../lib/automated-doctor-verification";
 
+const { facilityService } = await import("./facilities.service");
+
 class ProfileServices {
 	async getUserProfile(userId: string) {
 		try {
@@ -307,6 +309,18 @@ class ProfileServices {
 				message: "Failed to upload file",
 			});
 		}
+	}
+
+	async getStaffInvitation(token: string, userId: string) {
+		return facilityService.getStaffInvitation(token, userId);
+	}
+
+	async respondToStaffInvitation(
+		token: string,
+		userId: string,
+		action: "accept" | "decline",
+	) {
+		return facilityService.respondToStaffInvitation(token, userId, action);
 	}
 }
 export const profileServices = new ProfileServices();

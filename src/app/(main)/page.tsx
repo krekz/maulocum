@@ -737,7 +737,7 @@ export default function Home() {
 										size="lg"
 										className="h-14 px-8 text-lg bg-transparent border-slate-700 text-white hover:bg-slate-800 rounded-full"
 									>
-										I'm a Healthcare Facility
+										For Healthcare Facility
 									</Button>
 								</Link>
 							</div>

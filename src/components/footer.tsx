@@ -65,44 +65,52 @@ function Footerdemo() {
 						<h3 className="mb-4 text-lg font-semibold">Quick Links</h3>
 						<nav className="space-y-2 text-sm">
 							<Link
-								href="#"
+								href="/"
 								className="block transition-colors hover:text-primary"
 							>
 								Home
 							</Link>
 							<Link
-								href="#"
+								href="/about"
 								className="block transition-colors hover:text-primary"
 							>
-								About Us
+								About Maulocum
 							</Link>
 							<Link
-								href="#"
+								href="/support"
 								className="block transition-colors hover:text-primary"
 							>
-								Services
+								System Support
 							</Link>
 							<Link
-								href="#"
+								href="/privacy"
 								className="block transition-colors hover:text-primary"
 							>
-								Products
+								Privacy Policy
 							</Link>
 							<Link
-								href="#"
+								href="/terms"
 								className="block transition-colors hover:text-primary"
 							>
-								Contact
+								Terms of Service
 							</Link>
 						</nav>
 					</div>
 					<div>
 						<h3 className="mb-4 text-lg font-semibold">Contact Us</h3>
 						<address className="space-y-2 text-sm not-italic">
-							<p>123 Innovation Street</p>
-							<p>Tech City, TC 12345</p>
-							<p>Phone: (123) 456-7890</p>
-							<p>Email: hello@example.com</p>
+							<p>Kulliyyah of Information & Communication Technology (KICT)</p>
+							<p>International Islamic University Malaysia (IIUM)</p>
+							<p>Jalan Gombak, 53100 Kuala Lumpur, Malaysia</p>
+							<p>
+								Email:{" "}
+								<a
+									href="mailto:maulocum.project@iium.edu.my"
+									className="underline underline-offset-2 hover:text-foreground"
+								>
+									maulocum.project@gmail.com
+								</a>
+							</p>
 						</address>
 					</div>
 					<div className="relative">
@@ -193,15 +201,9 @@ function Footerdemo() {
 				</div>
 				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 text-center md:flex-row">
 					<p className="text-sm text-muted-foreground">
-						© 2024 Your Company. All rights reserved.
+						© 2025 MauLocum. Developed as an IIUM Final Year Project.
 					</p>
 					<nav className="flex gap-4 text-sm">
-						<Link href="#" className="transition-colors hover:text-primary">
-							Privacy Policy
-						</Link>
-						<Link href="#" className="transition-colors hover:text-primary">
-							Terms of Service
-						</Link>
 						<Link href="#" className="transition-colors hover:text-primary">
 							Cookie Settings
 						</Link>

@@ -12,7 +12,7 @@ function EmployerAppSidebar() {
 			main={{
 				header: {
 					title: data?.facilityName || "Facility",
-					url: "/employer/dashboard",
+					url: "/employer",
 				},
 				basic: [
 					{

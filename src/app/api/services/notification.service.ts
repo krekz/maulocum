@@ -1,7 +1,10 @@
 import { HTTPException } from "hono/http-exception";
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "../../../../prisma/generated/prisma/enums";
-import type { InputJsonValue } from "../../../../prisma/generated/prisma/internal/prismaNamespace";
+import type {
+	InputJsonValue,
+	NotificationWhereInput,
+} from "../../../../prisma/generated/prisma/internal/prismaNamespace";
 
 interface CreateNotificationParams {
 	type: NotificationType;
@@ -62,12 +65,7 @@ export class NotificationService {
 
 	async getNotifications(params: GetNotificationsParams) {
 		try {
-			const where: {
-				userId?: string;
-				doctorProfileId?: string;
-				facilityId?: string;
-				isRead?: boolean;
-			} = {};
+			const where: NotificationWhereInput = {};
 
 			if (params.userId) where.userId = params.userId;
 			if (params.doctorProfileId)
@@ -242,6 +240,38 @@ export class NotificationService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to delete notification",
+			});
+		}
+	}
+
+	async resetAllToUnread(params: {
+		userId?: string;
+		doctorProfileId?: string;
+		facilityId?: string;
+	}) {
+		try {
+			const where: {
+				userId?: string;
+				doctorProfileId?: string;
+				facilityId?: string;
+			} = {};
+
+			if (params.userId) where.userId = params.userId;
+			if (params.doctorProfileId)
+				where.doctorProfileId = params.doctorProfileId;
+			if (params.facilityId) where.facilityId = params.facilityId;
+
+			const result = await prisma.notification.updateMany({
+				where,
+				data: { isRead: false },
+			});
+
+			return { count: result.count };
+		} catch (error) {
+			console.error("Error in notification.service.resetAllToUnread:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to reset notifications",
 			});
 		}
 	}

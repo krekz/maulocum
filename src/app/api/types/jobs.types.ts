@@ -186,11 +186,17 @@ export const jobPostSchema = z
 
 // Job query/filter schema
 export const jobQuerySchema = z.object({
+	search: z.string().optional(), // Fuzzy search across title, description, location
+	state: z.string().optional(), // Filter by state/location
+	specialist: z.string().optional(), // Filter by required specialist
+	jobType: z.enum(JobType).optional(), // Filter by job type
+	payBasis: z.enum(PayBasis).optional(), // Filter by pay basis
+	minPayRate: z.coerce.number().positive().optional(), // Minimum pay rate
+	maxPayRate: z.coerce.number().positive().optional(), // Maximum pay rate
 	status: z.enum(JobStatus).optional(),
 	urgency: z.enum(JobUrgency).optional(),
 	facilityId: z.cuid().optional(),
 	location: z.string().optional(),
-	payBasis: z.enum(PayBasis).optional(),
 	startDate: z.coerce.date().optional(),
 	endDate: z.coerce.date().optional(),
 	page: z.coerce.number().int().positive().default(1),

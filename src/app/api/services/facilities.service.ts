@@ -1705,6 +1705,98 @@ export class FacilityService {
 			});
 		}
 	}
+
+	// ============================================
+	// Facility Profile Update Methods
+	// ============================================
+
+	/**
+	 * Update clinic information section
+	 */
+	async updateClinicInfo(
+		facilityId: string,
+		data: {
+			address: string;
+			contactPhone: string;
+			contactEmail: string;
+			website?: string;
+			operatingHours?: string;
+		},
+	) {
+		try {
+			await prisma.facility.update({
+				where: { id: facilityId },
+				data: {
+					address: data.address,
+					contactPhone: data.contactPhone,
+					contactEmail: data.contactEmail,
+					website: data.website || null,
+					operatingHours: data.operatingHours || null,
+					updatedAt: new Date(),
+				},
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.updateClinicInfo:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to update clinic information",
+			});
+		}
+	}
+
+	/**
+	 * Update about section
+	 */
+	async updateAbout(facilityId: string, data: { description?: string }) {
+		try {
+			await prisma.facility.update({
+				where: { id: facilityId },
+				data: {
+					description: data.description || null,
+					updatedAt: new Date(),
+				},
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.updateAbout:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to update about section",
+			});
+		}
+	}
+
+	/**
+	 * Update facilities & services section
+	 */
+	async updateFacilitiesServices(
+		facilityId: string,
+		data: { facilitiesServices: string[] },
+	) {
+		try {
+			await prisma.facility.update({
+				where: { id: facilityId },
+				data: {
+					facilitiesServices: data.facilitiesServices,
+					updatedAt: new Date(),
+				},
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error(
+				"Error in facility.service.updateFacilitiesServices:",
+				error,
+			);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to update facilities & services",
+			});
+		}
+	}
 }
 
 // Export singleton instance

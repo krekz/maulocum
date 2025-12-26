@@ -205,6 +205,9 @@ model Facility {
   contactPhone         String
   profileImage         String?
   description          String?
+  website              String?
+  operatingHours       String?
+  facilitiesServices   String[]              @default([])
   ownerId              String                @unique
   owner                User                  @relation("FacilityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   jobs                 Job[]
@@ -335,7 +338,7 @@ model ContactInfo {
   createdAt  DateTime @default(now())
 
   @@index([facilityId])
-  @@map("contact_info")
+  @@map("facility_contact_info")
 }
 
 model StaffProfile {
@@ -351,6 +354,7 @@ model StaffProfile {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([facilityId])
+  @@map("facility_staff_profile")
 }
 
 model FacilityVerification {
@@ -380,6 +384,7 @@ model JobBookmark {
   doctorProfileId String
 
   @@id([jobId, doctorProfileId])
+  @@map("job_bookmark")
 }
 
 enum InvitationStatus {
@@ -408,7 +413,7 @@ model StaffInvitation {
   @@index([token])
   @@index([facilityId])
   @@index([email])
-  @@map("staff_invitation")
+  @@map("facility_staff_invitation")
 }
 
 model Notification {

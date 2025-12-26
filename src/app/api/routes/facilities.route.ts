@@ -9,6 +9,9 @@ import {
 	facilityQuerySchema,
 	facilityRegistrationApiSchema,
 	facilityVerificationEditApiSchema,
+	updateAboutSchema,
+	updateClinicInfoSchema,
+	updateFacilitiesServicesSchema,
 } from "../types/facilities.types";
 import type { FacilityVariables } from "../types/hono.types";
 import { jobPostInputSchema, jobPostSchema } from "../types/jobs.types";
@@ -65,6 +68,10 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 							address: facility.address,
 							contactPhone: facility.contactPhone,
 							contactEmail: facility.contactEmail,
+							description: facility.description,
+							website: facility.website,
+							operatingHours: facility.operatingHours,
+							facilitiesServices: facility.facilitiesServices,
 							contactInfo: facility.contactInfo,
 							facilityVerification: facility.facilityVerification,
 						},
@@ -985,6 +992,111 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 				return c.json({
 					success: true,
 					message: "Staff member removed successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/profile/clinic-info
+	 * Update clinic information section
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/profile/clinic-info",
+		requireActiveEmployer,
+		zValidator("json", updateClinicInfoSchema),
+		async (c) => {
+			try {
+				const data = c.req.valid("json");
+				const staffProfile = c.get("staffProfile");
+
+				await facilityService.updateClinicInfo(staffProfile.facilityId, data);
+
+				return c.json({
+					success: true,
+					message: "Clinic information updated successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/profile/about
+	 * Update about section
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/profile/about",
+		requireActiveEmployer,
+		zValidator("json", updateAboutSchema),
+		async (c) => {
+			try {
+				const data = c.req.valid("json");
+				const staffProfile = c.get("staffProfile");
+
+				await facilityService.updateAbout(staffProfile.facilityId, data);
+
+				return c.json({
+					success: true,
+					message: "About section updated successfully",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/profile/facilities-services
+	 * Update facilities & services section
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/profile/facilities-services",
+		requireActiveEmployer,
+		zValidator("json", updateFacilitiesServicesSchema),
+		async (c) => {
+			try {
+				const data = c.req.valid("json");
+				const staffProfile = c.get("staffProfile");
+
+				await facilityService.updateFacilitiesServices(
+					staffProfile.facilityId,
+					data,
+				);
+
+				return c.json({
+					success: true,
+					message: "Facilities & services updated successfully",
 				});
 			} catch (error) {
 				console.error(error);

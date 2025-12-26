@@ -105,6 +105,13 @@ export class FacilityService {
 				},
 			});
 
+			await notificationService.createNotification({
+				type: "FACILITY_VERIFICATION_APPROVED",
+				title: "Facility Verification Approved",
+				message: "Your facility verification has been approved.",
+				facilityId: facility.id,
+			});
+
 			return {
 				facility,
 				message:

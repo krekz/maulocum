@@ -5,7 +5,7 @@ const STATE_OPTIONS = [
 	{ value: "kedah", label: "Kedah" },
 	{ value: "kelantan", label: "Kelantan" },
 	{ value: "melaka", label: "Melaka" },
-	{ value: "ns", label: "Negeri Sembilan" },
+	{ value: "negeri sembilan", label: "Negeri Sembilan" },
 	{ value: "pahang", label: "Pahang" },
 	{ value: "perak", label: "Perak" },
 	{ value: "perlis", label: "Perlis" },
@@ -14,7 +14,7 @@ const STATE_OPTIONS = [
 	{ value: "sarawak", label: "Sarawak" },
 	{ value: "selangor", label: "Selangor" },
 	{ value: "terengganu", label: "Terengganu" },
-	{ value: "kl", label: "Kuala Lumpur" },
+	{ value: "kuala lumpur", label: "Kuala Lumpur" },
 ];
 
 const SPECIALIST_OPTIONS = [

@@ -5,6 +5,7 @@ import {
 	Book,
 	Heart,
 	History,
+	Mail,
 	Menu,
 	Settings,
 	Star,
@@ -137,6 +138,11 @@ const MainNavbar = ({
 			url: "/profile/bookmarks",
 		},
 		{
+			name: "Inbox",
+			icon: <Mail className="h-4 w-4" />,
+			url: "/profile/inbox",
+		},
+		{
 			name: "Settings",
 			icon: <Settings className="h-4 w-4" />,
 			url: "/profile/settings",
@@ -208,108 +214,113 @@ const MainNavbar = ({
 							/>
 							<span className="text-lg font-semibold">{logo.title}</span>
 						</Link>
-						<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-							<SheetTrigger asChild>
-								<Button variant="outline" size="icon">
-									<Menu className="size-4" />
-								</Button>
-							</SheetTrigger>
-							<SheetContent className="overflow-y-auto">
-								<SheetHeader>
-									<SheetTitle>
-										<Link
-											href={logo.url}
-											className="flex items-center gap-2"
-											onClick={closeSheet}
+						<div className="flex">
+							<NotificationBell />
+							<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+								<SheetTrigger asChild>
+									<Button variant="outline" size="icon">
+										<Menu className="size-4" />
+									</Button>
+								</SheetTrigger>
+								<SheetContent className="overflow-y-auto">
+									<SheetHeader>
+										<SheetTitle>
+											<Link
+												href={logo.url}
+												className="flex items-center gap-2"
+												onClick={closeSheet}
+											>
+												<Image
+													src={logo.src}
+													width={32}
+													height={32}
+													className="w-8 min-w-[32px]"
+													alt={logo.alt}
+												/>
+												<span className="text-lg font-semibold">
+													{logo.title}
+												</span>
+											</Link>
+										</SheetTitle>
+									</SheetHeader>
+									<div className="m-4 flex flex-col gap-4 ">
+										<Accordion
+											type="single"
+											collapsible
+											className="flex w-full flex-col gap-4"
 										>
-											<Image
-												src={logo.src}
-												width={32}
-												height={32}
-												className="w-8 min-w-[32px]"
-												alt={logo.alt}
-											/>
-											<span className="text-lg font-semibold">
-												{logo.title}
-											</span>
-										</Link>
-									</SheetTitle>
-								</SheetHeader>
-								<div className="m-4 flex flex-col gap-4 ">
-									<Accordion
-										type="single"
-										collapsible
-										className="flex w-full flex-col gap-4"
-									>
-										{menu.map((item) => renderMobileMenuItem(item, closeSheet))}
-									</Accordion>
-									<div className="border-t py-4">
-										<div className="flex justify-center text-lg font-semibold mb-2">
-											Menu
-										</div>
-										<div className="grid grid-cols-2 justify-start">
-											{mobileExtraLinks.map((link, idx) => (
-												<Link
-													key={idx}
-													className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-accent-foreground active:scale-95 active:bg-muted"
-													href={link.url}
-													onClick={closeSheet}
-												>
-													{link.icon && (
-														<span className="inline-flex items-center ">
-															{link.icon}
-														</span>
-													)}
-													{link.name}
-												</Link>
-											))}
-										</div>
-									</div>
-									<div className="flex flex-col gap-3">
-										{isPending ? (
-											<div className="space-y-3">
-												<div className="flex items-center gap-3 p-3 border rounded-md">
-													<Skeleton className="h-10 w-10 rounded-full" />
-													<div className="flex-1 space-y-2">
-														<Skeleton className="h-4 w-24" />
-														<Skeleton className="h-3 w-32" />
-													</div>
-												</div>
-												<Skeleton className="h-10 w-full" />
+											{menu.map((item) =>
+												renderMobileMenuItem(item, closeSheet),
+											)}
+										</Accordion>
+										<div className="border-t py-4">
+											<div className="flex justify-center text-lg font-semibold mb-2">
+												Menu
 											</div>
-										) : session?.user ? (
-											<>
-												<div className="flex items-center gap-3 p-3 text-center rounded-md ">
-													<div className="flex-1">
-														<p className="font-medium">{session.user.name}</p>
-														<p className="text-base tracking-wider font-light text-muted-foreground">
-															{session.user.email}
-														</p>
+											<div className="grid grid-cols-2 justify-start">
+												{mobileExtraLinks.map((link, idx) => (
+													<Link
+														key={idx}
+														className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-accent-foreground active:scale-95 active:bg-muted"
+														href={link.url}
+														onClick={closeSheet}
+													>
+														{link.icon && (
+															<span className="inline-flex items-center ">
+																{link.icon}
+															</span>
+														)}
+														{link.name}
+													</Link>
+												))}
+											</div>
+										</div>
+										<div className="flex flex-col gap-3">
+											{isPending ? (
+												<div className="space-y-3">
+													<div className="flex items-center gap-3 p-3 border rounded-md">
+														<Skeleton className="h-10 w-10 rounded-full" />
+														<div className="flex-1 space-y-2">
+															<Skeleton className="h-4 w-24" />
+															<Skeleton className="h-3 w-32" />
+														</div>
 													</div>
+													<Skeleton className="h-10 w-full" />
 												</div>
+											) : session?.user ? (
+												<>
+													<div className="flex items-center gap-3 p-3 text-center rounded-md ">
+														<div className="flex-1">
+															<p className="font-medium">{session.user.name}</p>
+															<p className="text-base tracking-wider font-light text-muted-foreground">
+																{session.user.email}
+															</p>
+														</div>
+													</div>
+													<Button
+														onClick={() => handleLogout()}
+														variant="outline"
+														className="active:scale-95"
+													>
+														Log out
+													</Button>
+												</>
+											) : (
 												<Button
-													onClick={() => handleLogout()}
+													asChild
 													variant="outline"
 													className="active:scale-95"
 												>
-													Log out
+													<Link href={auth.login.url} onClick={closeSheet}>
+														{auth.login.text}
+													</Link>
 												</Button>
-											</>
-										) : (
-											<Button
-												asChild
-												variant="outline"
-												className="active:scale-95"
-											>
-												<Link href={auth.login.url} onClick={closeSheet}>
-													{auth.login.text}
-												</Link>
-											</Button>
-										)}
+											)}
+										</div>
 									</div>
-								</div>
-							</SheetContent>
-						</Sheet>
+								</SheetContent>
+							</Sheet>
+						</div>
 					</div>
 				</div>
 			</div>

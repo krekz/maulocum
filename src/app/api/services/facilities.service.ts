@@ -1223,40 +1223,12 @@ export class FacilityService {
 			const confirmationToken = crypto.randomUUID();
 
 			// Update application status
-			const updatedApplication = await prisma.jobApplication.update({
+			await prisma.jobApplication.update({
 				where: { id: applicationId },
 				data: {
 					status: "EMPLOYER_APPROVED",
 					confirmationToken,
 					employerApprovedAt: new Date(),
-				},
-				include: {
-					job: {
-						select: {
-							id: true,
-							title: true,
-							startDate: true,
-							endDate: true,
-							facility: {
-								select: {
-									id: true,
-									name: true,
-								},
-							},
-						},
-					},
-					DoctorProfile: {
-						include: {
-							user: {
-								select: {
-									id: true,
-									name: true,
-									email: true,
-									phoneNumber: true,
-								},
-							},
-						},
-					},
 				},
 			});
 
@@ -1264,24 +1236,22 @@ export class FacilityService {
 			const confirmationUrl = `${process.env.BETTER_AUTH_URL}/jobs/confirm/${confirmationToken}`;
 
 			// Send notification to doctor
-			if (application.DoctorProfile) {
-				await notificationService.createNotification({
-					type: "JOB_APPLICATION_APPROVED",
-					title: "Application Approved!",
-					message: `Your application for ${application.job.title} at ${application.job.facility.name} has been approved. Please confirm your availability.`,
-					doctorProfileId: application.DoctorProfile.id,
-					jobId: application.job.id,
-					jobApplicationId: application.id,
-					actionUrl: `/jobs/confirm/${confirmationToken}`,
-					metadata: {
-						facilityName: application.job.facility.name,
-						jobTitle: application.job.title,
-						confirmationUrl,
-						startDate: application.job.startDate.toISOString(),
-						endDate: application.job.endDate.toISOString(),
-					},
-				});
-			}
+			await notificationService.createNotification({
+				type: "JOB_APPLICATION_APPROVED",
+				title: "Application Approved!",
+				message: `Your application for ${application.job.title} at ${application.job.facility.name} has been approved. Please confirm your availability.`,
+				doctorProfileId: application.DoctorProfile?.id,
+				jobId: application.job.id,
+				userId: application.DoctorProfile?.userId,
+				actionUrl: `/jobs/confirm/${confirmationToken}`,
+				metadata: {
+					facilityName: application.job.facility.name,
+					jobTitle: application.job.title,
+					confirmationUrl,
+					startDate: application.job.startDate.toISOString(),
+					endDate: application.job.endDate.toISOString(),
+				},
+			});
 
 			// TODO: Send WhatsApp message to doctor
 			console.log("=== WHATSAPP NOTIFICATION (TODO) ===");
@@ -1296,10 +1266,7 @@ export class FacilityService {
 			console.log(`Confirmation Link: ${confirmationUrl}`);
 			console.log("=====================================");
 
-			return {
-				application: updatedApplication,
-				confirmationUrl,
-			};
+			return;
 		} catch (error) {
 			console.error("Error approving application:", error);
 			if (error instanceof HTTPException) throw error;
@@ -1340,7 +1307,7 @@ export class FacilityService {
 				});
 			}
 
-			const updatedApplication = await prisma.jobApplication.update({
+			await prisma.jobApplication.update({
 				where: { id: applicationId },
 				data: {
 					status: "EMPLOYER_REJECTED",
@@ -1351,9 +1318,7 @@ export class FacilityService {
 				},
 			});
 
-			return {
-				application: updatedApplication,
-			};
+			return;
 		} catch (error) {
 			console.error("Error rejecting application:", error);
 			if (error instanceof HTTPException) throw error;

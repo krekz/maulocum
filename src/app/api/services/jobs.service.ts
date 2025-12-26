@@ -10,6 +10,7 @@ import {
 	type JobQuery,
 	limitedAccessSelect,
 } from "../types/jobs.types";
+import { notificationService } from "./notification.service";
 
 // This is for public endpoint in /jobs page. for creating/updating/deleting jobs, is on facility service
 export class JobService {
@@ -338,6 +339,14 @@ export class JobService {
 					data: { status: "FILLED" },
 				}),
 			]);
+
+			await notificationService.createNotification({
+				type: "JOB_APPLICATION_CONFIRMED",
+				title: "Booking Confirmed!",
+				message: `Doctor ${application.DoctorProfile?.user.name} has confirmed the booking for ${application.job.title}.`,
+				facilityId: application.job.facility.id,
+				jobId: application.job.id,
+			});
 
 			// TODO: Send confirmation WhatsApp to employer
 			console.log("=== EMPLOYER NOTIFICATION (TODO) ===");

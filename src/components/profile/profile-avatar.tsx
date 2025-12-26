@@ -5,6 +5,7 @@ import {
 	Bookmark,
 	LogOut,
 	type LucideIcon,
+	Mail,
 	Settings,
 	Star,
 	Stethoscope,
@@ -58,6 +59,7 @@ export function ProfileAvatar({
 		{ href: "/profile/bookmarks", label: "Bookmarks", icon: Bookmark },
 		{ href: "/profile/reviews", label: "Reviews", icon: Star },
 
+		{ href: "/profile/inbox", label: "Inbox", icon: Mail },
 		{ href: "/profile/settings", label: "Settings", icon: Settings },
 		{
 			href: "#",

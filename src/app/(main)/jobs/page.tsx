@@ -3,21 +3,57 @@ import { headers } from "next/headers";
 import JobDetails from "@/components/jobs/job-details";
 import JobFilter from "@/components/jobs/job-filter";
 import JobList from "@/components/jobs/job-list";
+import { auth } from "@/lib/auth";
 import { backendApi } from "@/lib/rpc";
 
 export const dynamic = "force-dynamic";
 
-async function JobsPage() {
+type SearchParams = Promise<{
+	search?: string;
+	state?: string;
+	specialist?: string;
+	jobType?: string;
+	payBasis?: string;
+	minPayRate?: string;
+	maxPayRate?: string;
+	page?: string;
+}>;
+
+async function JobsPage({ searchParams }: { searchParams: SearchParams }) {
 	const headersList = await headers();
 	const cookie = headersList.get("cookie");
+	const params = await searchParams;
+
+	// Check if user is authenticated doctor/admin
+	const session = await auth.api.getSession({
+		headers: headersList,
+	});
+
+	let hasFullAccess = false;
+	if (session?.user?.id) {
+		// Check if user has a doctor profile (indicates doctor role)
+		hasFullAccess = session.user.doctorProfile !== null;
+	}
+
+	// Build query object, only include non-empty values
+	const query: Record<string, string> = {
+		page: params.page || "1",
+		limit: "10",
+	};
+
+	if (params.search) query.search = params.search;
+	if (params.state && params.state !== "all") query.state = params.state;
+	if (params.specialist && params.specialist !== "all")
+		query.specialist = params.specialist;
+	if (params.jobType && params.jobType !== "all")
+		query.jobType = params.jobType;
+	if (params.payBasis && params.payBasis !== "all")
+		query.payBasis = params.payBasis;
+	if (params.minPayRate) query.minPayRate = params.minPayRate;
+	if (params.maxPayRate) query.maxPayRate = params.maxPayRate;
 
 	const jobs = await backendApi.api.v2.jobs.$get(
-		{
-			query: {
-				page: "1",
-				limit: "10",
-			},
-		},
+		{ query },
 		{
 			headers: {
 				cookie: cookie || "",
@@ -28,7 +64,7 @@ async function JobsPage() {
 
 	return (
 		<div className="min-h-screen bg-slate-50">
-			<JobFilter />
+			{hasFullAccess && <JobFilter />}
 			<div className="lg:container mx-auto px-4 py-6">
 				{(() => {
 					switch (jobs.status) {

@@ -55,30 +55,7 @@ export class JobService {
 				headers: c.req.raw.headers,
 			});
 
-			const {
-				status,
-				urgency,
-				facilityId,
-				location,
-				payBasis,
-				startDate,
-				endDate,
-				page,
-				limit,
-			} = query;
-
-			const where: Prisma.JobWhereInput = {};
-
-			if (status) where.status = status;
-			if (urgency) where.urgency = urgency;
-			if (facilityId) where.facilityId = facilityId;
-			if (location)
-				where.location = { contains: location, mode: "insensitive" };
-			if (payBasis) where.payBasis = payBasis;
-			if (startDate) where.startDate = { gte: startDate };
-			if (endDate) where.endDate = { lte: endDate };
-
-			const skip = (page - 1) * limit;
+			const { page, limit } = query;
 
 			// Check if user has doctor or admin role
 			let hasFullAccess = false;
@@ -97,6 +74,82 @@ export class JobService {
 					false;
 				doctorProfileId = user?.doctorProfile?.id ?? null;
 			}
+
+			const where: Prisma.JobWhereInput = {};
+
+			// Only allow filtering for authenticated doctors/admins
+			if (hasFullAccess) {
+				const {
+					search,
+					state,
+					specialist,
+					jobType,
+					payBasis,
+					minPayRate,
+					maxPayRate,
+					status,
+					urgency,
+					facilityId,
+					location,
+					startDate,
+					endDate,
+				} = query;
+
+				// Fuzzy search across multiple fields
+				if (search) {
+					where.OR = [
+						{ title: { contains: search, mode: "insensitive" } },
+						{ description: { contains: search, mode: "insensitive" } },
+						{ location: { contains: search, mode: "insensitive" } },
+						{
+							facility: {
+								name: { contains: search, mode: "insensitive" },
+							},
+						},
+					];
+				}
+
+				// Filter by state (location contains state name)
+				if (state && state !== "all") {
+					where.location = { contains: state, mode: "insensitive" };
+				}
+
+				// Filter by specialist (requiredSpecialists array contains specialist)
+				if (specialist && specialist !== "all") {
+					where.requiredSpecialists = { has: specialist };
+				}
+
+				// Filter by job type
+				if (jobType) {
+					where.jobType = jobType;
+				}
+
+				// Filter by pay basis
+				if (payBasis) {
+					where.payBasis = payBasis;
+				}
+
+				// Filter by pay rate range
+				if (minPayRate !== undefined || maxPayRate !== undefined) {
+					where.payRate = {};
+					if (minPayRate !== undefined) {
+						where.payRate.gte = minPayRate.toString();
+					}
+					if (maxPayRate !== undefined) {
+						where.payRate.lte = maxPayRate.toString();
+					}
+				}
+
+				if (status) where.status = status;
+				if (urgency) where.urgency = urgency;
+				if (facilityId) where.facilityId = facilityId;
+				if (location)
+					where.location = { contains: location, mode: "insensitive" };
+				if (startDate) where.startDate = { gte: startDate };
+				if (endDate) where.endDate = { lte: endDate };
+			}
+
+			const skip = (page - 1) * limit;
 
 			if (hasFullAccess) {
 				const [fullAccessJobs, total] = await Promise.all([
@@ -138,16 +191,12 @@ export class JobService {
 					},
 				};
 			} else {
-				const [limitedAccessJobs, total] = await Promise.all([
-					prisma.job.findMany({
-						where,
-						skip,
-						take: limit,
-						orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
-						select: limitedAccessSelect,
-					}),
-					prisma.job.count({ where }),
-				]);
+				// Non-authenticated users: Always return fixed 5 jobs, no filtering
+				const limitedAccessJobs = await prisma.job.findMany({
+					take: 5,
+					orderBy: [{ urgency: "desc" }, { createdAt: "desc" }],
+					select: limitedAccessSelect,
+				});
 
 				if (!limitedAccessJobs.length) {
 					throw new HTTPException(404, { message: "Jobs not found" });
@@ -156,10 +205,10 @@ export class JobService {
 				return {
 					jobs: limitedAccessJobs,
 					pagination: {
-						total,
-						page,
-						limit,
-						totalPages: Math.ceil(total / limit),
+						total: 5,
+						page: 1,
+						limit: 5,
+						totalPages: 1,
 					},
 				};
 			}

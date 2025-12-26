@@ -133,6 +133,47 @@ export type FacilityVerificationEditApiInput = z.infer<
 	typeof facilityVerificationEditApiSchema
 >;
 
+// Schema for editing clinic information section
+export const updateClinicInfoSchema = z.object({
+	address: z
+		.string()
+		.min(10, "Address must be at least 10 characters")
+		.max(200),
+	contactPhone: z
+		.string()
+		.min(10)
+		.max(15)
+		.regex(/^[0-9+\-\s()]+$/, "Invalid phone number format"),
+	contactEmail: z.string().email().toLowerCase(),
+	website: z.url("Invalid URL").optional().or(z.literal("")),
+	operatingHours: z.string().max(500).optional().or(z.literal("")),
+});
+
+export type UpdateClinicInfoInput = z.infer<typeof updateClinicInfoSchema>;
+
+// Schema for editing about section
+export const updateAboutSchema = z.object({
+	description: z
+		.string()
+		.min(10, "Description must be at least 10 characters")
+		.max(2000)
+		.optional()
+		.or(z.literal("")),
+});
+
+export type UpdateAboutInput = z.infer<typeof updateAboutSchema>;
+
+// Schema for editing facilities & services section
+export const updateFacilitiesServicesSchema = z.object({
+	facilitiesServices: z
+		.array(z.string().min(1).max(100))
+		.max(50, "Maximum 50 services allowed"),
+});
+
+export type UpdateFacilitiesServicesInput = z.infer<
+	typeof updateFacilitiesServicesSchema
+>;
+
 export type FacilityQuery = z.infer<typeof facilityQuerySchema>;
 export type ContactInfo = z.infer<typeof contactInfoSchema>;
 export type CreateContactInfoInput = z.infer<typeof createContactInfoSchema>;

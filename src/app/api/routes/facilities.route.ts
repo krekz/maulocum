@@ -799,15 +799,11 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 			const { applicationId } = c.req.valid("param");
 
 			try {
-				const result = await facilityService.approveApplication(applicationId);
+				await facilityService.approveApplication(applicationId);
 
 				return c.json({
 					success: true,
 					message: "Application approved. Confirmation link sent to doctor.",
-					data: {
-						application: result.application,
-						confirmationUrl: result.confirmationUrl,
-					},
 				});
 			} catch (error) {
 				console.error("Error approving application:", error);
@@ -816,7 +812,6 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 					{
 						success: false,
 						message: httpError.message,
-						data: null,
 					},
 					httpError.status,
 				);
@@ -837,15 +832,11 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 			const { reason } = c.req.valid("json");
 
 			try {
-				const result = await facilityService.rejectApplication(
-					applicationId,
-					reason,
-				);
+				await facilityService.rejectApplication(applicationId, reason);
 
 				return c.json({
 					success: true,
 					message: "Application rejected.",
-					data: result.application,
 				});
 			} catch (error) {
 				console.error("Error rejecting application:", error);
@@ -854,7 +845,6 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 					{
 						success: false,
 						message: httpError.message,
-						data: null,
 					},
 					httpError.status,
 				);

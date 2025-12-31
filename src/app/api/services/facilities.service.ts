@@ -1,12 +1,13 @@
 import { HTTPException } from "hono/http-exception";
 import { prisma } from "@/lib/prisma";
+import { getDisplayName } from "@/lib/utils/name.utils";
+import type { Prisma } from "../../../../prisma/generated/prisma/client";
 import {
 	deleteFromR2,
 	extractKeyFromUrl,
 	generateFileKey,
 	uploadToR2,
-} from "@/lib/r2";
-import type { Prisma } from "../../../../prisma/generated/prisma/client";
+} from "../../../lib/r2";
 import type {
 	CreateContactInfoInput,
 	FacilityQuery,
@@ -1201,10 +1202,14 @@ export class FacilityService {
 					},
 					DoctorProfile: {
 						include: {
+							doctorVerification: {
+								select: {
+									fullName: true,
+								},
+							},
 							user: {
 								select: {
 									id: true,
-									name: true,
 									email: true,
 									phoneNumber: true,
 								},
@@ -1260,18 +1265,64 @@ export class FacilityService {
 				},
 			});
 
-			// TODO: Send WhatsApp message to doctor
-			console.log("=== WHATSAPP NOTIFICATION (TODO) ===");
-			console.log(`To: ${application.DoctorProfile?.user.phoneNumber}`);
-			console.log(`Doctor: ${application.DoctorProfile?.user.name}`);
-			console.log(
-				`Job: ${application.job.title} at ${application.job.facility.name}`,
-			);
-			console.log(
-				`Dates: ${application.job.startDate} - ${application.job.endDate}`,
-			);
-			console.log(`Confirmation Link: ${confirmationUrl}`);
-			console.log("=====================================");
+			// Send WhatsApp notification via queue
+			if (application.DoctorProfile?.user.phoneNumber) {
+				const doctorDisplayName = getDisplayName(
+					application.DoctorProfile.doctorVerification?.fullName,
+				);
+				const message = `🎉 *Application Approved!*\n\nDear Dr. ${doctorDisplayName},\n\nYour application for *${application.job.title}* at *${application.job.facility.name}* has been approved!\n\n📅 *Job Details:*\n- Start Date: ${application.job.startDate.toLocaleDateString()}\n- End Date: ${application.job.endDate.toLocaleDateString()}\n\n⚠️ *Action Required:*\nPlease confirm your availability within 24 hours:\n${confirmationUrl}\n\nThank you for using MauLocum! 🏥`;
+
+				try {
+					const res = await fetch(
+						`${process.env.WHATSAPP_NOTIFICATIONS_API_URL}/api/whatsapp/job`,
+						{
+							method: "POST",
+							body: JSON.stringify({
+								phoneNumber: application.DoctorProfile.user.phoneNumber,
+								message,
+								metadata: {
+									doctorName:
+										application.DoctorProfile.doctorVerification?.fullName ??
+										undefined,
+									jobTitle: application.job.title,
+									facilityName: application.job.facility.name,
+									startDate: application.job.startDate.toISOString(),
+									endDate: application.job.endDate.toISOString(),
+									confirmationUrl,
+									applicationId: application.id,
+								},
+							}),
+							headers: {
+								"Content-Type": "application/json",
+								"x-api-key": `${process.env.WHATSAPP_NOTIFICATIONS_API_KEY}`,
+							},
+						},
+					);
+
+					const data = await res.json();
+
+					if (!res.ok) {
+						switch (res.status) {
+							case 422: {
+								console.error("Notifications format failed", data.message);
+								throw new Error(data);
+							}
+							case 401: {
+								console.error("Notifications Unauthorized", data.message);
+								throw new Error(data);
+							}
+							default: {
+								console.error("Notifications Unknown Error", data.message);
+								throw new Error(data);
+							}
+						}
+					}
+
+					console.log("Succesfully send Notifications");
+				} catch (error) {
+					console.error(error);
+				}
+			}
 
 			return;
 		} catch (error) {

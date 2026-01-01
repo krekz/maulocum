@@ -131,9 +131,19 @@ const NavbarEmployer = ({
 
 						{/* Logged in but not employer - show register button */}
 						{session && !session.user.isEmployer && (
-							<Button asChild size="sm">
-								<Link href="/employer/register">Register as Employer</Link>
-							</Button>
+							<>
+								<Button asChild size="sm">
+									<Link href="/employer/register">Register as Employer</Link>
+								</Button>
+								<Button
+									onClick={() => handleLogout()}
+									variant="ghost"
+									size="icon"
+									className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+								>
+									<LogOut className="h-4 w-4" />
+								</Button>
+							</>
 						)}
 
 						{/* Logged in as employer */}

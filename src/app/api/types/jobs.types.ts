@@ -1,5 +1,14 @@
 import { z } from "zod";
-import type { Prisma } from "../../../../prisma/generated/prisma/client";
+import {
+	JobStatus,
+	JobType,
+	JobUrgency,
+	PayBasis,
+} from "../../../../prisma/generated/prisma/enums";
+import type {
+	JobGetPayload,
+	JobSelect,
+} from "../../../../prisma/generated/prisma/models";
 
 // Select objects defined first
 export const fullAccessSelect = {
@@ -52,7 +61,7 @@ export const fullAccessSelect = {
 			applicants: true,
 		},
 	},
-} satisfies Prisma.JobSelect;
+} satisfies JobSelect;
 
 export const limitedAccessSelect = {
 	id: true,
@@ -65,14 +74,14 @@ export const limitedAccessSelect = {
 			address: true,
 		},
 	},
-} satisfies Prisma.JobSelect;
+} satisfies JobSelect;
 
 // Dynamic types derived from select objects
-export type FullAccessJob = Prisma.JobGetPayload<{
+export type FullAccessJob = JobGetPayload<{
 	select: typeof fullAccessSelect;
 }> & { isBookmarked: boolean };
 
-export type LimitedAccessJob = Prisma.JobGetPayload<{
+export type LimitedAccessJob = JobGetPayload<{
 	select: typeof limitedAccessSelect;
 }>;
 
@@ -87,33 +96,6 @@ export type GetJobsPromiseReturn = Promise<
 	| { jobs: FullAccessJob[]; pagination: Pagination }
 	| { jobs: LimitedAccessJob[]; pagination: Pagination }
 >;
-
-// Enums
-export const JobUrgency = {
-	HIGH: "HIGH",
-	MEDIUM: "MEDIUM",
-	LOW: "LOW",
-} as const;
-
-export const JobStatus = {
-	OPEN: "OPEN",
-	CLOSED: "CLOSED",
-	FILLED: "FILLED",
-} as const;
-
-export const PayBasis = {
-	HOURLY: "HOURLY",
-	DAILY: "DAILY",
-	WEEKLY: "WEEKLY",
-	MONTHLY: "MONTHLY",
-} as const;
-
-export const JobType = {
-	FULL_TIME: "FULL_TIME",
-	PART_TIME: "PART_TIME",
-	LOCUM: "LOCUM",
-	CONTRACT: "CONTRACT",
-} as const;
 
 // API input schema (accepts string dates from HTTP)
 export const jobPostInputSchema = z

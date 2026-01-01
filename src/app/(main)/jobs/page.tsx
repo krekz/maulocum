@@ -53,7 +53,12 @@ async function JobsPage({ searchParams }: { searchParams: SearchParams }) {
 	if (params.maxPayRate) query.maxPayRate = params.maxPayRate;
 
 	const jobs = await backendApi.api.v2.jobs.$get(
-		{ query },
+		{
+			query: {
+				...query,
+				status: "OPEN",
+			},
+		},
 		{
 			headers: {
 				cookie: cookie || "",

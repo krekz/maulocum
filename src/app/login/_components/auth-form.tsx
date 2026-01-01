@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconBrandGoogle, IconMail } from "@tabler/icons-react";
-import { type HTMLAttributes, useState } from "react";
+import { IconBrandGoogle, IconLock } from "@tabler/icons-react";
+import { type HTMLAttributes, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
 	FormControl,
 	FormField,
 	FormItem,
+	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -20,16 +21,42 @@ type UserAuthFormProps = HTMLAttributes<HTMLDivElement>;
 
 const formSchema = z.object({
 	email: z.email({ message: "Please enter a valid email address" }),
+	password: z
+		.string()
+		.min(6, { message: "Password must be at least 6 characters" }),
 });
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 	const [isLoading, setIsLoading] = useState(false);
-	const [magicLinkSent, setMagicLinkSent] = useState(false);
+	const [callbackURL, setCallbackURL] = useState("/jobs");
+
+	useEffect(() => {
+		// Get the referrer (previous page) from browser history
+		const referrer = document.referrer;
+
+		if (referrer) {
+			try {
+				const referrerUrl = new URL(referrer);
+				const currentUrl = new URL(window.location.href);
+
+				// Only use referrer if it's from the same origin and not the login page
+				if (
+					referrerUrl.origin === currentUrl.origin &&
+					!referrerUrl.pathname.includes("/login")
+				) {
+					setCallbackURL(referrerUrl.pathname + referrerUrl.search);
+				}
+			} catch (error) {
+				console.error("Error parsing referrer:", error);
+			}
+		}
+	}, []);
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			email: "",
+			password: "",
 		},
 	});
 
@@ -38,7 +65,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 		try {
 			await authClient.signIn.social({
 				provider: "google",
-				callbackURL: "/jobs",
+				callbackURL,
 			});
 		} catch (error) {
 			console.error("Google sign-in error:", error);
@@ -50,22 +77,41 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 	async function onSubmit(data: z.infer<typeof formSchema>) {
 		setIsLoading(true);
 		try {
-			const result = await authClient.signIn.magicLink({
+			const result = await authClient.signIn.email({
 				email: data.email,
-				callbackURL: "/jobs",
+				password: data.password,
+				callbackURL,
 			});
 
 			if (result.error) {
-				console.error("Magic link error:", result.error);
-			} else {
-				setMagicLinkSent(true);
+				console.error("Sign-in error:", result.error);
 			}
 		} catch (error) {
-			console.error("Magic link error:", error);
+			console.error("Sign-in error:", error);
 		} finally {
 			setIsLoading(false);
 		}
 	}
+
+	// Magic Link (Disabled for now)
+	// async function onSubmit(data: z.infer<typeof formSchema>) {
+	// 	setIsLoading(true);
+	// 	try {
+	// 		const result = await authClient.signIn.magicLink({
+	// 			email: data.email,
+	// 			callbackURL: "/jobs",
+	// 		});
+	// 		if (result.error) {
+	// 			console.error("Magic link error:", result.error);
+	// 		} else {
+	// 			setMagicLinkSent(true);
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Magic link error:", error);
+	// 	} finally {
+	// 		setIsLoading(false);
+	// 	}
+	// }
 
 	return (
 		<div className={cn("space-y-5", className)} {...props}>
@@ -92,68 +138,64 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 				</div>
 			</div>
 
-			{/* Magic Link Form */}
-			{magicLinkSent ? (
-				<div className="rounded-lg border border-green-200 bg-green-50 p-5 text-center dark:border-green-800 dark:bg-green-950">
-					<div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-						<IconMail className="h-6 w-6 text-green-600 dark:text-green-400" />
-					</div>
-					<h3 className="text-base font-semibold text-green-900 dark:text-green-100">
-						Check your email
-					</h3>
-					<p className="mt-2 text-sm text-green-700 dark:text-green-300">
-						We've sent a magic link to your email address. Click the link to
-						sign in.
-					</p>
+			{/* Email & Password Form */}
+			<Form {...form}>
+				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<FormField
+						control={form.control}
+						name="email"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Email</FormLabel>
+								<FormControl>
+									<Input
+										type="email"
+										placeholder="you@example.com"
+										className="h-11"
+										{...field}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={form.control}
+						name="password"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Password</FormLabel>
+								<FormControl>
+									<Input
+										type="password"
+										placeholder="••••••••"
+										className="h-11"
+										{...field}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 					<Button
-						variant="ghost"
-						size="sm"
-						className="mt-4 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-						onClick={() => setMagicLinkSent(false)}
+						type="submit"
+						disabled={isLoading}
+						className="w-full h-11 text-sm font-medium"
 					>
-						Use a different email
+						{isLoading ? (
+							<>
+								<span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+								Signing in...
+							</>
+						) : (
+							<>
+								<IconLock className="mr-2 h-4 w-4" />
+								Sign In
+							</>
+						)}
 					</Button>
-				</div>
-			) : (
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
-							name="email"
-							render={({ field }) => (
-								<FormItem>
-									<FormControl>
-										<Input
-											type="email"
-											placeholder="you@example.com"
-											className="h-11"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<Button
-							type="submit"
-							disabled={isLoading}
-							className="w-full h-11 text-sm font-medium"
-						>
-							{isLoading ? (
-								<>
-									<span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-									Sending...
-								</>
-							) : (
-								<>
-									<IconMail className="mr-2 h-4 w-4" />
-									Send Magic Link
-								</>
-							)}
-						</Button>
-					</form>
-				</Form>
-			)}
+				</form>
+			</Form>
 		</div>
 	);
 }

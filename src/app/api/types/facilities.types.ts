@@ -23,6 +23,7 @@ export const reviewSchema = z.object({
 export const facilityQuerySchema = z.object({
 	ownerId: z.string().optional(),
 	search: z.string().optional(),
+	location: z.string().optional(),
 	page: z.coerce.number().int().positive().default(1),
 	limit: z.coerce.number().int().positive().max(100).default(10),
 });

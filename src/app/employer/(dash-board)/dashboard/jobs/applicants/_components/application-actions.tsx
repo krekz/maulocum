@@ -164,8 +164,9 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 							's application?
 							<br />
 							<br />A WhatsApp message with a confirmation link will be sent to
-							the doctor. The booking will only be finalized once the doctor
-							confirms.
+							the doctor{" "}
+							<strong> ({application.DoctorProfile?.user?.phoneNumber})</strong>
+							. The booking will only be finalized once the doctor confirms.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

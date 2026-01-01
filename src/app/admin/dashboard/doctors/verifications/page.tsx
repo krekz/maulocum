@@ -177,7 +177,9 @@ function DoctorVerificationsPage() {
 											<p className="text-sm font-medium text-muted-foreground">
 												Phone
 											</p>
-											<p className="text-sm">{verification.phoneNumber}</p>
+											<p className="text-sm">
+												{verification.doctorProfile.user.phoneNumber}
+											</p>
 										</div>
 										<div>
 											<p className="text-sm font-medium text-muted-foreground">

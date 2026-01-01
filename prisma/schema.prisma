@@ -132,7 +132,6 @@ model DoctorVerification {
   doctorProfileId    String             @unique
   doctorProfile      DoctorProfile      @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
   fullName           String
-  phoneNumber        String
   location           String
   specialty          String?
   yearsOfExperience  Int

@@ -39,10 +39,10 @@ export interface TSingleJobApplicant {
 		user: {
 			email: string;
 			image: string | null;
+			phoneNumber: string | null;
 		} | null;
 		doctorVerification: {
 			fullName: string;
-			phoneNumber: string;
 			location: string;
 			specialty: string | null;
 			yearsOfExperience: number;

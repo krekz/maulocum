@@ -187,6 +187,7 @@ export default async function ProfilePage() {
 				<VerificationDisplayWrapper
 					verification={verification}
 					userEmail={user.email}
+					phoneNumber={user.phoneNumber as string}
 				/>
 			)}
 		</div>

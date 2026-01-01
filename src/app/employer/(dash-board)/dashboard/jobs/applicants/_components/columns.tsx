@@ -202,7 +202,6 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		header: "Contact",
 		cell: ({ row }) => {
 			const doctor = row.original.DoctorProfile;
-			const verification = doctor?.doctorVerification;
 			const user = doctor?.user;
 
 			return (
@@ -225,9 +224,7 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>
-									{verification?.phoneNumber ?? user?.phoneNumber ?? "No phone"}
-								</p>
+								<p>{user?.phoneNumber ?? "No phone"}</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>

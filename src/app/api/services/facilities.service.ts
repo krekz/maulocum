@@ -810,7 +810,6 @@ export class FacilityService {
 							doctorVerification: {
 								select: {
 									fullName: true,
-									phoneNumber: true,
 									location: true,
 									specialty: true,
 									yearsOfExperience: true,
@@ -981,7 +980,6 @@ export class FacilityService {
 							doctorVerification: {
 								select: {
 									fullName: true,
-									phoneNumber: true,
 									location: true,
 									specialty: true,
 									yearsOfExperience: true,
@@ -992,6 +990,7 @@ export class FacilityService {
 								select: {
 									email: true,
 									image: true,
+									phoneNumber: true,
 								},
 							},
 							doctorReviews: {
@@ -1098,14 +1097,6 @@ export class FacilityService {
 			if (!job) {
 				throw new HTTPException(404, {
 					message: "Job not found",
-				});
-			}
-
-			// Prevent deletion if job has applicants
-			if (job._count.applicants > 0) {
-				throw new HTTPException(400, {
-					message:
-						"Cannot delete job with applicants. Please close the job instead.",
 				});
 			}
 

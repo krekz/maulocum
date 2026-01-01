@@ -18,7 +18,6 @@ interface VerificationDisplayWrapperProps {
 	verification: {
 		id: string;
 		fullName: string;
-		phoneNumber: string;
 		location: string;
 		specialty?: string | null;
 		yearsOfExperience: number;
@@ -30,11 +29,13 @@ interface VerificationDisplayWrapperProps {
 		allowAppeal: boolean;
 	};
 	userEmail: string;
+	phoneNumber: string;
 }
 
 export function VerificationDisplayWrapper({
 	verification,
 	userEmail,
+	phoneNumber,
 }: VerificationDisplayWrapperProps) {
 	const { isEditing, setIsEditing } = useEditVerificationStore();
 
@@ -97,11 +98,7 @@ export function VerificationDisplayWrapper({
 						value={verification.fullName}
 					/>
 					<InfoItem icon={Mail} label="Email" value={userEmail} />
-					<InfoItem
-						icon={Phone}
-						label="Phone"
-						value={verification.phoneNumber}
-					/>
+					<InfoItem icon={Phone} label="Phone" value={phoneNumber} />
 					<InfoItem
 						icon={MapPin}
 						label="Location"

@@ -93,6 +93,7 @@ class AdminService {
 									id: true,
 									name: true,
 									email: true,
+									phoneNumber: true,
 									image: true,
 									createdAt: true,
 								},
@@ -145,10 +146,10 @@ class AdminService {
 						doctorProfile: {
 							user: {
 								email: { contains: search, mode: "insensitive" },
+								phoneNumber: { contains: search, mode: "insensitive" },
 							},
 						},
 					},
-					{ phoneNumber: { contains: search, mode: "insensitive" } },
 					{ provisionalId: { contains: search, mode: "insensitive" } },
 					{ fullId: { contains: search, mode: "insensitive" } },
 					{ apcNumber: { contains: search, mode: "insensitive" } },

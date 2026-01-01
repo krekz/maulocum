@@ -199,7 +199,6 @@ class ProfileServices {
 							doctorVerification: {
 								create: {
 									fullName: data.fullName,
-									phoneNumber: user.phoneNumber,
 									location: data.location,
 									specialty: data.specialty,
 									yearsOfExperience: data.yearsOfExperience,

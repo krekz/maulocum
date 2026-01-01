@@ -59,7 +59,6 @@ describe("FacilityService - getJobApplicants", () => {
                     },
                     doctorVerification: {
                         fullName: "Stephen Strange",
-                        phoneNumber: "1234567890",
                         location: "NY",
                         specialty: "Magic",
                         yearsOfExperience: 10,

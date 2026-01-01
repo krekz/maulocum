@@ -255,11 +255,15 @@ class DoctorsService {
 					},
 				},
 				DoctorProfile: {
-					include: {
+					select: {
+						user: {
+							select: {
+								phoneNumber: true,
+							},
+						},
 						doctorVerification: {
 							select: {
 								fullName: true,
-								phoneNumber: true,
 							},
 						},
 					},

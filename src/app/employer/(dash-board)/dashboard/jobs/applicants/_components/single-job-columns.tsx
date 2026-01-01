@@ -136,7 +136,6 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 		header: "Contact",
 		cell: ({ row }) => {
 			const doctor = row.original.DoctorProfile;
-			const verification = doctor?.doctorVerification;
 			const user = doctor?.user;
 
 			return (
@@ -159,7 +158,7 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>{verification?.phoneNumber ?? "No phone"}</p>
+								<p>{user?.phoneNumber ?? "No phone"}</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>

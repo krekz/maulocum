@@ -247,7 +247,12 @@ export class JobService {
 						},
 					},
 					DoctorProfile: {
-						include: {
+						select: {
+							doctorVerification: {
+								select: {
+									fullName: true,
+								},
+							},
 							user: {
 								select: {
 									id: true,

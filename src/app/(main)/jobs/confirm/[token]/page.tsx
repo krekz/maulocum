@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/rpc";
+import { getDisplayName } from "@/lib/utils/name.utils";
 
 export default function ConfirmJobPage() {
 	const params = useParams();
@@ -309,14 +310,14 @@ export default function ConfirmJobPage() {
 	const remainingTime = application?.remainingTime;
 
 	return (
-		<div className="min-h-screen bg-linear-to-b from-orange-50 to-white flex items-center justify-center">
+		<div className="min-h-screen flex items-center justify-center">
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.5 }}
 				className="w-full max-w-lg"
 			>
-				<Card className="border-orange-200 shadow-lg shadow-orange-100/50">
+				<Card className="border-none">
 					<CardHeader className="text-center pb-2">
 						<motion.div
 							initial={{ scale: 0 }}
@@ -328,6 +329,12 @@ export default function ConfirmJobPage() {
 						</motion.div>
 						<CardTitle className="text-2xl">Confirm Your Booking</CardTitle>
 						<CardDescription className="text-base">
+							Dear Dr.{" "}
+							<strong>
+								{getDisplayName(
+									application?.DoctorProfile?.doctorVerification?.fullName,
+								)}{" "}
+							</strong>
 							You have been approved for this job. Please confirm to finalize
 							your booking.
 						</CardDescription>

@@ -498,14 +498,14 @@ export class JobService {
 				},
 			});
 
-			// TODO: Send rejection notification to employer via WhatsApp
-			console.log("=== EMPLOYER REJECTION NOTIFICATION (TODO) ===");
-			console.log(`Job: ${application.job.title}`);
-			console.log(
-				`Doctor ${application.DoctorProfile?.user.name} has declined the booking.`,
-			);
-			if (reason) console.log(`Reason: ${reason}`);
-			console.log("==============================================");
+			await notificationService.createNotification({
+				facilityId: updatedApplication.job.facility.id,
+				message: updatedApplication.rejectionReason as string,
+				jobId: updatedApplication.job.id,
+				type: "JOB_APPLICATION_REJECTED",
+				title: "Booking Rejected!",
+				jobApplicationId: updatedApplication.id,
+			});
 
 			return {
 				application: updatedApplication,

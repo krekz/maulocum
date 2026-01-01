@@ -6,6 +6,7 @@ import {
 	magicLink,
 	phoneNumber,
 } from "better-auth/plugins";
+import { sendWhatsappNotifications } from "@/app/api/lib/send-whatsapp";
 import { prisma } from "./prisma";
 // If your Prisma file is located elsewhere, you can change the path
 
@@ -92,6 +93,16 @@ export const auth = betterAuth({
 			async sendOTP({ phoneNumber, code }) {
 				// TODO: Implement SMS service (e.g., Twilio, AWS SNS, etc.)
 				console.log(`Sending OTP to ${phoneNumber}: ${code}`);
+				await sendWhatsappNotifications("/otp", {
+					phoneNumber,
+					message:
+						`*MauLocum OTP Code*\n` +
+						`\n` +
+						`Your one-time verification code is:\n` +
+						`*${code}*\n` +
+						`\n` +
+						`If you did not request this code, please ignore this message.\n`,
+				});
 
 				// For development, log the OTP
 				// In production, send this via SMS service

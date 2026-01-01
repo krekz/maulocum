@@ -8,6 +8,7 @@ import {
 	generateFileKey,
 	uploadToR2,
 } from "../../../lib/r2";
+import { sendWhatsappNotifications } from "../lib/send-whatsapp";
 import type {
 	CreateContactInfoInput,
 	FacilityQuery,
@@ -462,17 +463,32 @@ export class FacilityService {
 	// Get all facilities with filters and pagination
 	async getFacilities(query: FacilityQuery) {
 		try {
-			const { ownerId, search, page, limit } = query;
+			const { ownerId, search, location, page, limit } = query;
 
 			const where: Prisma.FacilityWhereInput = {};
 
 			if (ownerId) where.ownerId = ownerId;
+
+			const conditions: Prisma.FacilityWhereInput[] = [];
+
 			if (search) {
-				where.OR = [
-					{ name: { contains: search, mode: "insensitive" } },
-					{ address: { contains: search, mode: "insensitive" } },
-					{ description: { contains: search, mode: "insensitive" } },
-				];
+				conditions.push({
+					OR: [
+						{ name: { contains: search, mode: "insensitive" } },
+						{ address: { contains: search, mode: "insensitive" } },
+						{ description: { contains: search, mode: "insensitive" } },
+					],
+				});
+			}
+
+			if (location && location !== "all") {
+				conditions.push({
+					address: { contains: location, mode: "insensitive" },
+				});
+			}
+
+			if (conditions.length > 0) {
+				where.AND = conditions;
 			}
 
 			const skip = (page - 1) * limit;
@@ -490,10 +506,15 @@ export class FacilityService {
 								name: true,
 							},
 						},
+						facilityReviews: {
+							select: {
+								rating: true,
+							},
+						},
 						_count: {
 							select: {
 								jobs: true,
-								doctorReviews: true,
+								facilityReviews: true,
 							},
 						},
 					},
@@ -501,19 +522,29 @@ export class FacilityService {
 				prisma.facility.count({ where }),
 			]);
 
-			if (!facilities.length || !total) {
-				throw new HTTPException(404, {
-					message: "Facilities not found",
-				});
-			}
+			if (!facilities || !facilities.length)
+				throw new HTTPException(404, { message: "Facilities not found" });
+
+			const facilitiesWithAvgRating = facilities.map((facility) => {
+				const reviews = facility.facilityReviews;
+				const avgRating =
+					reviews.length > 0
+						? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+						: 0;
+
+				return {
+					...facility,
+					avgRating,
+				};
+			});
 
 			return {
-				facilities,
+				facilities: facilitiesWithAvgRating,
 				pagination: {
 					total,
 					page,
 					limit,
-					totalPages: Math.ceil(total / limit),
+					totalPages: Math.ceil(total / limit) || 0,
 				},
 			};
 		} catch (error) {
@@ -1271,57 +1302,21 @@ export class FacilityService {
 					application.DoctorProfile.doctorVerification?.fullName,
 				);
 				const message = `🎉 *Application Approved!*\n\nDear Dr. ${doctorDisplayName},\n\nYour application for *${application.job.title}* at *${application.job.facility.name}* has been approved!\n\n📅 *Job Details:*\n- Start Date: ${application.job.startDate.toLocaleDateString()}\n- End Date: ${application.job.endDate.toLocaleDateString()}\n\n⚠️ *Action Required:*\nPlease confirm your availability within 24 hours:\n${confirmationUrl}\n\nThank you for using MauLocum! 🏥`;
-
-				try {
-					const res = await fetch(
-						`${process.env.WHATSAPP_NOTIFICATIONS_API_URL}/api/whatsapp/job`,
-						{
-							method: "POST",
-							body: JSON.stringify({
-								phoneNumber: application.DoctorProfile.user.phoneNumber,
-								message,
-								metadata: {
-									doctorName:
-										application.DoctorProfile.doctorVerification?.fullName ??
-										undefined,
-									jobTitle: application.job.title,
-									facilityName: application.job.facility.name,
-									startDate: application.job.startDate.toISOString(),
-									endDate: application.job.endDate.toISOString(),
-									confirmationUrl,
-									applicationId: application.id,
-								},
-							}),
-							headers: {
-								"Content-Type": "application/json",
-								"x-api-key": `${process.env.WHATSAPP_NOTIFICATIONS_API_KEY}`,
-							},
-						},
-					);
-
-					const data = await res.json();
-
-					if (!res.ok) {
-						switch (res.status) {
-							case 422: {
-								console.error("Notifications format failed", data.message);
-								throw new Error(data);
-							}
-							case 401: {
-								console.error("Notifications Unauthorized", data.message);
-								throw new Error(data);
-							}
-							default: {
-								console.error("Notifications Unknown Error", data.message);
-								throw new Error(data);
-							}
-						}
-					}
-
-					console.log("Succesfully send Notifications");
-				} catch (error) {
-					console.error(error);
-				}
+				sendWhatsappNotifications("/job", {
+					phoneNumber: application.DoctorProfile.user.phoneNumber,
+					message,
+					metadata: {
+						doctorName:
+							application.DoctorProfile.doctorVerification?.fullName ??
+							undefined,
+						jobTitle: application.job.title,
+						facilityName: application.job.facility.name,
+						startDate: application.job.startDate.toISOString(),
+						endDate: application.job.endDate.toISOString(),
+						confirmationUrl,
+						applicationId: application.id,
+					},
+				});
 			}
 
 			return;

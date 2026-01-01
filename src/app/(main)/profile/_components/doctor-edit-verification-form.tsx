@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import SelectState from "@/components/select-state";
 import {
 	Form,
 	FormControl,
@@ -149,29 +150,7 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="location"
-								render={({ field }) => (
-									<FormItem>
-										<label
-											htmlFor="location"
-											className="text-xs font-medium text-slate-700 mb-1.5 block"
-										>
-											Location <span className="text-red-500">*</span>
-										</label>
-										<FormControl>
-											<Input
-												id="location"
-												placeholder="Kuala Lumpur, Malaysia"
-												className="h-9 text-sm"
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage className="text-xs" />
-									</FormItem>
-								)}
-							/>
+							<SelectState form={form} />
 
 							<FormField
 								control={form.control}

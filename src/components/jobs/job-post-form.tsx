@@ -55,6 +55,7 @@ import { SPECIALIST_OPTIONS } from "@/lib/constant";
 import { usePostJob } from "@/lib/hooks/useEmployerJobs";
 import type { JobDetailProps } from "@/lib/rpc";
 import { cn } from "@/lib/utils";
+import SelectState from "../select-state";
 
 interface JobPostFormProps {
 	mode?: "create" | "edit";
@@ -139,23 +140,7 @@ export function JobPostForm({
 								</FormItem>
 							)}
 						/>
-						<FormField
-							control={form.control}
-							name="location"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Location</FormLabel>
-									<FormControl>
-										<Input
-											className="h-9"
-											placeholder="e.g. Petaling Jaya, Selangor"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<SelectState form={form} />
 
 						<FormField
 							control={form.control}

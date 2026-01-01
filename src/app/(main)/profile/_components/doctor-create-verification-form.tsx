@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import SelectState from "@/components/select-state";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -132,19 +133,8 @@ export function DoctorDetailsForm({
 						/>
 
 						{/* Location */}
-						<FormField
-							control={form.control}
-							name="location"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Location *</FormLabel>
-									<FormControl>
-										<Input placeholder="Kuala Lumpur, Malaysia" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<SelectState form={form} />
+
 						{/* Specialty */}
 						<FormField
 							control={form.control}

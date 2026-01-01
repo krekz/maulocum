@@ -1,8 +1,7 @@
 import { Briefcase, SearchX } from "lucide-react";
 import { headers } from "next/headers";
-import JobDetails from "@/components/jobs/job-details";
 import JobFilter from "@/components/jobs/job-filter";
-import JobList from "@/components/jobs/job-list";
+import { JobsResponsiveWrapper } from "@/components/jobs/jobs-responsive-wrapper";
 import { auth } from "@/lib/auth";
 import { backendApi } from "@/lib/rpc";
 
@@ -74,12 +73,7 @@ async function JobsPage({ searchParams }: { searchParams: SearchParams }) {
 				{(() => {
 					switch (jobs.status) {
 						case 200:
-							return (
-								<div className="flex flex-col md:flex-row gap-4">
-									<JobList jobListings={data} />
-									<JobDetails jobListings={data} />
-								</div>
-							);
+							return <JobsResponsiveWrapper jobListings={data} />;
 						case 404:
 							return (
 								<div className="flex flex-col items-center justify-center py-20">

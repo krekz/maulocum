@@ -28,7 +28,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
 import ApplyJobDialog from "./apply-jobs-dialog";
 
-function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
+interface JobDetailsProps {
+	jobListings?: JobResponse;
+	isMobileSheet?: boolean;
+}
+
+function JobDetails({
+	jobListings: data,
+	isMobileSheet = false,
+}: JobDetailsProps) {
 	const { data: session, isPending } = authClient.useSession();
 	const jobListings = data?.data;
 	const searchParams = useSearchParams();
@@ -78,9 +86,13 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 		}
 	}, [selectedJobId, jobListings?.jobs]);
 
+	const containerClass = isMobileSheet
+		? "bg-white"
+		: "flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden";
+
 	if (isPending) {
 		return (
-			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+			<div className={containerClass}>
 				<div className="p-6 flex items-center justify-center min-h-[400px]">
 					<div className="text-center">
 						<div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 animate-pulse">
@@ -95,7 +107,7 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (!session) {
 		return (
-			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+			<div className={containerClass}>
 				<div className="p-6">
 					<div className="flex flex-col items-center justify-center text-center py-10">
 						<div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
@@ -119,7 +131,7 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (!selectedJob) {
 		return (
-			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+			<div className={containerClass}>
 				<div className="p-6">
 					<div className="flex flex-col items-center justify-center text-center py-10">
 						<div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-4">
@@ -140,7 +152,7 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 
 	if (!hasFullAccess) {
 		return (
-			<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+			<div className={containerClass}>
 				<div className="p-6">
 					<div className="flex flex-col items-center justify-center text-center py-8">
 						<div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-4">
@@ -193,7 +205,9 @@ function JobDetails({ jobListings: data }: { jobListings?: JobResponse }) {
 			: 0;
 
 	return (
-		<div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden md:sticky md:top-20 md:max-h-[calc(100vh-6rem)]">
+		<div
+			className={`${containerClass} ${!isMobileSheet ? "md:sticky md:top-20 md:max-h-[calc(100vh-6rem)]" : ""}`}
+		>
 			{/* Header */}
 			<div className="p-4 border-b border-slate-100">
 				<div className="flex items-start justify-between mb-3">

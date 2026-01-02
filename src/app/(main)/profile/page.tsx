@@ -112,6 +112,64 @@ export default async function ProfilePage() {
 				/>
 			)}
 
+			<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+				{/* Header */}
+				<div className="px-4 py-3 border-b border-slate-100">
+					<h3 className="font-semibold text-slate-900 text-sm">My Profile</h3>
+				</div>
+
+				{/* Profile Info */}
+				<div className="p-4">
+					<div className="flex items-start gap-4">
+						{/* Avatar */}
+						<Avatar className="h-16 w-16 border-2 border-slate-100 shadow-sm shrink-0">
+							<AvatarImage
+								src={user?.image || "/placeholder-avatar.jpg"}
+								alt={user.name}
+							/>
+							<AvatarFallback className="bg-slate-100 text-slate-600 text-lg font-medium">
+								{user.name?.charAt(0).toUpperCase() || "U"}
+							</AvatarFallback>
+						</Avatar>
+
+						{/* Info */}
+						<div className="flex-1 min-w-0">
+							<div className="flex items-center gap-2 mb-1">
+								<h2 className="font-semibold text-slate-900 text-base truncate">
+									{verification?.fullName || user.name}
+								</h2>
+								{isVerified && (
+									<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1">
+										<ShieldCheck className="w-3 h-3" />
+										Verified
+									</span>
+								)}
+							</div>
+
+							{/* Meta Info */}
+							<div className="space-y-1">
+								{verification?.specialty && (
+									<div className="flex items-center gap-1.5 text-xs text-slate-500">
+										<Stethoscope className="w-3 h-3" />
+										<span>{verification.specialty}</span>
+									</div>
+								)}
+								<div className="flex items-center gap-1.5 text-xs text-slate-500">
+									<Mail className="w-3 h-3" />
+									<span className="truncate">{user.email}</span>
+								</div>
+								{verification?.location && (
+									<div className="flex items-center gap-1.5 text-xs text-slate-500">
+										<MapPin className="w-3 h-3" />
+										<span>{verification.location}</span>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			{/* Verification Wizard for new users */}
 			{needsVerification && (
 				<DoctorVerificationWizard
@@ -122,65 +180,6 @@ export default async function ProfilePage() {
 			)}
 
 			{/* Profile Card - Only show if verified or has verification */}
-			{(isVerified || verification) && (
-				<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-					{/* Header */}
-					<div className="px-4 py-3 border-b border-slate-100">
-						<h3 className="font-semibold text-slate-900 text-sm">My Profile</h3>
-					</div>
-
-					{/* Profile Info */}
-					<div className="p-4">
-						<div className="flex items-start gap-4">
-							{/* Avatar */}
-							<Avatar className="h-16 w-16 border-2 border-slate-100 shadow-sm shrink-0">
-								<AvatarImage
-									src={user?.image || "/placeholder-avatar.jpg"}
-									alt={user.name}
-								/>
-								<AvatarFallback className="bg-slate-100 text-slate-600 text-lg font-medium">
-									{user.name?.charAt(0).toUpperCase() || "U"}
-								</AvatarFallback>
-							</Avatar>
-
-							{/* Info */}
-							<div className="flex-1 min-w-0">
-								<div className="flex items-center gap-2 mb-1">
-									<h2 className="font-semibold text-slate-900 text-base truncate">
-										{verification?.fullName || user.name}
-									</h2>
-									{isVerified && (
-										<span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 flex items-center gap-1">
-											<ShieldCheck className="w-3 h-3" />
-											Verified
-										</span>
-									)}
-								</div>
-
-								{/* Meta Info */}
-								<div className="space-y-1">
-									{verification?.specialty && (
-										<div className="flex items-center gap-1.5 text-xs text-slate-500">
-											<Stethoscope className="w-3 h-3" />
-											<span>{verification.specialty}</span>
-										</div>
-									)}
-									<div className="flex items-center gap-1.5 text-xs text-slate-500">
-										<Mail className="w-3 h-3" />
-										<span className="truncate">{user.email}</span>
-									</div>
-									{verification?.location && (
-										<div className="flex items-center gap-1.5 text-xs text-slate-500">
-											<MapPin className="w-3 h-3" />
-											<span>{verification.location}</span>
-										</div>
-									)}
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
 
 			{/* Professional Information */}
 			{verification && (

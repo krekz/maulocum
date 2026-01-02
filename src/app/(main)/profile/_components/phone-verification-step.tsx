@@ -6,6 +6,16 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -23,7 +33,10 @@ const phoneSchema = z.object({
 	phoneNumber: z
 		.string()
 		.min(10, "Valid phone number is required")
-		.regex(/^01\d{8,9}$/, "Invalid phone number format"),
+		.regex(/^0[1-9]\d{8,9}$/, "Phone number must start with 0 followed by 1-9")
+		.refine((val) => !val.startsWith("06"), {
+			message: "This format number is not allowed",
+		}),
 });
 
 const otpSchema = z.object({
@@ -44,6 +57,8 @@ export function PhoneVerificationStep({
 	const [step, setStep] = useState<"phone" | "otp">("phone");
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [pendingPhoneNumber, setPendingPhoneNumber] = useState("");
 
 	const phoneForm = useForm<z.infer<typeof phoneSchema>>({
 		resolver: zodResolver(phoneSchema),
@@ -88,7 +103,13 @@ export function PhoneVerificationStep({
 	};
 
 	const onPhoneSubmit = async (data: z.infer<typeof phoneSchema>) => {
-		await sendOTP(data.phoneNumber);
+		setPendingPhoneNumber(data.phoneNumber);
+		setShowConfirmDialog(true);
+	};
+
+	const handleConfirmSendOTP = async () => {
+		setShowConfirmDialog(false);
+		await sendOTP(pendingPhoneNumber);
 	};
 
 	const onOTPSubmit = async (data: z.infer<typeof otpSchema>) => {
@@ -256,6 +277,29 @@ export function PhoneVerificationStep({
 					</Button>
 				</form>
 			</Form>
+
+			<AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Confirm Phone Number</AlertDialogTitle>
+						<AlertDialogDescription className="space-y-2">
+							<p>OTP notification will be sent to WhatsApp via:</p>
+							<p className="text-lg font-semibold text-foreground">
+								+6{pendingPhoneNumber}
+							</p>
+							<p className="text-sm">
+								Please make sure this number is correct before proceeding.
+							</p>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={handleConfirmSendOTP}>
+							Send OTP
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

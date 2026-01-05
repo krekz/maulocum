@@ -1,6 +1,7 @@
 import { hc } from "hono/client";
 import {
 	AlertCircle,
+	Briefcase,
 	Clock,
 	Mail,
 	MapPin,
@@ -8,6 +9,7 @@ import {
 	Stethoscope,
 } from "lucide-react";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { APIType } from "@/app/api/[...route]/route";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +28,8 @@ export default async function ProfilePage() {
 	if (!session) {
 		redirect("/login");
 	}
+
+	console.log(session.user);
 
 	const res = await client.api.v2.profile.user[":userId"].$get({
 		param: {
@@ -167,6 +171,34 @@ export default async function ProfilePage() {
 							</div>
 						</div>
 					</div>
+
+					{/* Employer Account Badge */}
+					{session.user.isEmployer && (
+						<div className="mt-3 pt-3 border-t border-slate-100	">
+							<Link
+								href="/employer/profile"
+								className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-900 transition-colors group"
+							>
+								<div className="w-5 h-5 rounded bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
+									<Briefcase className="w-3 h-3 text-slate-600" />
+								</div>
+								<span className="font-medium">Employer Account Active</span>
+								<svg
+									className="w-3 h-3 ml-auto text-slate-400 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M9 5l7 7-7 7"
+									/>
+								</svg>
+							</Link>
+						</div>
+					)}
 				</div>
 			</div>
 

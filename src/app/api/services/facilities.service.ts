@@ -427,29 +427,59 @@ export class FacilityService {
 		}
 	}
 
-	// Get facility by ID
-	// Use for general facility information
-	async getFacilityById(id: string) {
-		return prisma.facility.findUnique({
+	// Get facility by ID with access control
+	// isVerifiedDoctor: if true, returns sensitive data (reviews, ratings, jobs)
+	async getFacilityById(id: string, isVerifiedDoctor = false) {
+		const facility = await prisma.facility.findUnique({
 			where: { id },
 			include: {
 				owner: {
 					select: {
 						id: true,
 						name: true,
-						email: true,
 					},
 				},
-				jobs: {
-					where: { status: "OPEN" },
-					orderBy: { createdAt: "desc" },
-					take: 10,
-				},
-				facilityReviews: {
-					orderBy: { createdAt: "desc" },
-					take: 10,
-				},
+				// Only include sensitive data for verified doctors
+				...(isVerifiedDoctor && {
+					jobs: {
+						where: { status: "OPEN" },
+						orderBy: { createdAt: "desc" },
+						take: 10,
+						select: {
+							id: true,
+							title: true,
+							description: true,
+							location: true,
+							payRate: true,
+							payBasis: true,
+							startTime: true,
+							endTime: true,
+							startDate: true,
+							endDate: true,
+							jobType: true,
+							urgency: true,
+							status: true,
+							requiredSpecialists: true,
+							createdAt: true,
+						},
+					},
+					facilityReviews: {
+						orderBy: { createdAt: "desc" },
+						take: 10,
+						select: {
+							id: true,
+							rating: true,
+							comment: true,
+							createdAt: true,
+						},
+					},
+				}),
 				contactInfo: true,
+				facilityVerification: {
+					select: {
+						verificationStatus: true,
+					},
+				},
 				_count: {
 					select: {
 						jobs: true,
@@ -458,6 +488,31 @@ export class FacilityService {
 				},
 			},
 		});
+
+		if (!facility) return null;
+
+		// Calculate average rating only for verified doctors
+		let averageRating = 0;
+		let reviewCount = 0;
+
+		if (isVerifiedDoctor) {
+			const ratingStats = await prisma.facilityReview.aggregate({
+				where: { facilityId: id },
+				_avg: { rating: true },
+				_count: { rating: true },
+			});
+			averageRating = ratingStats._avg.rating || 0;
+			reviewCount = ratingStats._count.rating || 0;
+		}
+
+		return {
+			...facility,
+			averageRating,
+			reviewCount,
+			// Mask sensitive data for non-verified users
+			jobs: isVerifiedDoctor ? facility.jobs : undefined,
+			facilityReviews: isVerifiedDoctor ? facility.facilityReviews : undefined,
+		};
 	}
 
 	// Get all facilities with filters and pagination
@@ -499,24 +554,12 @@ export class FacilityService {
 					skip,
 					take: limit,
 					orderBy: { createdAt: "desc" },
-					include: {
-						owner: {
-							select: {
-								id: true,
-								name: true,
-							},
-						},
-						facilityReviews: {
-							select: {
-								rating: true,
-							},
-						},
-						_count: {
-							select: {
-								jobs: true,
-								facilityReviews: true,
-							},
-						},
+
+					select: {
+						id: true,
+						name: true,
+						profileImage: true,
+						_count: true,
 					},
 				}),
 				prisma.facility.count({ where }),
@@ -525,21 +568,8 @@ export class FacilityService {
 			if (!facilities || !facilities.length)
 				throw new HTTPException(404, { message: "Facilities not found" });
 
-			const facilitiesWithAvgRating = facilities.map((facility) => {
-				const reviews = facility.facilityReviews;
-				const avgRating =
-					reviews.length > 0
-						? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-						: 0;
-
-				return {
-					...facility,
-					avgRating,
-				};
-			});
-
 			return {
-				facilities: facilitiesWithAvgRating,
+				facilities,
 				pagination: {
 					total,
 					page,

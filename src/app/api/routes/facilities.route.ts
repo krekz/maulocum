@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { requireActiveEmployer, requireAuth } from "../lib/api-utils";
 import { facilityService } from "../services/facilities.service";
 import {
@@ -547,12 +548,24 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	/**
 	 * GET /api/v2/facilities/:id
 	 * Get a single facility by ID
-	 * @PUBLIC endpoint
+	 * Sensitive data (reviews, ratings, jobs) only visible to verified doctors
+	 * @PUBLIC endpoint (with conditional data based on auth)
 	 */
 	.get("/:id", zValidator("param", z.object({ id: z.string() })), async (c) => {
 		try {
 			const { id } = c.req.valid("param");
-			const facility = await facilityService.getFacilityById(id);
+
+			// Determine if the requester is a verified doctor (has a doctorProfile)
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+
+			const isVerifiedDoctor = Boolean(session?.user?.doctorProfile);
+
+			const facility = await facilityService.getFacilityById(
+				id,
+				isVerifiedDoctor,
+			);
 			if (!facility) {
 				return c.json(
 					{
@@ -566,7 +579,10 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 			return c.json({
 				success: true,
 				message: "Facility fetched successfully",
-				data: facility,
+				data: {
+					...facility,
+					isVerifiedDoctor,
+				},
 			});
 		} catch (error) {
 			console.error(error);

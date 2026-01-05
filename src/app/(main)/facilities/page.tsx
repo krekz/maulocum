@@ -43,26 +43,15 @@ async function FacilitiesPage({
 						case 200:
 							return (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-									{data?.data?.facilities?.map(
-										(facility: {
-											id: string;
-											name: string;
-											address: string;
-											profileImage?: string | null;
-											avgRating: number;
-											_count: { jobs: number; facilityReviews: number };
-										}) => (
-											<FacilityCard
-												key={facility.id}
-												id={facility.id}
-												name={facility.name}
-												address={facility.address}
-												profileImage={facility.profileImage}
-												openJobs={facility._count.jobs}
-												avgRating={facility.avgRating}
-											/>
-										),
-									)}
+									{data?.data?.facilities?.map((facility) => (
+										<FacilityCard
+											key={facility.id}
+											id={facility.id}
+											name={facility.name}
+											profileImage={facility.profileImage}
+											openJobs={facility._count.jobs}
+										/>
+									))}
 								</div>
 							);
 						case 404:

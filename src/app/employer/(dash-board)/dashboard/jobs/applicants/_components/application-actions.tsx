@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { TJobApplicant, TSingleJobApplicant } from "@/lib/rpc";
 import { client } from "@/lib/rpc";
+import { ReviewDoctorDialog } from "./review-doctor-dialog";
 
 interface ApplicationActionsProps {
 	application: TJobApplicant | TSingleJobApplicant;
@@ -104,6 +105,14 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 		},
 	});
 
+	const isCompleted = application.status === "COMPLETED";
+	const hasReviewed = application.doctorReview !== null;
+	const user = application.DoctorProfile?.user;
+
+	const doctorName =
+		application.DoctorProfile?.doctorVerification?.fullName ??
+		(user && "name" in user ? user.name : undefined) ??
+		"Doctor";
 	return (
 		<>
 			<DropdownMenu>
@@ -118,6 +127,12 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 					<DropdownMenuItem>View Application</DropdownMenuItem>
 					<DropdownMenuItem>View Doctor Profile</DropdownMenuItem>
 					<DropdownMenuSeparator />
+					{isCompleted && !hasReviewed && (
+						<ReviewDoctorDialog
+							applicationId={application.id}
+							doctorName={doctorName}
+						/>
+					)}
 
 					{isPending && (
 						<>

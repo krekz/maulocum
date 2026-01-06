@@ -15,7 +15,6 @@ import {
 import type { TSingleJobApplicant } from "@/lib/rpc";
 import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
 import { ApplicationActions } from "./application-actions";
-import { ReviewDoctorDialog } from "./review-doctor-dialog";
 
 const statusConfig = {
 	PENDING: {
@@ -267,20 +266,9 @@ export const singleJobColumns: ColumnDef<TSingleJobApplicant>[] = [
 		enableHiding: false,
 		cell: ({ row }) => {
 			const application = row.original;
-			const isCompleted = application.status === "COMPLETED";
-			const hasReviewed = application.doctorReview !== null;
-			const doctorName =
-				application.DoctorProfile?.doctorVerification?.fullName ?? "Doctor";
-
 			return (
 				<div className="flex items-center gap-2">
 					<ApplicationActions application={application} />
-					{isCompleted && !hasReviewed && (
-						<ReviewDoctorDialog
-							applicationId={application.id}
-							doctorName={doctorName}
-						/>
-					)}
 				</div>
 			);
 		},

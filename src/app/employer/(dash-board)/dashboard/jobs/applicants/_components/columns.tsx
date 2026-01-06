@@ -25,7 +25,6 @@ import {
 import type { TJobApplicant } from "@/lib/rpc";
 import type { $Enums } from "../../../../../../../../prisma/generated/prisma/client";
 import { ApplicationActions } from "./application-actions";
-import { ReviewDoctorDialog } from "./review-doctor-dialog";
 
 const statusConfig = {
 	PENDING: {
@@ -76,21 +75,6 @@ const reviewedStatusConfig = {
 	label: "Reviewed",
 	variant: "default" as const,
 	className: "bg-purple-500 text-white",
-};
-
-const verificationStatusConfig = {
-	APPROVED: {
-		label: "Verified",
-		className: "bg-green-100 text-green-700 border-green-200",
-	},
-	PENDING: {
-		label: "Pending",
-		className: "bg-yellow-100 text-yellow-700 border-yellow-200",
-	},
-	REJECTED: {
-		label: "Rejected",
-		className: "bg-red-100 text-red-700 border-red-200",
-	},
 };
 
 const urgencyConfig = {
@@ -251,24 +235,6 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		},
 	},
 	{
-		id: "verification",
-		header: "Verification",
-		cell: ({ row }) => {
-			const status =
-				row.original.DoctorProfile?.doctorVerification?.verificationStatus ??
-				"PENDING";
-			const config =
-				verificationStatusConfig[
-					status as keyof typeof verificationStatusConfig
-				];
-			return (
-				<Badge variant="outline" className={config?.className}>
-					{config?.label ?? status}
-				</Badge>
-			);
-		},
-	},
-	{
 		accessorKey: "status",
 		header: ({ column }) => (
 			<Button
@@ -333,22 +299,9 @@ export const columns: ColumnDef<TJobApplicant>[] = [
 		enableHiding: false,
 		cell: ({ row }) => {
 			const application = row.original;
-			const isCompleted = application.status === "COMPLETED";
-			const hasReviewed = application.doctorReview !== null;
-			const doctorName =
-				application.DoctorProfile?.doctorVerification?.fullName ??
-				application.DoctorProfile?.user?.name ??
-				"Doctor";
-
 			return (
 				<div className="flex items-center gap-2">
 					<ApplicationActions application={application} />
-					{isCompleted && !hasReviewed && (
-						<ReviewDoctorDialog
-							applicationId={application.id}
-							doctorName={doctorName}
-						/>
-					)}
 				</div>
 			);
 		},

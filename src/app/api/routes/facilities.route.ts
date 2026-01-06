@@ -98,6 +98,87 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	})
 
 	/**
+	 * GET /api/v2/facilities/doctors
+	 * Get list of verified doctors for employer view
+	 * RBAC: Only verified facilities can view full doctor details
+	 * @PROTECTED route
+	 */
+	.get(
+		"/doctors",
+		requireActiveEmployer,
+		zValidator(
+			"query",
+			z.object({
+				search: z.string().optional(),
+				page: z.coerce.number().optional(),
+				limit: z.coerce.number().optional(),
+			}),
+		),
+		async (c) => {
+			try {
+				const staffProfile = c.get("staffProfile");
+				const query = c.req.valid("query");
+				const result = await facilityService.getDoctors(
+					staffProfile.facilityId,
+					query,
+				);
+				return c.json({
+					success: true,
+					data: result,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * GET /api/v2/facilities/doctors/:id
+	 * Get single doctor profile for employer view
+	 * RBAC: Only verified facilities can view full doctor details
+	 * @PROTECTED route
+	 */
+	.get(
+		"/doctors/:id",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const staffProfile = c.get("staffProfile");
+				const { id } = c.req.valid("param");
+				const result = await facilityService.getDoctorById(
+					staffProfile.facilityId,
+					id,
+				);
+				return c.json({
+					success: true,
+					data: result,
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+						data: null,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
 	 * GET /api/v2/facilities/sidebar-counts
 	 * Get sidebar badge counts for employer dashboard
 	 * @PROTECTED route

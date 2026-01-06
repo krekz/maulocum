@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, Upload } from "lucide-react";
+// import { FileText, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ function ApplyJobDialog({
 }) {
 	const [open, setOpen] = useState(false);
 	const [coverLetter, setCoverLetter] = useState("");
-	const [file, setFile] = useState<File | null>(null);
+	// const [file, setFile] = useState<File | null>(null);
 	const queryClient = useQueryClient();
 
 	const applyMutation = useMutation({
@@ -50,18 +50,18 @@ function ApplyJobDialog({
 			queryClient.invalidateQueries({ queryKey: ["doctor-applications"] });
 			setOpen(false);
 			setCoverLetter("");
-			setFile(null);
+			// setFile(null);
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || "Failed to submit application");
 		},
 	});
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.files?.[0]) {
-			setFile(e.target.files[0]);
-		}
-	};
+	// const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	// 	if (e.target.files?.[0]) {
+	// 		setFile(e.target.files[0]);
+	// 	}
+	// };
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -97,7 +97,7 @@ function ApplyJobDialog({
 						/>
 					</div>
 
-					<div className="space-y-2">
+					{/* <div className="space-y-2">
 						<Label htmlFor="document">Upload Document (Optional)</Label>
 						<div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors">
 							<input
@@ -134,7 +134,7 @@ function ApplyJobDialog({
 								</Button>
 							</div>
 						)}
-					</div>
+					</div> */}
 
 					<DialogFooter className="pt-4">
 						<Button

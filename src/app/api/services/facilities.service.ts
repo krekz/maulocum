@@ -2241,6 +2241,273 @@ export class FacilityService {
 			});
 		}
 	}
+	/**
+	 * Get list of verified doctors for employer view
+	 * RBAC: Only verified facilities can view doctor profiles
+	 */
+	async getDoctors(
+		facilityId: string,
+		query: { search?: string; page?: number; limit?: number },
+	) {
+		try {
+			// Check if facility is verified
+			const facilityVerification = await prisma.facilityVerification.findUnique(
+				{
+					where: { facilityId },
+					select: { verificationStatus: true },
+				},
+			);
+
+			const isVerified =
+				facilityVerification?.verificationStatus === "APPROVED";
+
+			const page = query.page || 1;
+			const limit = query.limit || 12;
+			const skip = (page - 1) * limit;
+
+			// Build search filter
+			const searchFilter: Prisma.DoctorProfileWhereInput = query.search
+				? {
+						OR: [
+							{
+								user: {
+									name: { contains: query.search, mode: "insensitive" },
+								},
+							},
+							{
+								doctorVerification: {
+									specialty: { contains: query.search, mode: "insensitive" },
+								},
+							},
+							{
+								doctorVerification: {
+									location: { contains: query.search, mode: "insensitive" },
+								},
+							},
+						],
+					}
+				: {};
+
+			// Get verified doctors only
+			const [doctors, total] = await Promise.all([
+				prisma.doctorProfile.findMany({
+					where: {
+						doctorVerification: {
+							verificationStatus: "APPROVED",
+						},
+						...searchFilter,
+					},
+					select: {
+						id: true,
+						user: {
+							select: {
+								name: true,
+								image: true,
+								location: true,
+							},
+						},
+						doctorVerification: {
+							select: {
+								specialty: true,
+								location: true,
+								yearsOfExperience: true,
+							},
+						},
+						doctorReviews: {
+							select: { rating: true },
+						},
+					},
+					skip,
+					take: limit,
+					orderBy: { createdAt: "desc" },
+				}),
+				prisma.doctorProfile.count({
+					where: {
+						doctorVerification: {
+							verificationStatus: "APPROVED",
+						},
+						...searchFilter,
+					},
+				}),
+			]);
+
+			// Calculate average ratings
+			const doctorsWithRatings = doctors.map((doctor) => {
+				const ratings = doctor.doctorReviews.map((r) => r.rating);
+				const avgRating =
+					ratings.length > 0
+						? ratings.reduce((a, b) => a + b, 0) / ratings.length
+						: null;
+
+				return {
+					id: doctor.id,
+					name: isVerified ? doctor.user.name : null,
+					image: isVerified ? doctor.user.image : null,
+					specialty: doctor.doctorVerification?.specialty || "General",
+					location:
+						doctor.doctorVerification?.location || doctor.user.location || null,
+					yearsOfExperience:
+						doctor.doctorVerification?.yearsOfExperience || null,
+					rating: avgRating ? Number(avgRating.toFixed(1)) : null,
+					reviewCount: doctor.doctorReviews.length,
+					isLocked: !isVerified,
+				};
+			});
+
+			return {
+				doctors: doctorsWithRatings,
+				pagination: {
+					page,
+					limit,
+					total,
+					totalPages: Math.ceil(total / limit),
+				},
+				isVerified,
+			};
+		} catch (error) {
+			console.error("Error in facility.service.getDoctors:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch doctors",
+			});
+		}
+	}
+
+	/**
+	 * Get single doctor profile for employer view
+	 * RBAC: Only verified facilities can view full doctor details
+	 */
+	async getDoctorById(facilityId: string, doctorProfileId: string) {
+		try {
+			// Check if facility is verified
+			const facilityVerification = await prisma.facilityVerification.findUnique(
+				{
+					where: { facilityId },
+					select: { verificationStatus: true },
+				},
+			);
+
+			const isVerified =
+				facilityVerification?.verificationStatus === "APPROVED";
+
+			// Get doctor profile
+			const doctor = await prisma.doctorProfile.findFirst({
+				where: {
+					id: doctorProfileId,
+					doctorVerification: {
+						verificationStatus: "APPROVED",
+					},
+				},
+				select: {
+					id: true,
+					user: {
+						select: {
+							name: true,
+							image: true,
+							email: true,
+							phoneNumber: true,
+							location: true,
+						},
+					},
+					doctorVerification: {
+						select: {
+							fullName: true,
+							specialty: true,
+							location: true,
+							yearsOfExperience: true,
+						},
+					},
+					doctorReviews: {
+						select: {
+							id: true,
+							rating: true,
+							comment: true,
+							createdAt: true,
+						},
+						orderBy: { createdAt: "desc" },
+						take: 10,
+					},
+					_count: {
+						select: {
+							acceptedJobs: true,
+						},
+					},
+				},
+			});
+
+			if (!doctor) {
+				throw new HTTPException(404, {
+					message: "Doctor not found",
+				});
+			}
+
+			// Calculate average rating
+			const ratings = doctor.doctorReviews.map((r) => r.rating);
+			const avgRating =
+				ratings.length > 0
+					? ratings.reduce((a, b) => a + b, 0) / ratings.length
+					: null;
+
+			// Calculate rating distribution
+			const ratingDistribution = {
+				5: doctor.doctorReviews.filter((r) => r.rating === 5).length,
+				4: doctor.doctorReviews.filter((r) => r.rating === 4).length,
+				3: doctor.doctorReviews.filter((r) => r.rating === 3).length,
+				2: doctor.doctorReviews.filter((r) => r.rating === 2).length,
+				1: doctor.doctorReviews.filter((r) => r.rating === 1).length,
+			};
+
+			// If not verified, return limited data with lock
+			if (!isVerified) {
+				return {
+					id: doctor.id,
+					name: null,
+					image: null,
+					email: null,
+					phoneNumber: null,
+					specialty: doctor.doctorVerification?.specialty || "General",
+					location: doctor.doctorVerification?.location || null,
+					yearsOfExperience:
+						doctor.doctorVerification?.yearsOfExperience || null,
+					rating: avgRating ? Number(avgRating.toFixed(1)) : null,
+					reviewCount: doctor.doctorReviews.length,
+					completedJobs: doctor._count.acceptedJobs,
+					ratingDistribution,
+					reviews: [],
+					isLocked: true,
+				};
+			}
+
+			return {
+				id: doctor.id,
+				name: doctor.doctorVerification?.fullName || doctor.user.name,
+				image: doctor.user.image,
+				email: doctor.user.email,
+				phoneNumber: doctor.user.phoneNumber,
+				specialty: doctor.doctorVerification?.specialty || "General",
+				location:
+					doctor.doctorVerification?.location || doctor.user.location || null,
+				yearsOfExperience: doctor.doctorVerification?.yearsOfExperience || null,
+				rating: avgRating ? Number(avgRating.toFixed(1)) : null,
+				reviewCount: doctor.doctorReviews.length,
+				completedJobs: doctor._count.acceptedJobs,
+				ratingDistribution,
+				reviews: doctor.doctorReviews.map((review) => ({
+					id: review.id,
+					rating: review.rating,
+					comment: review.comment,
+					date: review.createdAt,
+				})),
+				isLocked: false,
+			};
+		} catch (error) {
+			console.error("Error in facility.service.getDoctorById:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch doctor profile",
+			});
+		}
+	}
 }
 
 // Export singleton instance

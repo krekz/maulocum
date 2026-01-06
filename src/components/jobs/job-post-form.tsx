@@ -116,7 +116,10 @@ export function JobPostForm({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+			<form
+				onSubmit={form.handleSubmit(onSubmit)}
+				className="mx-auto max-w-4xl space-y-6"
+			>
 				{/* Template Manager - Only in create mode */}
 				{mode === "create" && (
 					<div className="flex justify-end">
@@ -125,20 +128,20 @@ export function JobPostForm({
 				)}
 
 				{/* Main Form Card */}
-				<div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+				<div className="overflow-hidden rounded-xl border bg-card shadow-sm">
 					{/* Job Details Section */}
-					<div className="p-5 border-b">
-						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+					<div className="border-b p-5">
+						<h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 							<Briefcase className="size-4" />
 							Job Details
 						</h2>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<FormField
 								control={form.control}
 								name="title"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2 lg:col-span-2">
+									<FormItem className="md:col-span-2">
 										<FormLabel className="text-xs">Job Title</FormLabel>
 										<FormControl>
 											<Input
@@ -253,7 +256,7 @@ export function JobPostForm({
 										.filter(Boolean);
 
 									return (
-										<FormItem className="md:col-span-2 lg:col-span-3">
+										<FormItem className="md:col-span-2">
 											<FormLabel className="text-xs">
 												Required Specialists{" "}
 												<span className="text-destructive">*</span>
@@ -337,10 +340,10 @@ export function JobPostForm({
 								control={form.control}
 								name="description"
 								render={({ field }) => (
-									<FormItem className="md:col-span-2 lg:col-span-3">
+									<FormItem className="md:col-span-2">
 										<FormLabel className="text-xs">
 											Description{" "}
-											<span className="text-muted-foreground font-normal">
+											<span className="font-normal text-muted-foreground">
 												(optional)
 											</span>
 										</FormLabel>
@@ -360,13 +363,13 @@ export function JobPostForm({
 					</div>
 
 					{/* Schedule Section */}
-					<div className="p-5 border-b bg-muted/30">
-						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+					<div className="border-b bg-muted/30 p-5">
+						<h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 							<Clock className="size-4" />
 							Schedule
 						</h2>
 
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<FormField
 								control={form.control}
 								name="startDate"
@@ -491,17 +494,17 @@ export function JobPostForm({
 
 					{/* Compensation Section */}
 					<div className="p-5">
-						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+						<h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 							<Users className="size-4" />
 							Compensation
 						</h2>
 
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<FormField
 								control={form.control}
 								name="payRate"
 								render={({ field }) => (
-									<FormItem className="col-span-1">
+									<FormItem>
 										<FormLabel className="text-xs">
 											Pay Rate (RM) <span className="text-destructive">*</span>
 										</FormLabel>
@@ -517,7 +520,7 @@ export function JobPostForm({
 								control={form.control}
 								name="payBasis"
 								render={({ field }) => (
-									<FormItem className="col-span-1">
+									<FormItem>
 										<FormLabel className="text-xs">
 											Pay Basis <span className="text-destructive">*</span>
 										</FormLabel>

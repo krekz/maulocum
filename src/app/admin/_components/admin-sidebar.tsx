@@ -15,10 +15,10 @@ function AdminSidebar() {
 				title: "Dashboard",
 				url: "/admin/dashboard",
 			},
-			{
-				title: "Users",
-				url: "/admin/dashboard/users",
-			},
+			// {
+			// 	title: "Users",
+			// 	url: "/admin/dashboard/users",
+			// },
 		],
 		collapsible: [
 			{

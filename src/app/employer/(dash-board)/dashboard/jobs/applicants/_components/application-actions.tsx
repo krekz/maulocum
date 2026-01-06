@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, MoreHorizontal, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -124,8 +125,14 @@ export function ApplicationActions({ application }: ApplicationActionsProps) {
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>Actions</DropdownMenuLabel>
-					<DropdownMenuItem>View Application</DropdownMenuItem>
-					<DropdownMenuItem>View Doctor Profile</DropdownMenuItem>
+					<DropdownMenuItem>
+						<Link
+							href={`/employer/doctors/${application.DoctorProfile?.id}`}
+							target="_blank"
+						>
+							View Doctor Profile
+						</Link>
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					{isCompleted && !hasReviewed && (
 						<ReviewDoctorDialog

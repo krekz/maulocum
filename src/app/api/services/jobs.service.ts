@@ -310,7 +310,8 @@ export class JobService {
 	 * Doctor confirms the job via confirmation token
 	 * - Validates token
 	 * - Updates status to DOCTOR_CONFIRMED
-	 * - Finalizes the booking
+	 * - Adds doctor to JobAcceptedDoctor table
+	 * - Sets job status to FILLED only when doctorsNeeded count is met
 	 */
 	async confirmApplication(confirmationToken: string) {
 		try {
@@ -321,10 +322,16 @@ export class JobService {
 						select: {
 							id: true,
 							title: true,
+							doctorsNeeded: true,
 							facility: {
 								select: {
 									id: true,
 									name: true,
+								},
+							},
+							_count: {
+								select: {
+									acceptedDoctors: true,
 								},
 							},
 						},
@@ -354,6 +361,12 @@ export class JobService {
 				});
 			}
 
+			if (!application.DoctorProfile) {
+				throw new HTTPException(400, {
+					message: "Doctor profile not found for this application",
+				});
+			}
+
 			// Check token expiry
 			const { isExpired } = checkTokenExpiry(application.employerApprovedAt);
 
@@ -364,7 +377,12 @@ export class JobService {
 				);
 			}
 
-			// Update application status to confirmed and job status to FILLED
+			// Calculate if job should be marked as FILLED after this confirmation
+			const currentAcceptedCount = application.job._count.acceptedDoctors;
+			const doctorsNeeded = application.job.doctorsNeeded;
+			const willBeFilled = currentAcceptedCount + 1 >= doctorsNeeded;
+
+			// Update application status, add to accepted doctors, and optionally update job status
 			const [updatedApplication] = await prisma.$transaction([
 				prisma.jobApplication.update({
 					where: { id: application.id },
@@ -378,6 +396,7 @@ export class JobService {
 							select: {
 								id: true,
 								title: true,
+								doctorsNeeded: true,
 								facility: {
 									select: {
 										id: true,
@@ -388,10 +407,23 @@ export class JobService {
 						},
 					},
 				}),
-				prisma.job.update({
-					where: { id: application.job.id },
-					data: { status: "FILLED" },
+				// Add doctor to accepted doctors table
+				prisma.jobAcceptedDoctor.create({
+					data: {
+						jobId: application.job.id,
+						doctorProfileId: application.DoctorProfile.id,
+						applicationId: application.id,
+					},
 				}),
+				// Update job status to FILLED only if doctors needed count is met
+				...(willBeFilled
+					? [
+							prisma.job.update({
+								where: { id: application.job.id },
+								data: { status: "FILLED" },
+							}),
+						]
+					: []),
 			]);
 
 			await notificationService.createNotification({
@@ -408,6 +440,12 @@ export class JobService {
 			console.log(
 				`Doctor ${application.DoctorProfile?.user.name} has confirmed the booking!`,
 			);
+			console.log(
+				`Accepted: ${currentAcceptedCount + 1}/${doctorsNeeded} doctors`,
+			);
+			if (willBeFilled) {
+				console.log("Job is now FILLED!");
+			}
 			console.log("=====================================");
 
 			return {

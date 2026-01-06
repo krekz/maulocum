@@ -30,6 +30,11 @@ async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
 		notFound();
 	}
 
+	// Get accepted doctors count from the job response
+	const acceptedDoctorsCount =
+		(job as { _count?: { acceptedDoctors?: number } })._count
+			?.acceptedDoctors ?? 0;
+
 	return (
 		<div className="container mx-auto py-8 px-4">
 			<div className="max-w-4xl mx-auto">
@@ -40,7 +45,7 @@ async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
 					</p>
 				</div>
 
-				<EditJobForm job={job} />
+				<EditJobForm job={job} acceptedDoctorsCount={acceptedDoctorsCount} />
 			</div>
 		</div>
 	);

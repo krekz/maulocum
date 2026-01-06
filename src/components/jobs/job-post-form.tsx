@@ -9,6 +9,7 @@ import {
 	ChevronsUpDown,
 	Clock,
 	Loader2,
+	Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -85,6 +86,7 @@ export function JobPostForm({
 			jobType: initialData?.jobType || "LOCUM",
 			urgency: initialData?.urgency || "MEDIUM",
 			requiredSpecialists: initialData?.requiredSpecialists || [],
+			doctorsNeeded: initialData?.doctorsNeeded || 1,
 			startDate: initialData?.startDate
 				? new Date(initialData?.startDate)
 				: undefined,
@@ -140,7 +142,13 @@ export function JobPostForm({
 								</FormItem>
 							)}
 						/>
-						<SelectState form={form} />
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<SelectState value={field.value} onChange={field.onChange} />
+							)}
+						/>
 
 						<FormField
 							control={form.control}
@@ -318,6 +326,40 @@ export function JobPostForm({
 							}}
 						/>
 					</div>
+				</div>
+
+				{/* Staffing Requirements Section */}
+				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
+					<h2 className="text-base font-semibold flex items-center gap-2">
+						<Users className="size-4" />
+						Staffing Requirements
+					</h2>
+
+					<FormField
+						control={form.control}
+						name="doctorsNeeded"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>
+									Doctors Needed <span className="text-red-500">*</span>
+								</FormLabel>
+								<FormControl>
+									<Input
+										type="number"
+										min={1}
+										max={20}
+										className="h-9 w-full md:w-48"
+										{...field}
+										onChange={(e) => field.onChange(Number(e.target.value))}
+									/>
+								</FormControl>
+								<FormDescription>
+									How many doctors are needed for this job position
+								</FormDescription>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 				</div>
 
 				{/* Schedule & Compensation Section */}

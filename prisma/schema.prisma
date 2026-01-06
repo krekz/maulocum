@@ -118,6 +118,7 @@ model DoctorProfile {
   facilityReviews    FacilityReview[] // Reviews written by this doctor about facilities
   doctorReviews      DoctorReview[] // Reviews received by this doctor from facilities
   jobApplications    JobApplication[]
+  acceptedJobs       JobAcceptedDoctor[]
   doctorVerification DoctorVerification?
   bookmarks          JobBookmark[]
   notifications      Notification[]
@@ -225,7 +226,7 @@ model Facility {
 }
 
 model Job {
-  id                  String           @id @default(cuid())
+  id                  String              @id @default(cuid())
   title               String?
   description         String?
   location            String?
@@ -236,15 +237,17 @@ model Job {
   startDate           DateTime
   endDate             DateTime
   jobType             JobType
-  urgency             JobUrgency       @default(LOW)
-  status              JobStatus        @default(OPEN)
+  urgency             JobUrgency          @default(LOW)
+  status              JobStatus           @default(OPEN)
   requiredSpecialists String[]
+  doctorsNeeded       Int                 @default(1)
   facilityId          String
-  facility            Facility         @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facility            Facility            @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   applicants          JobApplication[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  staff               StaffProfile?    @relation(fields: [staffId], references: [id])
+  acceptedDoctors     JobAcceptedDoctor[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  staff               StaffProfile?       @relation(fields: [staffId], references: [id])
   staffId             String?
   bookmarkedBy        JobBookmark[]
   notifications       Notification[]
@@ -253,6 +256,21 @@ model Job {
   @@index([status])
   @@index([urgency])
   @@map("job")
+}
+
+model JobAcceptedDoctor {
+  id              String        @id @default(cuid())
+  jobId           String
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  doctorProfileId String
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  applicationId   String        @unique
+  acceptedAt      DateTime      @default(now())
+
+  @@unique([jobId, doctorProfileId])
+  @@index([jobId])
+  @@index([doctorProfileId])
+  @@map("job_accepted_doctor")
 }
 
 model JobApplication {

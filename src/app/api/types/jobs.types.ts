@@ -26,6 +26,7 @@ export const fullAccessSelect = {
 	urgency: true,
 	status: true,
 	requiredSpecialists: true,
+	doctorsNeeded: true,
 	facilityId: true,
 	createdAt: true,
 	updatedAt: true,
@@ -122,6 +123,11 @@ export const jobPostInputSchema = z
 		jobType: z.enum(JobType),
 		urgency: z.enum(JobUrgency),
 		requiredSpecialists: z.array(z.string()),
+		doctorsNeeded: z.coerce
+			.number()
+			.int()
+			.min(1, "At least 1 doctor is required")
+			.default(1),
 	})
 	.refine(
 		(data) => {
@@ -136,35 +142,41 @@ export const jobPostInputSchema = z
 	);
 
 // Form validation schema (uses Date objects for client-side forms)
-export const jobPostSchema = z
-	.object({
-		title: z.string().optional(),
-		description: z.string().optional(),
-		location: z.string().optional(),
-		payRate: z.string().min(1, "Pay rate is required"),
-		payBasis: z.enum(PayBasis),
-		startTime: z
-			.string()
-			.regex(
-				/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-				"Invalid time format (HH:MM)",
-			),
-		endTime: z
-			.string()
-			.regex(
-				/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-				"Invalid time format (HH:MM)",
-			),
-		startDate: z.date(),
-		endDate: z.date(),
-		jobType: z.enum(JobType),
-		urgency: z.enum(JobUrgency),
-		requiredSpecialists: z.array(z.string()),
-	})
-	.refine((data) => data.endDate >= data.startDate, {
+const jobPostBaseSchema = z.object({
+	title: z.string().optional(),
+	description: z.string().optional(),
+	location: z.string().optional(),
+	payRate: z.string().min(1, "Pay rate is required"),
+	payBasis: z.enum(PayBasis),
+	startTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+	endTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+	startDate: z.date(),
+	endDate: z.date(),
+	jobType: z.enum(JobType),
+	urgency: z.enum(JobUrgency),
+	requiredSpecialists: z.array(z.string()),
+	doctorsNeeded: z
+		.number()
+		.int()
+		.min(1, "At least 1 doctor is required")
+		.default(1),
+});
+
+export const jobPostSchema = jobPostBaseSchema.refine(
+	(data) => data.endDate >= data.startDate,
+	{
 		message: "End date must be after or equal to start date",
 		path: ["endDate"],
-	});
+	},
+);
+
+// Export the base schema type for form usage
+// Use z.input for form values (allows undefined for fields with defaults)
+export type JobPostFormValues = z.input<typeof jobPostBaseSchema>;
 
 // Job query/filter schema
 export const jobQuerySchema = z.object({
@@ -199,5 +211,3 @@ export type JobQuery = z.infer<typeof jobQuerySchema>;
 export type CreateJobApplicationInput = z.infer<
 	typeof createJobApplicationSchema
 >;
-
-export type JobPostFormValues = z.infer<typeof jobPostSchema>;

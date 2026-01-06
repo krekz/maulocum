@@ -770,6 +770,13 @@ export class FacilityService {
 		try {
 			const job = await prisma.job.findUnique({
 				where: { id },
+				include: {
+					_count: {
+						select: {
+							acceptedDoctors: true,
+						},
+					},
+				},
 			});
 
 			if (!job) {
@@ -1074,13 +1081,26 @@ export class FacilityService {
 	/**
 	 * Update a job posting
 	 * @security Ownership verified by requireActiveEmployer middleware
+	 * Handles doctorsNeeded decrease by removing last accepted doctors
 	 */
 	async updateJob(jobId: string, facilityId: string, data: JobPostFormValues) {
 		try {
 			// Verify job exists and belongs to facility
 			const job = await prisma.job.findFirst({
 				where: { id: jobId, facilityId },
-				select: { id: true },
+				select: {
+					id: true,
+					doctorsNeeded: true,
+					status: true,
+					acceptedDoctors: {
+						orderBy: { acceptedAt: "desc" },
+						select: {
+							id: true,
+							applicationId: true,
+							doctorProfileId: true,
+						},
+					},
+				},
 			});
 
 			if (!job) {
@@ -1089,10 +1109,71 @@ export class FacilityService {
 				});
 			}
 
+			const currentDoctorsNeeded = job.doctorsNeeded;
+			const newDoctorsNeeded = data.doctorsNeeded ?? currentDoctorsNeeded;
+			const acceptedCount = job.acceptedDoctors.length;
+
+			// Handle doctorsNeeded decrease - remove last accepted doctors
+			if (newDoctorsNeeded < acceptedCount) {
+				const doctorsToRemove = acceptedCount - newDoctorsNeeded;
+				const doctorsToRemoveList = job.acceptedDoctors.slice(
+					0,
+					doctorsToRemove,
+				);
+
+				// Remove accepted doctors and cancel their applications in a transaction
+				await prisma.$transaction([
+					// Delete from JobAcceptedDoctor
+					prisma.jobAcceptedDoctor.deleteMany({
+						where: {
+							id: { in: doctorsToRemoveList.map((d) => d.id) },
+						},
+					}),
+					// Update their job applications to CANCELLED
+					prisma.jobApplication.updateMany({
+						where: {
+							id: { in: doctorsToRemoveList.map((d) => d.applicationId) },
+						},
+						data: {
+							status: "CANCELLED",
+							cancelledAt: new Date(),
+							cancellationReason: "Job position count reduced by employer",
+						},
+					}),
+				]);
+			}
+
+			// Determine new job status
+			let newStatus = job.status;
+			const newAcceptedCount = Math.min(acceptedCount, newDoctorsNeeded);
+
+			// If doctorsNeeded increased and job was FILLED, reopen it
+			if (newDoctorsNeeded > currentDoctorsNeeded && job.status === "FILLED") {
+				newStatus = "OPEN";
+			}
+			// If after removal, we still have enough doctors, keep it FILLED
+			else if (newAcceptedCount >= newDoctorsNeeded && job.status === "OPEN") {
+				newStatus = "FILLED";
+			}
+			// If we removed doctors and now don't have enough, set to OPEN
+			else if (newAcceptedCount < newDoctorsNeeded && job.status === "FILLED") {
+				newStatus = "OPEN";
+			}
+
 			// Update the job
 			const updatedJob = await prisma.job.update({
 				where: { id: jobId },
-				data,
+				data: {
+					...data,
+					status: newStatus,
+				},
+				include: {
+					_count: {
+						select: {
+							acceptedDoctors: true,
+						},
+					},
+				},
 			});
 
 			return updatedJob;

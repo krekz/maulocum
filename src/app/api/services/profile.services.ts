@@ -194,6 +194,14 @@ class ProfileServices {
 				where: { id: user.id },
 				data: {
 					location: data.location,
+					roles: {
+						set:
+							verificationStatus === "APPROVED"
+								? user.isEmployer
+									? ["EMPLOYER", "DOCTOR"]
+									: ["DOCTOR"]
+								: ["USER"],
+					},
 					doctorProfile: {
 						create: {
 							doctorVerification: {
@@ -209,6 +217,8 @@ class ProfileServices {
 									verificationStatus,
 									reviewedBy:
 										verificationStatus === "APPROVED" ? "AUTOMATED" : "ADMIN",
+									reviewedAt:
+										verificationStatus === "APPROVED" ? new Date() : null,
 								},
 							},
 						},

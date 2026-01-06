@@ -13,6 +13,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CloseJobButton } from "@/components/employer/close-job-button";
+import { CompleteJobButton } from "@/components/employer/complete-job-button";
 import { DeleteJobButton } from "@/components/employer/delete-job-button";
 import { ReopenJobButton } from "@/components/employer/reopen-job-button";
 import { Badge } from "@/components/ui/badge";
@@ -243,10 +244,16 @@ async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
 									</Button>
 
 									{job.status === "OPEN" && (
-										<CloseJobButton
-											jobId={job.id}
-											jobTitle={job.title || "Untitled Position"}
-										/>
+										<>
+											<CompleteJobButton
+												jobId={job.id}
+												jobTitle={job.title || "Untitled Position"}
+											/>
+											<CloseJobButton
+												jobId={job.id}
+												jobTitle={job.title || "Untitled Position"}
+											/>
+										</>
 									)}
 
 									{(job.status === "CLOSED" || job.status === "FILLED") && (

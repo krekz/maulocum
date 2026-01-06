@@ -2,18 +2,10 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Users } from "lucide-react";
-import Link from "next/link";
+import { ArrowUpDown, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { JobActionsDropdown } from "./job-actions-dropdown";
 
 export interface JobColumn {
 	id: string;
@@ -182,42 +174,7 @@ export const columns: ColumnDef<JobColumn>[] = [
 		id: "actions",
 		cell: ({ row }) => {
 			const job = row.original;
-			return (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="h-8 w-8 p-0">
-							<span className="sr-only">Open menu</span>
-							<MoreHorizontal className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem asChild>
-							<Link href={`/employer/dashboard/jobs/${job.id}`}>
-								<Eye className="mr-2 h-4 w-4" />
-								View Details
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<Link href={`/employer/dashboard/jobs/${job.id}/edit`}>
-								<Pencil className="mr-2 h-4 w-4" />
-								Edit Job
-							</Link>
-						</DropdownMenuItem>
-						{job._count.applicants > 0 && (
-							<DropdownMenuItem asChild>
-								<Link
-									href={`/employer/dashboard/jobs/applicants?jobId=${job.id}`}
-								>
-									<Users className="mr-2 h-4 w-4" />
-									View Applicants ({job._count.applicants})
-								</Link>
-							</DropdownMenuItem>
-						)}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			);
+			return <JobActionsDropdown job={job} />;
 		},
 	},
 ];

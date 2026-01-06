@@ -229,7 +229,7 @@ async function HistoryPage() {
 										{statusBadge.label}
 									</span>
 									<Link
-										href={`/jobs/${application.job.id}`}
+										href={`/jobs?id=${application.job.id}`}
 										className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
 									>
 										View Details

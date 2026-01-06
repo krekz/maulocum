@@ -999,6 +999,62 @@ export class FacilityService {
 	}
 
 	/**
+	 * Mark a job as completed - updates all DOCTOR_CONFIRMED applications to COMPLETED
+	 * @security Ownership verified by requireActiveEmployer middleware
+	 */
+	async completeJob(jobId: string, facilityId: string) {
+		try {
+			const job = await prisma.job.findFirst({
+				where: { id: jobId, facilityId },
+				select: { id: true },
+			});
+
+			if (!job) {
+				throw new HTTPException(404, {
+					message: "Job not found",
+				});
+			}
+
+			// Find all confirmed applications for this job
+			const confirmedApplications = await prisma.jobApplication.findMany({
+				where: {
+					jobId,
+					status: "DOCTOR_CONFIRMED",
+				},
+				select: { id: true },
+			});
+
+			if (confirmedApplications.length === 0) {
+				throw new HTTPException(400, {
+					message: "No confirmed applications to mark as completed",
+				});
+			}
+
+			// Update all confirmed applications to COMPLETED
+			await prisma.jobApplication.updateMany({
+				where: {
+					jobId,
+					status: "DOCTOR_CONFIRMED",
+				},
+				data: {
+					status: "COMPLETED",
+				},
+			});
+
+			return {
+				success: true,
+				completedCount: confirmedApplications.length,
+			};
+		} catch (error) {
+			console.error("Error in facility.service.completeJob:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to mark job as completed",
+			});
+		}
+	}
+
+	/**
 	 * Get all applicants for a job
 	 * @security Ownership verified by requireActiveEmployer middleware
 	 */

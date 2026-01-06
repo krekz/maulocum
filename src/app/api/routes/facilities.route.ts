@@ -632,6 +632,40 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	)
 
 	/**
+	 * PATCH /api/v2/facilities/jobs/:id/complete
+	 * Mark a job as completed
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/jobs/:id/complete",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const staffProfile = c.get("staffProfile");
+
+				await facilityService.completeJob(id, staffProfile.facilityId);
+
+				return c.json({
+					success: true,
+					message: "Job marked as completed",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
 	 * DELETE /api/v2/facilities/jobs/:id
 	 * Delete a job posting
 	 * @PROTECTED route

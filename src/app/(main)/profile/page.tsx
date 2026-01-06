@@ -113,6 +113,31 @@ export default async function ProfilePage() {
 					allowAppeal={verification.allowAppeal}
 				/>
 			)}
+			{/* Employer Account Badge */}
+			{session.user.isEmployer && (
+				<Link
+					href="/employer/profile"
+					// className="w-full text-left p-4 bg-emerald-50 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors"
+				>
+					<div className="flex p-4 items-start gap-3 bg-emerald-50 rounded-xl border border-emerald-100">
+						<div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+							<Briefcase className="w-4 h-4 text-emerald-700" />
+						</div>
+						<div>
+							<h3 className="font-medium text-emerald-900 text-sm">
+								Employer Account Active
+							</h3>
+							<p className="text-xs text-emerald-800 mt-0.5">
+								Manage your facility details and job postings in your employer
+								dashboard.
+							</p>
+							<p className="text-xs text-emerald-800 mt-0.5">
+								Click here to navigate
+							</p>
+						</div>
+					</div>
+				</Link>
+			)}
 
 			<div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 				{/* Header */}
@@ -169,34 +194,6 @@ export default async function ProfilePage() {
 							</div>
 						</div>
 					</div>
-
-					{/* Employer Account Badge */}
-					{session.user.isEmployer && (
-						<div className="mt-3 pt-3 border-t border-slate-100	">
-							<Link
-								href="/employer/profile"
-								className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-900 transition-colors group"
-							>
-								<div className="w-5 h-5 rounded bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-slate-200 transition-colors">
-									<Briefcase className="w-3 h-3 text-slate-600" />
-								</div>
-								<span className="font-medium">Employer Account Active</span>
-								<svg
-									className="w-3 h-3 ml-auto text-slate-400 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M9 5l7 7-7 7"
-									/>
-								</svg>
-							</Link>
-						</div>
-					)}
 				</div>
 			</div>
 

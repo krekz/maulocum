@@ -1031,15 +1031,26 @@ export class FacilityService {
 			}
 
 			// Update all confirmed applications to COMPLETED
-			await prisma.jobApplication.updateMany({
-				where: {
-					jobId,
-					status: "DOCTOR_CONFIRMED",
-				},
-				data: {
-					status: "COMPLETED",
-				},
-			});
+			await Promise.all([
+				prisma.jobApplication.updateMany({
+					where: {
+						jobId,
+						status: "DOCTOR_CONFIRMED",
+					},
+					data: {
+						status: "COMPLETED",
+					},
+				}),
+				// update job status to filled
+				prisma.job.update({
+					where: {
+						id: jobId,
+					},
+					data: {
+						status: "FILLED",
+					},
+				}),
+			]);
 
 			return {
 				success: true,
@@ -1998,6 +2009,36 @@ export class FacilityService {
 			if (error instanceof HTTPException) throw error;
 			throw new HTTPException(500, {
 				message: "Failed to update facilities & services",
+			});
+		}
+	}
+
+	/**
+	 * Get sidebar counts for employer dashboard
+	 */
+	async getSidebarCounts(facilityId: string) {
+		try {
+			const [unreadNotifications, pendingApplicants] = await Promise.all([
+				prisma.notification.count({
+					where: { facilityId, isRead: false },
+				}),
+				prisma.jobApplication.count({
+					where: {
+						job: { facilityId },
+						status: "PENDING",
+					},
+				}),
+			]);
+
+			return {
+				unreadNotifications,
+				pendingApplicants,
+			};
+		} catch (error) {
+			console.error("Error in facility.service.getSidebarCounts:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch sidebar counts",
 			});
 		}
 	}

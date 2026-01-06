@@ -98,6 +98,35 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	})
 
 	/**
+	 * GET /api/v2/facilities/sidebar-counts
+	 * Get sidebar badge counts for employer dashboard
+	 * @PROTECTED route
+	 */
+	.get("/sidebar-counts", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			const counts = await facilityService.getSidebarCounts(
+				staffProfile.facilityId,
+			);
+			return c.json({
+				success: true,
+				data: counts,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
 	 * GET /api/v2/facilities/notifications
 	 * Get all notifications for employer's facility
 	 * @PROTECTED route

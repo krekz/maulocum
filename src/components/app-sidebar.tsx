@@ -33,13 +33,16 @@ interface Sidebarmain {
 	basic: Array<{
 		title: string;
 		url: string;
+		badge?: number;
 	}>;
 	collapsible: Array<{
 		title: string;
 		url: string;
+		badge?: number;
 		items?: Array<{
 			title: string;
 			url: string;
+			badge?: number;
 		}>;
 	}>;
 }
@@ -92,7 +95,17 @@ export function AppSidebar({
 						{main.basic.map((item) => (
 							<SidebarMenuItem key={item.title}>
 								<SidebarMenuButton asChild isActive={pathname === item.url}>
-									<a href={item.url}>{item.title}</a>
+									<a
+										href={item.url}
+										className="flex items-center justify-between w-full"
+									>
+										<span>{item.title}</span>
+										{item.badge !== undefined && item.badge > 0 && (
+											<span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1.5">
+												{item.badge > 99 ? "99+" : item.badge}
+											</span>
+										)}
+									</a>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
 						))}
@@ -107,7 +120,14 @@ export function AppSidebar({
 								<SidebarMenuItem>
 									<CollapsibleTrigger asChild>
 										<SidebarMenuButton>
-											{item.title}{" "}
+											<span className="flex items-center gap-2">
+												{item.title}
+												{item.badge !== undefined && item.badge > 0 && (
+													<span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1.5">
+														{item.badge > 99 ? "99+" : item.badge}
+													</span>
+												)}
+											</span>
 											<Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
 											<Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
 										</SidebarMenuButton>
@@ -115,13 +135,26 @@ export function AppSidebar({
 									{item.items?.length ? (
 										<CollapsibleContent>
 											<SidebarMenuSub>
-												{item.items.map((item) => (
-													<SidebarMenuSubItem key={item.title}>
+												{item.items.map((subItem) => (
+													<SidebarMenuSubItem key={subItem.title}>
 														<SidebarMenuSubButton
 															asChild
-															isActive={pathname === item.url}
+															isActive={pathname === subItem.url}
 														>
-															<a href={item.url}>{item.title}</a>
+															<a
+																href={subItem.url}
+																className="flex items-center justify-between w-full"
+															>
+																<span>{subItem.title}</span>
+																{subItem.badge !== undefined &&
+																	subItem.badge > 0 && (
+																		<span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground px-1">
+																			{subItem.badge > 99
+																				? "99+"
+																				: subItem.badge}
+																		</span>
+																	)}
+															</a>
 														</SidebarMenuSubButton>
 													</SidebarMenuSubItem>
 												))}

@@ -3,9 +3,11 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { handleLogout } from "@/lib/utils";
 import { useFacilityName } from "../_hooks/use-facility-name";
+import { useSidebarCounts } from "../_hooks/use-sidebar-counts";
 
 function EmployerAppSidebar() {
 	const { data } = useFacilityName();
+	const { data: counts } = useSidebarCounts();
 
 	return (
 		<AppSidebar
@@ -22,12 +24,14 @@ function EmployerAppSidebar() {
 					{
 						title: "Notifications",
 						url: "/employer/dashboard/notifications",
+						badge: counts?.unreadNotifications,
 					},
 				],
 				collapsible: [
 					{
 						title: "Jobs",
 						url: "/employer/dashboard/jobs",
+						badge: counts?.pendingApplicants,
 						items: [
 							{
 								title: "Post Job",
@@ -40,6 +44,7 @@ function EmployerAppSidebar() {
 							{
 								title: "Applicants",
 								url: "/employer/dashboard/jobs/applicants",
+								badge: counts?.pendingApplicants,
 							},
 						],
 					},

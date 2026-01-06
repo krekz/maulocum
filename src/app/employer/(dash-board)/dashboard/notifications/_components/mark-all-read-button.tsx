@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { backendApi } from "@/lib/rpc";
+import { client } from "@/lib/rpc";
 
 export function MarkAllReadButton() {
 	const router = useRouter();
@@ -14,7 +14,7 @@ export function MarkAllReadButton() {
 	const handleMarkAllRead = async () => {
 		try {
 			const response =
-				await backendApi.api.v2.facilities.notifications["read-all"].$patch();
+				await client.api.v2.facilities.notifications["read-all"].$patch();
 
 			if (!response.ok) {
 				throw new Error("Failed to mark notifications as read");

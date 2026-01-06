@@ -150,7 +150,13 @@ export function EditVerificationForm({
 								)}
 							/>
 
-							<SelectState form={form} />
+							<FormField
+								control={form.control}
+								name="location"
+								render={({ field }) => (
+									<SelectState value={field.value} onChange={field.onChange} />
+								)}
+							/>
 
 							<FormField
 								control={form.control}

@@ -32,7 +32,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -57,6 +56,7 @@ import { usePostJob } from "@/lib/hooks/useEmployerJobs";
 import type { JobDetailProps } from "@/lib/rpc";
 import { cn } from "@/lib/utils";
 import SelectState from "../select-state";
+import { JobTemplateManager } from "./job-template-manager";
 
 interface JobPostFormProps {
 	mode?: "create" | "edit";
@@ -116,70 +116,57 @@ export function JobPostForm({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-				{/* Job Details Section */}
-				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
-					<h2 className="text-base font-semibold flex items-center gap-2">
-						<Briefcase className="size-4" />
-						Job Details
-					</h2>
+			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+				{/* Template Manager - Only in create mode */}
+				{mode === "create" && (
+					<div className="flex justify-end">
+						<JobTemplateManager form={form} />
+					</div>
+				)}
 
-					<div className="space-y-3">
-						<FormField
-							control={form.control}
-							name="title"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Job Title</FormLabel>
-									<FormControl>
-										<Input
-											className="h-9"
-											placeholder="e.g. General Practitioner Locum"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="location"
-							render={({ field }) => (
-								<SelectState value={field.value} onChange={field.onChange} />
-							)}
-						/>
+				{/* Main Form Card */}
+				<div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+					{/* Job Details Section */}
+					<div className="p-5 border-b">
+						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+							<Briefcase className="size-4" />
+							Job Details
+						</h2>
 
-						<FormField
-							control={form.control}
-							name="description"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Job Description</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="Provide a detailed description of the role and requirements"
-											rows={3}
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription>
-										Optional: Describe the position, responsibilities, and
-										requirements
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							<FormField
+								control={form.control}
+								name="title"
+								render={({ field }) => (
+									<FormItem className="md:col-span-2 lg:col-span-2">
+										<FormLabel className="text-xs">Job Title</FormLabel>
+										<FormControl>
+											<Input
+												className="h-9"
+												placeholder="e.g. General Practitioner Locum"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+							<FormField
+								control={form.control}
+								name="location"
+								render={({ field }) => (
+									<SelectState value={field.value} onChange={field.onChange} />
+								)}
+							/>
+
 							<FormField
 								control={form.control}
 								name="jobType"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											Job Type <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											Job Type <span className="text-destructive">*</span>
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}
@@ -187,7 +174,7 @@ export function JobPostForm({
 										>
 											<FormControl>
 												<SelectTrigger className="h-9">
-													<SelectValue placeholder="Select job type" />
+													<SelectValue placeholder="Select type" />
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
@@ -207,8 +194,8 @@ export function JobPostForm({
 								name="urgency"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											Urgency Level <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											Urgency <span className="text-destructive">*</span>
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}
@@ -229,155 +216,164 @@ export function JobPostForm({
 									</FormItem>
 								)}
 							/>
-						</div>
 
-						<FormField
-							control={form.control}
-							name="requiredSpecialists"
-							render={({ field }) => {
-								const values = field.value ?? [];
-								const labels = values
-									.map(
-										(v) => SPECIALIST_OPTIONS.find((o) => o.value === v)?.label,
-									)
-									.filter(Boolean);
-
-								return (
+							<FormField
+								control={form.control}
+								name="doctorsNeeded"
+								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											Required Specialists{" "}
-											<span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											Doctors Needed <span className="text-destructive">*</span>
 										</FormLabel>
-										<Popover
-											open={isSpecialistsOpen}
-											onOpenChange={setIsSpecialistsOpen}
-										>
-											<PopoverTrigger asChild>
-												<FormControl>
-													<Button
-														variant="outline"
-														role="combobox"
-														aria-expanded={isSpecialistsOpen}
-														className={cn(
-															"h-9 w-full justify-between text-left font-normal",
-															values.length === 0 && "text-muted-foreground",
-														)}
-													>
-														<span className="truncate">
-															{labels.length > 0
-																? labels.join(", ")
-																: "Select specialists"}
-														</span>
-														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-													</Button>
-												</FormControl>
-											</PopoverTrigger>
-											<PopoverContent
-												className="w-[--radix-popover-trigger-width] p-0"
-												align="start"
-											>
-												<Command>
-													<CommandInput placeholder="Search specialists..." />
-													<CommandList>
-														<CommandEmpty>No specialist found.</CommandEmpty>
-														<CommandGroup>
-															{SPECIALIST_OPTIONS.filter(
-																(opt) => opt.value !== "all",
-															).map((option) => {
-																const isSelected = values.includes(
-																	option.value,
-																);
-																return (
-																	<CommandItem
-																		key={option.value}
-																		value={option.label}
-																		onSelect={() => {
-																			const next = isSelected
-																				? values.filter(
-																						(v) => v !== option.value,
-																					)
-																				: [...values, option.value];
-																			field.onChange(next);
-																		}}
-																	>
-																		<Check
-																			className={cn(
-																				"mr-2 h-4 w-4",
-																				isSelected
-																					? "opacity-100"
-																					: "opacity-0",
-																			)}
-																		/>
-																		{option.label}
-																	</CommandItem>
-																);
-															})}
-														</CommandGroup>
-													</CommandList>
-												</Command>
-											</PopoverContent>
-										</Popover>
-										<FormDescription>
-											Select all specialties that are suitable for this position
-										</FormDescription>
+										<FormControl>
+											<Input
+												type="number"
+												min={1}
+												max={20}
+												className="h-9"
+												{...field}
+												onChange={(e) => field.onChange(Number(e.target.value))}
+											/>
+										</FormControl>
 										<FormMessage />
 									</FormItem>
-								);
-							}}
-						/>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="requiredSpecialists"
+								render={({ field }) => {
+									const values = field.value ?? [];
+									const labels = values
+										.map(
+											(v) =>
+												SPECIALIST_OPTIONS.find((o) => o.value === v)?.label,
+										)
+										.filter(Boolean);
+
+									return (
+										<FormItem className="md:col-span-2 lg:col-span-3">
+											<FormLabel className="text-xs">
+												Required Specialists{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<Popover
+												open={isSpecialistsOpen}
+												onOpenChange={setIsSpecialistsOpen}
+											>
+												<PopoverTrigger asChild>
+													<FormControl>
+														<Button
+															variant="outline"
+															role="combobox"
+															aria-expanded={isSpecialistsOpen}
+															className={cn(
+																"h-9 w-full justify-between text-left font-normal",
+																values.length === 0 && "text-muted-foreground",
+															)}
+														>
+															<span className="truncate">
+																{labels.length > 0
+																	? labels.join(", ")
+																	: "Select specialists"}
+															</span>
+															<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+														</Button>
+													</FormControl>
+												</PopoverTrigger>
+												<PopoverContent
+													className="w-[--radix-popover-trigger-width] p-0"
+													align="start"
+												>
+													<Command>
+														<CommandInput placeholder="Search specialists..." />
+														<CommandList>
+															<CommandEmpty>No specialist found.</CommandEmpty>
+															<CommandGroup>
+																{SPECIALIST_OPTIONS.filter(
+																	(opt) => opt.value !== "all",
+																).map((option) => {
+																	const isSelected = values.includes(
+																		option.value,
+																	);
+																	return (
+																		<CommandItem
+																			key={option.value}
+																			value={option.label}
+																			onSelect={() => {
+																				const next = isSelected
+																					? values.filter(
+																							(v) => v !== option.value,
+																						)
+																					: [...values, option.value];
+																				field.onChange(next);
+																			}}
+																		>
+																			<Check
+																				className={cn(
+																					"mr-2 h-4 w-4",
+																					isSelected
+																						? "opacity-100"
+																						: "opacity-0",
+																				)}
+																			/>
+																			{option.label}
+																		</CommandItem>
+																	);
+																})}
+															</CommandGroup>
+														</CommandList>
+													</Command>
+												</PopoverContent>
+											</Popover>
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+
+							<FormField
+								control={form.control}
+								name="description"
+								render={({ field }) => (
+									<FormItem className="md:col-span-2 lg:col-span-3">
+										<FormLabel className="text-xs">
+											Description{" "}
+											<span className="text-muted-foreground font-normal">
+												(optional)
+											</span>
+										</FormLabel>
+										<FormControl>
+											<Textarea
+												placeholder="Brief description of the role..."
+												rows={2}
+												className="resize-none"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
 					</div>
-				</div>
 
-				{/* Staffing Requirements Section */}
-				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
-					<h2 className="text-base font-semibold flex items-center gap-2">
-						<Users className="size-4" />
-						Staffing Requirements
-					</h2>
+					{/* Schedule Section */}
+					<div className="p-5 border-b bg-muted/30">
+						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+							<Clock className="size-4" />
+							Schedule
+						</h2>
 
-					<FormField
-						control={form.control}
-						name="doctorsNeeded"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>
-									Doctors Needed <span className="text-red-500">*</span>
-								</FormLabel>
-								<FormControl>
-									<Input
-										type="number"
-										min={1}
-										max={20}
-										className="h-9 w-full md:w-48"
-										{...field}
-										onChange={(e) => field.onChange(Number(e.target.value))}
-									/>
-								</FormControl>
-								<FormDescription>
-									How many doctors are needed for this job position
-								</FormDescription>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-
-				{/* Schedule & Compensation Section */}
-				<div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
-					<h2 className="text-base font-semibold flex items-center gap-2">
-						<Clock className="size-4" />
-						Schedule & Compensation
-					</h2>
-
-					<div className="space-y-3">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							<FormField
 								control={form.control}
 								name="startDate"
 								render={({ field }) => (
 									<FormItem className="flex flex-col">
-										<FormLabel>
-											Start Date <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											Start Date <span className="text-destructive">*</span>
 										</FormLabel>
 										<Popover>
 											<PopoverTrigger asChild>
@@ -389,11 +385,11 @@ export function JobPostForm({
 															!field.value && "text-muted-foreground",
 														)}
 													>
-														<CalendarIcon className="mr-2 h-4 w-4" />
+														<CalendarIcon className="mr-2 h-3.5 w-3.5" />
 														{field.value ? (
-															format(field.value, "PPP")
+															format(field.value, "dd MMM yyyy")
 														) : (
-															<span>Pick a date</span>
+															<span>Pick date</span>
 														)}
 													</Button>
 												</FormControl>
@@ -420,8 +416,8 @@ export function JobPostForm({
 								name="endDate"
 								render={({ field }) => (
 									<FormItem className="flex flex-col">
-										<FormLabel>
-											End Date <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											End Date <span className="text-destructive">*</span>
 										</FormLabel>
 										<Popover>
 											<PopoverTrigger asChild>
@@ -433,11 +429,11 @@ export function JobPostForm({
 															!field.value && "text-muted-foreground",
 														)}
 													>
-														<CalendarIcon className="mr-2 h-4 w-4" />
+														<CalendarIcon className="mr-2 h-3.5 w-3.5" />
 														{field.value ? (
-															format(field.value, "PPP")
+															format(field.value, "dd MMM yyyy")
 														) : (
-															<span>Pick a date</span>
+															<span>Pick date</span>
 														)}
 													</Button>
 												</FormControl>
@@ -458,24 +454,17 @@ export function JobPostForm({
 									</FormItem>
 								)}
 							/>
-						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<FormField
 								control={form.control}
 								name="startTime"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											Start Time <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											Start Time <span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input
-												className="h-9"
-												type="time"
-												placeholder="09:00"
-												{...field}
-											/>
+											<Input className="h-9" type="time" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -487,38 +476,38 @@ export function JobPostForm({
 								name="endTime"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
-											End Time <span className="text-red-500">*</span>
+										<FormLabel className="text-xs">
+											End Time <span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input
-												className="h-9"
-												type="time"
-												placeholder="17:00"
-												{...field}
-											/>
+											<Input className="h-9" type="time" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
 						</div>
+					</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+					{/* Compensation Section */}
+					<div className="p-5">
+						<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-4">
+							<Users className="size-4" />
+							Compensation
+						</h2>
+
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							<FormField
 								control={form.control}
 								name="payRate"
 								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Pay Rate <span className="text-red-500">*</span>
+									<FormItem className="col-span-1">
+										<FormLabel className="text-xs">
+											Pay Rate (RM) <span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
-											<Input className="h-9" placeholder="e.g. 40" {...field} />
+											<Input className="h-9" placeholder="e.g. 80" {...field} />
 										</FormControl>
-										<FormDescription>
-											Enter the amount (e.g., 40 for RM40)
-										</FormDescription>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -528,9 +517,9 @@ export function JobPostForm({
 								control={form.control}
 								name="payBasis"
 								render={({ field }) => (
-									<FormItem>
-										<FormLabel>
-											Pay Basis <span className="text-red-500">*</span>
+									<FormItem className="col-span-1">
+										<FormLabel className="text-xs">
+											Pay Basis <span className="text-destructive">*</span>
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}
@@ -538,7 +527,7 @@ export function JobPostForm({
 										>
 											<FormControl>
 												<SelectTrigger className="h-9">
-													<SelectValue placeholder="Select pay basis" />
+													<SelectValue placeholder="Select" />
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
@@ -557,7 +546,7 @@ export function JobPostForm({
 				</div>
 
 				{/* Form Actions */}
-				<div className="flex justify-end gap-2">
+				<div className="flex justify-end gap-3 pt-2">
 					<Button
 						variant="outline"
 						type="button"

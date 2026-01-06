@@ -98,6 +98,36 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	})
 
 	/**
+	 * GET /api/v2/facilities/dashboard-stats
+	 * Get dashboard statistics for employer
+	 * @PROTECTED route
+	 */
+	.get("/dashboard-stats", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			const stats = await facilityService.getDashboardStats(
+				staffProfile.facilityId,
+			);
+			return c.json({
+				success: true,
+				message: "Dashboard stats fetched successfully",
+				data: stats,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
 	 * GET /api/v2/facilities/verification-status
 	 * Get current user's facility verification status with editable flag
 	 * @PROTECTED route

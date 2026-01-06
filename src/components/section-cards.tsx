@@ -1,5 +1,5 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
-
+import { IconTrendingUp } from "@tabler/icons-react";
+import { Briefcase, CheckCircle, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -10,91 +10,83 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 
-export function SectionCards() {
+interface SectionCardsProps {
+	activeJobs: number;
+	totalApplicants: number;
+	fillRate: number;
+}
+
+export function SectionCards({
+	activeJobs,
+	totalApplicants,
+	fillRate,
+}: SectionCardsProps) {
 	return (
-		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3">
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>Active Job Listings</CardDescription>
+					<CardDescription className="flex items-center gap-2">
+						<Briefcase className="size-4" />
+						Active Job Listings
+					</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						12
+						{activeJobs}
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
 							<IconTrendingUp />
-							+3
+							Active
 						</Badge>
 					</CardAction>
 				</CardHeader>
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						3 new listings this month <IconTrendingUp className="size-4" />
-					</div>
 					<div className="text-muted-foreground">
-						9 active from previous month
+						Currently accepting applications
 					</div>
 				</CardFooter>
 			</Card>
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>Applicant Response Rate</CardDescription>
+					<CardDescription className="flex items-center gap-2">
+						<Users className="size-4" />
+						Total Applicants
+					</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						68%
+						{totalApplicants}
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
-							<IconTrendingDown />
-							-5%
+							<IconTrendingUp />
+							All time
 						</Badge>
 					</CardAction>
 				</CardHeader>
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						Down 5% this period <IconTrendingDown className="size-4" />
-					</div>
 					<div className="text-muted-foreground">
-						Job descriptions need improvement
+						Applications received across all jobs
 					</div>
 				</CardFooter>
 			</Card>
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>Locum Doctors Available</CardDescription>
+					<CardDescription className="flex items-center gap-2">
+						<CheckCircle className="size-4" />
+						Fill Rate
+					</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						156
+						{fillRate}%
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
 							<IconTrendingUp />
-							+12
+							Success
 						</Badge>
 					</CardAction>
 				</CardHeader>
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						Growing talent pool <IconTrendingUp className="size-4" />
+					<div className="text-muted-foreground">
+						Positions filled successfully
 					</div>
-					<div className="text-muted-foreground">12 new doctors joined</div>
-				</CardFooter>
-			</Card>
-			<Card className="@container/card">
-				<CardHeader>
-					<CardDescription>Fill Rate</CardDescription>
-					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						92%
-					</CardTitle>
-					<CardAction>
-						<Badge variant="outline">
-							<IconTrendingUp />
-							+4%
-						</Badge>
-					</CardAction>
-				</CardHeader>
-				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						Positions filled successfully <IconTrendingUp className="size-4" />
-					</div>
-					<div className="text-muted-foreground">Above industry average</div>
 				</CardFooter>
 			</Card>
 		</div>

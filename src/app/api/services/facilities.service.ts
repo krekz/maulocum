@@ -1945,6 +1945,100 @@ export class FacilityService {
 			});
 		}
 	}
+
+	/**
+	 * Get dashboard stats for employer
+	 */
+	async getDashboardStats(facilityId: string) {
+		try {
+			const [
+				activeJobsCount,
+				totalJobsCount,
+				filledJobsCount,
+				totalApplicantsCount,
+				recentApplicants,
+			] = await Promise.all([
+				// Active jobs (OPEN status)
+				prisma.job.count({
+					where: { facilityId, status: "OPEN" },
+				}),
+				// Total jobs
+				prisma.job.count({
+					where: { facilityId },
+				}),
+				// Filled jobs
+				prisma.job.count({
+					where: { facilityId, status: "FILLED" },
+				}),
+				// Total applicants across all jobs
+				prisma.jobApplication.count({
+					where: { job: { facilityId } },
+				}),
+				// Recent applicants (last 5)
+				prisma.jobApplication.findMany({
+					where: { job: { facilityId } },
+					orderBy: { appliedAt: "desc" },
+					take: 5,
+					select: {
+						id: true,
+						status: true,
+						appliedAt: true,
+						job: {
+							select: {
+								title: true,
+								requiredSpecialists: true,
+							},
+						},
+						DoctorProfile: {
+							select: {
+								user: {
+									select: {
+										name: true,
+										image: true,
+									},
+								},
+								doctorVerification: {
+									select: {
+										specialty: true,
+									},
+								},
+							},
+						},
+					},
+				}),
+			]);
+
+			// Calculate fill rate percentage
+			const fillRate =
+				totalJobsCount > 0
+					? Math.round((filledJobsCount / totalJobsCount) * 100)
+					: 0;
+
+			return {
+				activeJobs: activeJobsCount,
+				totalApplicants: totalApplicantsCount,
+				fillRate,
+				recentApplicants: recentApplicants.map((app) => ({
+					id: app.id,
+					status: app.status,
+					appliedAt: app.appliedAt,
+					jobTitle: app.job.title,
+					specialty:
+						app.DoctorProfile?.doctorVerification?.specialty ||
+						app.job.requiredSpecialists[0] ||
+						"General",
+					doctorName: app.DoctorProfile?.user.name || "Unknown",
+					doctorImage: app.DoctorProfile?.user.image,
+				})),
+			};
+		} catch (error) {
+			console.error("Error in facility.service.getDashboardStats:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch dashboard stats",
+			});
+		}
+	}
 }
 
 // Export singleton instance

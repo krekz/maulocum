@@ -73,6 +73,7 @@ function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 							<h4 className="font-semibold text-slate-900 text-sm leading-tight pr-2">
 								{fullAccess ? job.facility.name : "Healthcare Facility"}
 							</h4>
+
 							<div className="flex items-center gap-1.5 shrink-0">
 								{!fullAccess && (
 									<span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-medium rounded flex items-center gap-0.5">
@@ -92,10 +93,13 @@ function JobList({ jobListings: data }: { jobListings: JobResponse }) {
 								)}
 							</div>
 						</div>
+						<h4 className="font-semibold text-slate-900 text-sm leading-tight pr-2">
+							{fullAccess && job.title && job.title}
+						</h4>
 
 						{/* Pay Rate */}
 						<div
-							className={`text-lg font-bold mb-2 ${isSelected ? "text-blue-600" : "text-slate-700"}`}
+							className={`text-lg font-bold mb-2 mt-4 ${isSelected ? "text-blue-600" : "text-slate-700"}`}
 						>
 							RM {fullAccess ? job.payRate : "---"}
 							<span className="text-xs font-normal text-slate-400 ml-0.5">

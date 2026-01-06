@@ -98,6 +98,97 @@ const app = new Hono<{ Variables: FacilityVariables }>()
 	})
 
 	/**
+	 * GET /api/v2/facilities/notifications
+	 * Get all notifications for employer's facility
+	 * @PROTECTED route
+	 */
+	.get("/notifications", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			const notifications = await facilityService.getNotifications(
+				staffProfile.facilityId,
+			);
+			return c.json({
+				success: true,
+				message: "Notifications fetched successfully",
+				data: notifications,
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+					data: null,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
+	 * PATCH /api/v2/facilities/notifications/:id/read
+	 * Mark a notification as read
+	 * @PROTECTED route
+	 */
+	.patch(
+		"/notifications/:id/read",
+		requireActiveEmployer,
+		zValidator("param", z.object({ id: z.string() })),
+		async (c) => {
+			try {
+				const { id } = c.req.valid("param");
+				const staffProfile = c.get("staffProfile");
+				await facilityService.markNotificationAsRead(
+					id,
+					staffProfile.facilityId,
+				);
+				return c.json({
+					success: true,
+					message: "Notification marked as read",
+				});
+			} catch (error) {
+				console.error(error);
+				const httpError = error as HTTPException;
+				return c.json(
+					{
+						success: false,
+						message: httpError.message,
+					},
+					httpError.status,
+				);
+			}
+		},
+	)
+
+	/**
+	 * PATCH /api/v2/facilities/notifications/read-all
+	 * Mark all notifications as read
+	 * @PROTECTED route
+	 */
+	.patch("/notifications/read-all", requireActiveEmployer, async (c) => {
+		try {
+			const staffProfile = c.get("staffProfile");
+			await facilityService.markAllNotificationsAsRead(staffProfile.facilityId);
+			return c.json({
+				success: true,
+				message: "All notifications marked as read",
+			});
+		} catch (error) {
+			console.error(error);
+			const httpError = error as HTTPException;
+			return c.json(
+				{
+					success: false,
+					message: httpError.message,
+				},
+				httpError.status,
+			);
+		}
+	})
+
+	/**
 	 * GET /api/v2/facilities/dashboard-stats
 	 * Get dashboard statistics for employer
 	 * @PROTECTED route

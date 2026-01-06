@@ -19,6 +19,10 @@ function EmployerAppSidebar() {
 						title: "Dashboard",
 						url: "/employer/dashboard",
 					},
+					{
+						title: "Notifications",
+						url: "/employer/dashboard/notifications",
+					},
 				],
 				collapsible: [
 					{

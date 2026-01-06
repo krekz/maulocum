@@ -1947,6 +1947,111 @@ export class FacilityService {
 	}
 
 	/**
+	 * Get notifications for employer's facility
+	 */
+	async getNotifications(facilityId: string) {
+		try {
+			const notifications = await prisma.notification.findMany({
+				where: { facilityId },
+				orderBy: { createdAt: "desc" },
+				select: {
+					id: true,
+					type: true,
+					title: true,
+					message: true,
+					isRead: true,
+					actionUrl: true,
+					metadata: true,
+					createdAt: true,
+					job: {
+						select: {
+							id: true,
+							title: true,
+						},
+					},
+					jobApplication: {
+						select: {
+							id: true,
+							status: true,
+							DoctorProfile: {
+								select: {
+									user: {
+										select: {
+											name: true,
+											image: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			});
+
+			return notifications;
+		} catch (error) {
+			console.error("Error in facility.service.getNotifications:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to fetch notifications",
+			});
+		}
+	}
+
+	/**
+	 * Mark notification as read
+	 */
+	async markNotificationAsRead(notificationId: string, facilityId: string) {
+		try {
+			const notification = await prisma.notification.findFirst({
+				where: { id: notificationId, facilityId },
+			});
+
+			if (!notification) {
+				throw new HTTPException(404, {
+					message: "Notification not found",
+				});
+			}
+
+			await prisma.notification.update({
+				where: { id: notificationId },
+				data: { isRead: true },
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error("Error in facility.service.markNotificationAsRead:", error);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to mark notification as read",
+			});
+		}
+	}
+
+	/**
+	 * Mark all notifications as read
+	 */
+	async markAllNotificationsAsRead(facilityId: string) {
+		try {
+			await prisma.notification.updateMany({
+				where: { facilityId, isRead: false },
+				data: { isRead: true },
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error(
+				"Error in facility.service.markAllNotificationsAsRead:",
+				error,
+			);
+			if (error instanceof HTTPException) throw error;
+			throw new HTTPException(500, {
+				message: "Failed to mark all notifications as read",
+			});
+		}
+	}
+
+	/**
 	 * Get dashboard stats for employer
 	 */
 	async getDashboardStats(facilityId: string) {

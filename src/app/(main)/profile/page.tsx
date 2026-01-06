@@ -29,8 +29,6 @@ export default async function ProfilePage() {
 		redirect("/login");
 	}
 
-	console.log(session.user);
-
 	const res = await client.api.v2.profile.user[":userId"].$get({
 		param: {
 			userId: session.user.id,
